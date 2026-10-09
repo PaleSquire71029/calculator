@@ -443,6 +443,57 @@ html.light footer{color:#7a828b!important}
 }
 html.kb-open .zx-menu.is-mobile-open{display:none}
 
+
+/* 移动端修正补丁：控件不压缩，坐标表单稳定，输入面板固定于底部 */
+.structured-solver,.function-point-workbench,.structured-points,.structured-point,.structured-coefficients,.structured-field{min-width:0!important;width:100%}
+.structured-points{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:stretch}
+.structured-point{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;align-content:start}
+.structured-point>b{grid-column:1/-1}
+.structured-point .structured-field{display:flex;flex-direction:column;gap:6px}
+.structured-field>span{display:block;line-height:1.3}
+.structured-field input{display:block;width:100%;min-width:0;max-width:100%;height:44px;padding:10px 11px;border:1px solid #343a44;border-radius:10px;background:#0c0f13;color:var(--zx-text);font:inherit;font-size:16px;line-height:1.2;box-sizing:border-box}
+.structured-coefficients{grid-template-columns:repeat(2,minmax(0,1fr))}
+.structured-equation{width:100%;min-width:0;overflow-wrap:anywhere}
+.function-task-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+.function-task-tabs button{min-width:0;overflow-wrap:anywhere}
+.function-expression-panel{min-width:0}
+.function-expression-field{width:100%;min-width:0;box-sizing:border-box}
+.function-graph{width:100%;min-width:0}
+.function-graph svg{width:100%;height:auto;display:block}
+.function-graph-note{padding:9px 12px;border-top:1px solid var(--zx-line);color:var(--zx-muted);font-size:10px;line-height:1.6}
+.zx-mobile-mathpad{display:none}
+@media(max-width:768px){
+  .structured-points{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px}
+  .structured-point{padding:9px!important;gap:8px!important}
+  .structured-point .structured-field input{height:43px;padding:8px;font-size:16px}
+  .structured-coefficients{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .structured-coefficients .structured-field input{height:44px}
+  .function-value-row{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+  .function-value-row .structured-field{width:100%;max-width:none}
+  .function-graph-head{flex-direction:row;align-items:center}
+  .zx-mobile-mathpad.is-visible{display:block;position:fixed;z-index:90;left:0;right:0;bottom:0;padding:10px max(12px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:rgba(13,16,21,.98);border-top:1px solid #353c46;box-shadow:0 -12px 36px rgba(0,0,0,.4);backdrop-filter:blur(14px)}
+  .zx-mobile-mathpad-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;color:#c4ccd6;font-size:11px}
+  .zx-mobile-mathpad-head button{padding:5px 9px;border:1px solid #353c46;border-radius:7px;background:#1a1f26;color:#c4ccd6;font:inherit}
+  .zx-mobile-mathpad-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+  .zx-mobile-mathpad-grid button{min-width:0;min-height:42px;border:1px solid #333a44;border-radius:9px;background:#1a1f26;color:#edf0f3;font:inherit;font-size:15px;touch-action:manipulation}
+  .zx-mobile-mathpad-grid button[data-value="DEL"],.zx-mobile-mathpad-grid button[data-value="NEXT"]{color:#e5c989}
+  .zx-mobile-mathpad-grid button[data-value="DONE"]{background:#8be5b9;border-color:#8be5b9;color:#101712;font-weight:700}
+  body.zx-mathpad-open{padding-bottom:260px}
+  html.light .zx-mobile-mathpad.is-visible{background:rgba(248,247,243,.98);border-color:#d7d4cb}
+  html.light .zx-mobile-mathpad-head{color:#353a42}
+  html.light .zx-mobile-mathpad-head button,html.light .zx-mobile-mathpad-grid button{background:#fff;border-color:#dedbd3;color:#303640}
+  html.light .zx-mobile-mathpad-grid button[data-value="DONE"]{background:#8e6d30;border-color:#8e6d30;color:white}
+}
+@media(max-width:420px){
+  .structured-points{grid-template-columns:minmax(0,1fr)!important}
+  .structured-point{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+  .structured-point .structured-field input{height:42px}
+  .function-task-tabs{gap:5px}
+  .function-task-tabs button{padding:7px 3px;font-size:10px}
+  .zx-mobile-mathpad-grid{gap:5px}
+  .zx-mobile-mathpad-grid button{min-height:40px}
+}
+
 </style>
 
     <script>
@@ -1902,6 +1953,76 @@ function zxEvalArithmetic(src) {
                 el.dispatchEvent(new Event('input',{bubbles:true}));try{el.focus({preventScroll:true})}catch(err){el.focus();}
             });
         }
+
+        /* 移动端统一数学键盘：点击数字字段呼出，避免系统键盘遮挡页面。 */
+        function initMobileMathPad(){
+            if(document.getElementById('zxMobileMathPad'))return;
+            const pad=document.createElement('section');
+            pad.id='zxMobileMathPad';pad.className='zx-mobile-mathpad';pad.setAttribute('aria-label','数学输入键盘');
+            pad.innerHTML='<div class="zx-mobile-mathpad-head"><span id="zxMathPadLabel">数学输入</span><button type="button" data-value="DONE">收起键盘</button></div><div class="zx-mobile-mathpad-grid">'+
+                [['7','7'],['8','8'],['9','9'],['DEL','DEL'],['NEXT','下一个'],
+                 ['4','4'],['5','5'],['6','6'],['+','+'],['-','−'],
+                 ['1','1'],['2','2'],['3','3'],['*','×'],['/','÷'],
+                 ['0','0'],['.','.'],['(', '('],[')',')'],['^','^'],
+                 ['x','x'],['pi','π'],['CLEAR','清空'],['=','='],['DONE','完成']]
+                .map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>';
+            document.body.appendChild(pad);
+            let active=null;
+            const mobile=window.matchMedia('(max-width: 768px)');
+            const selector='.view.is-active input[data-math-field],.view.is-active input[data-custom-expression]';
+            function candidates(){return Array.from(document.querySelectorAll(selector)).filter(function(el){return !el.disabled&&el.offsetParent!==null;});}
+            function show(el){
+                if(!mobile.matches||!el)return;
+                active=el;el.readOnly=true;
+                const label=el.getAttribute('aria-label')||el.getAttribute('data-math-field')||'数学输入';
+                const lab=document.getElementById('zxMathPadLabel');if(lab)lab.textContent='输入：'+label;
+                pad.classList.add('is-visible');document.body.classList.add('zx-mathpad-open');
+            }
+            function hide(){pad.classList.remove('is-visible');document.body.classList.remove('zx-mathpad-open');}
+            document.addEventListener('focusin',function(e){
+                const el=e.target;
+                if(!el.matches||!el.matches(selector)||el.closest('.solve-subview'))return;
+                if(mobile.matches){e.preventDefault();show(el);}
+            });
+            document.addEventListener('click',function(e){
+                const el=e.target.closest&&e.target.closest(selector);
+                if(el&&mobile.matches&&!el.closest('.solve-subview')){active=el;show(el);return;}
+                const key=e.target.closest&&e.target.closest('#zxMobileMathPad [data-value]');
+                if(!key)return;
+                const action=key.getAttribute('data-value');
+                if(action==='DONE'){hide();if(active)active.blur();return;}
+                if(action==='NEXT'){const list=candidates();if(!list.length)return;const next=(list.indexOf(active)+1)%list.length;show(list[next]);list[next].focus({preventScroll:true});return;}
+                if(!active||!active.isConnected)return;
+                let start=typeof active.selectionStart==='number'?active.selectionStart:active.value.length;
+                let end=typeof active.selectionEnd==='number'?active.selectionEnd:active.value.length;
+                if(action==='CLEAR'){active.value='';start=end=0;}
+                else if(action==='DEL'){if(start===end&&start>0)start--;active.value=active.value.slice(0,start)+active.value.slice(end);end=start;}
+                else{
+                    const values={'−':'-','×':'*','÷':'/' ,'π':'pi'};
+                    const insert=values[action]||action;
+                    active.value=active.value.slice(0,start)+insert+active.value.slice(end);
+                    start+=insert.length;end=start;
+                }
+                try{active.setSelectionRange(start,end);}catch(err){}
+                active.dispatchEvent(new Event('input',{bubbles:true}));
+                active.dispatchEvent(new Event('change',{bubbles:true}));
+            });
+            document.addEventListener('click',function(e){
+                if(!pad.classList.contains('is-visible'))return;
+                if(pad.contains(e.target)||(e.target.matches&&e.target.matches(selector)))return;
+                if(e.target.closest&&e.target.closest('.zx-btn,.zx-chip,[data-fit-task],[data-fit-mode],[data-solve-tab]'))hide();
+            });
+            function sync(){
+                document.querySelectorAll('input[data-math-field],input[data-custom-expression]').forEach(function(el){
+                    if(mobile.matches){el.setAttribute('inputmode','none');if(el.matches(selector))el.readOnly=true;}
+                    else{el.readOnly=false;}
+                });
+                if(!mobile.matches)hide();
+            }
+            sync();
+            if(mobile.addEventListener)mobile.addEventListener('change',sync);else if(mobile.addListener)mobile.addListener(sync);
+        }
+
         /* ==================================================================
            七、深浅色（与主站共用 zhixing_appearance 键）
            ================================================================== */
@@ -2308,19 +2429,54 @@ function zxEvalArithmetic(src) {
             return {ok:true,text:lines.join('\n'),compiled:f};
         }
         function zxRenderFunctionGraph(source){
-            const host=$('fitGraph');if(!host)return;const f=zxCompileFunctionExpression(source);if(!f.ok){host.innerHTML='';return;}
-            const W=640,H=260,L=38,R=12,T=12,B=26,xMin=-10,xMax=10,plotW=W-L-R,plotH=H-T-B;
-            const samples=[];const finite=[];
-            for(let i=0;i<=500;i++){const x=xMin+(xMax-xMin)*i/500;let y;try{y=f.eval(x);}catch(e){y=NaN;}if(!Number.isFinite(y)||Math.abs(y)>1e5)y=NaN;samples.push({x:x,y:y});if(Number.isFinite(y))finite.push(y);}
-            if(!finite.length){host.innerHTML='<div class="function-graph-empty">当前区间内没有可绘制的实数值。</div>';return;}
-            finite.sort(function(a,b){return a-b;});let yMin=finite[Math.floor((finite.length-1)*0.02)],yMax=finite[Math.floor((finite.length-1)*0.98)];if(Math.abs(yMax-yMin)<1e-9){yMin-=1;yMax+=1;}else{const pad=(yMax-yMin)*0.12;yMin-=pad;yMax+=pad;}if(yMin>=yMax){yMin=-10;yMax=10;}
-            const X=x=>L+(x-xMin)/(xMax-xMin)*plotW,Y=y=>T+(yMax-y)/(yMax-yMin)*plotH;
-            let grid='';for(let k=0;k<=4;k++){const yy=T+plotH*k/4,val=yMax-(yMax-yMin)*k/4;grid+='<line x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'" stroke="currentColor" opacity=".12"/><text x="'+(L-5)+'" y="'+(yy+4)+'" text-anchor="end" font-size="10" fill="currentColor" opacity=".65">'+zxFmtNum(val,2)+'</text>';}
-            const zeroY=Y(0),zeroX=X(0);if(zeroY>=T&&zeroY<=T+plotH)grid+='<line x1="'+L+'" y1="'+zeroY+'" x2="'+(W-R)+'" y2="'+zeroY+'" stroke="currentColor" opacity=".55"/>';if(zeroX>=L&&zeroX<=W-R)grid+='<line x1="'+zeroX+'" y1="'+T+'" x2="'+zeroX+'" y2="'+(T+plotH)+'" stroke="currentColor" opacity=".55"/>';
-            let d='',pen=false,last=null; samples.forEach(function(q){if(!Number.isFinite(q.y)||q.y<yMin-(yMax-yMin)*0.35||q.y>yMax+(yMax-yMin)*0.35){pen=false;last=null;return;}const px=X(q.x),py=Y(q.y);if(last&&Math.abs(q.y-last.y)>(yMax-yMin)*0.55)pen=false;if(!pen){d+='M'+px.toFixed(2)+','+py.toFixed(2);pen=true;}else d+='L'+px.toFixed(2)+','+py.toFixed(2);last=q;});
-            host.innerHTML='<div class="function-graph-head"><span>函数图像</span><small>显示区间：−10 ≤ x ≤ 10</small></div><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="函数图像">'+grid+'<path d="'+d+'" fill="none" stroke="var(--accent,#8b9cff)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            const host=$('fitGraph');if(!host)return;
+            const f=zxCompileFunctionExpression(source);
+            if(!f.ok){host.innerHTML='<div class="function-graph-empty">请先输入有效的函数表达式。</div>';return;}
+            const W=640,H=280,L=58,R=14,T=16,B=32,xMin=-10,xMax=10,N=1000,plotW=W-L-R,plotH=H-T-B;
+            const raw=[];
+            for(let i=0;i<=N;i++){
+                const x=xMin+(xMax-xMin)*i/N;let y=NaN;
+                try{y=f.eval(x);}catch(e){}
+                if(!Number.isFinite(y)||Math.abs(y)>1e7)y=NaN;
+                raw.push({x,y});
+            }
+            const finite=raw.filter(p=>Number.isFinite(p.y)).map(p=>p.y).sort((a,b)=>a-b);
+            if(!finite.length){host.innerHTML='<div class="function-graph-empty">当前显示区间没有可绘制的实数函数值。</div>';return;}
+            const quantile=q=>finite[Math.min(finite.length-1,Math.max(0,Math.floor((finite.length-1)*q)))];
+            let yMin=quantile(.03),yMax=quantile(.97);
+            if(!Number.isFinite(yMin)||!Number.isFinite(yMax)||yMax-yMin<1e-9){yMin=quantile(.1)-1;yMax=quantile(.9)+1;}
+            if(yMax-yMin<1e-9){yMin-=1;yMax+=1;}
+            const pad=(yMax-yMin)*.1;yMin-=pad;yMax+=pad;
+            const span=yMax-yMin;
+            const X=x=>L+(x-xMin)/(xMax-xMin)*plotW,Y=y=>T+(yMax-y)/span*plotH;
+            let grid='';
+            for(let k=0;k<=4;k++){
+                const yy=T+plotH*k/4,val=yMax-span*k/4;
+                grid+='<line x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'" stroke="currentColor" opacity=".11"/><text x="'+(L-8)+'" y="'+(yy+4)+'" text-anchor="end" font-size="10" fill="currentColor" opacity=".72">'+zxFmtNum(val,2)+'</text>';
+            }
+            for(let k=0;k<=4;k++){
+                const x=xMin+(xMax-xMin)*k/4,xx=X(x);
+                grid+='<text x="'+xx+'" y="'+(H-9)+'" text-anchor="middle" font-size="10" fill="currentColor" opacity=".65">'+zxFmtNum(x,1)+'</text>';
+            }
+            if(yMin<=0&&yMax>=0){const yy=Y(0);grid+='<line x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'" stroke="currentColor" opacity=".48"/>';}
+            if(xMin<=0&&xMax>=0){const xx=X(0);grid+='<line x1="'+xx+'" y1="'+T+'" x2="'+xx+'" y2="'+(T+plotH)+'" stroke="currentColor" opacity=".48"/>';}
+            let d='',pen=false,prev=null;
+            raw.forEach((p,i)=>{
+                if(!Number.isFinite(p.y)||p.y<yMin||p.y>yMax){pen=false;prev=null;return;}
+                if(prev){
+                    const dx=p.x-prev.x,dy=Math.abs(p.y-prev.y);
+                    // 斜率突变或跳跃大于图窗高度的一半，断开路径，避免跨渐近线连线。
+                    if(dx<=0||dy>span*.28||dy/Math.max(dx,1e-9)>span/Math.max((xMax-xMin),1)*28){pen=false;}
+                }
+                const px=X(p.x),py=Y(p.y);
+                if(!pen){d+='M'+px.toFixed(2)+','+py.toFixed(2);pen=true;}
+                else d+='L'+px.toFixed(2)+','+py.toFixed(2);
+                prev=p;
+            });
+            if(!d){host.innerHTML='<div class="function-graph-empty">函数值超出当前绘图窗口，请尝试其他显示区间。</div>';return;}
+            host.innerHTML='<div class="function-graph-head"><span>函数图像</span><small>显示区间：−10 ≤ x ≤ 10 · 数值采样图</small></div><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="函数图像，纵轴按当前区间内采样值自动缩放"><defs><clipPath id="zxGraphClip"><rect x="'+L+'" y="'+T+'" width="'+plotW+'" height="'+plotH+'"/></clipPath></defs>'+grid+'<path d="'+d+'" clip-path="url(#zxGraphClip)" fill="none" stroke="#91a0ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="function-graph-note">图像为数值采样结果；不连续点附近可能留白，不能单凭图像判定精确渐近线或定义域。</div>';
         }
-                function zxAnalyzeFunctionCoefficients(kind,c) {
+        function zxAnalyzeFunctionCoefficients(kind,c) {
             if(Object.keys(c||{}).some(function(k){return !Number.isFinite(c[k]);}))return {ok:false,error:'系数必须是有效数字'};
             const lines=[];
             if(kind==='linear'){
@@ -2637,6 +2793,7 @@ function zxEvalArithmetic(src) {
             });
 
             initSolveKeypad();
+            initMobileMathPad();
             initBasic();
             initEquation();
             initInequality();
