@@ -1490,7 +1490,7 @@ function zxFitFunction(src, type) {
         const sol=zxSolveLinearSystem(A,pts.map(function(q){return q.y;}));
         if(!sol)return {ok:false,error:'这四个点无法确定函数解析式'};
         const a=sol[0],b=sol[1],c=sol[2],d=sol[3];
-        return {ok:true,text:'设 y=ax³+bx²+cx+d\\n代入四点解四元一次方程组：a='+zxFmtNum(a)+'，b='+zxFmtNum(b)+'，c='+zxFmtNum(c)+'，d='+zxFmtNum(d)+'\\n\\n解析式：y = '+zxPolyText([d,c,b,a])+(Math.abs(a)<1e-12?'\\n（最高次项系数为 0，实际次数低于三次）':'')};
+        return {ok:true,text:'设 y=ax³+bx²+cx+d\n代入四点解四元一次方程组：a='+zxFmtNum(a)+'，b='+zxFmtNum(b)+'，c='+zxFmtNum(c)+'，d='+zxFmtNum(d)+'\n\n解析式：y = '+zxPolyText([d,c,b,a])+(Math.abs(a)<1e-12?'\n（最高次项系数为 0，实际次数低于三次）':'')};
     }
     if (kind === 'inverse') {
         if (pts.length !== 1) return { ok: false, error: '反比例函数只需 1 个点，当前 ' + pts.length + ' 个（多点请选一次 / 二次 / 三次函数）' };
