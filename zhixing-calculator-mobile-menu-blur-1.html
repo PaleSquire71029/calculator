@@ -2272,12 +2272,11 @@ function zxEvalArithmetic(src) {
             function count(){return fitKind==='linear'?2:fitKind==='quad'?3:fitKind==='cubic'?4:fitKind==='inverse'?1:4;}
             function coeffNames(){return fitKind==='linear'?['a','b']:fitKind==='quad'?['a','b','c']:fitKind==='cubic'?['a','b','c','d']:['k'];}
             function render(){
-                const n=count(),names=coeffNames();
+                const n=count();
                 const modeButtons='<div class="structured-mode-tabs"><button type="button" data-fit-input-mode="points" class="'+(fitInputMode==='points'?'is-active':'')+'">由坐标求解析式</button><button type="button" data-fit-input-mode="coefficients" class="'+(fitInputMode==='coefficients'?'is-active':'')+'">标准式系数输入</button></div>';
                 const title=({linear:'一次函数',quad:'二次函数',cubic:'三次函数',inverse:'反比例函数',auto:'自动判断点数'}[fitKind]||'函数');
                 let body='';
                 if(fitInputMode==='coefficients'){
-                    if(fitKind==='auto')fitKind='quad';
                     const ns=coeffNames();
                     body='<div class="structured-equation">'+(fitKind==='linear'?'y = ax + b':fitKind==='quad'?'y = ax² + bx + c':fitKind==='cubic'?'y = ax³ + bx² + cx + d':'y = k / x')+'</div><div class="structured-coefficients">'+ns.map(function(name){return structuredField('coef'+name,name,'');}).join('')+'</div><div class="structured-hint">分别填写系数即可。空白系数按 0 处理；点击“求解析式”可查看函数表达式及适用的基本性质。</div>';
                 }else{
@@ -2285,14 +2284,14 @@ function zxEvalArithmetic(src) {
                         '<div class="structured-hint">'+(fitKind==='auto'?'自动模式最多填写 4 个点：1 个点求反比例，2 个点求一次，3 个点求二次，4 个点求三次；空白点会忽略。':'每个坐标的 x、y 分开填写；切换函数类型会调整所需点数。')+'</div>';
                 }
                 root.innerHTML=modeButtons+'<div class="structured-top"><div class="structured-form-title">'+title+(fitInputMode==='coefficients'?'：分别输入系数':'：输入坐标')+'</div></div>'+body;
-                root.querySelectorAll('[data-fit-input-mode]').forEach(function(btn){btn.addEventListener('click',function(){fitInputMode=btn.getAttribute('data-fit-input-mode');if(fitInputMode==='coefficients'&&fitKind==='auto')fitKind='quad';render();});});
+                root.querySelectorAll('[data-fit-input-mode]').forEach(function(btn){btn.addEventListener('click',function(){fitInputMode=btn.getAttribute('data-fit-input-mode');if(fitInputMode==='coefficients'&&fitKind==='auto')fitKind='quad';document.querySelectorAll('#fitTypes [data-fit]').forEach(function(b){b.classList.toggle('is-active',b.getAttribute('data-fit')===fitKind);});render();});});
                 if(typeof initSolveKeypad==='function')initSolveKeypad();
             }
             function getCoeffs(){
                 const names=coeffNames(),out={};names.forEach(function(name){const el=root.querySelector('[data-math-field="coef'+name+'"]');const raw=el?el.value.trim():'';out[name]=raw===''?0:Number(raw);if(!Number.isFinite(out[name]))out[name]=NaN;});return out;
             }
             function getRaw(){
-                if(fitInputMode==='coefficients'){const c=getCoeffs();if(Object.keys(c).some(function(k){return !Number.isFinite(c[k]);}))return '';return fitKind==='linear'?'y=('+c.a+')*x+('+c.b+')':fitKind==='quad'?'y=('+c.a+')*x^2+('+c.b+')*x+('+c.c+')':fitKind==='cubic'?'y=('+c.a+')*x^3+('+c.b+')*x^2+('+c.c+')*x+('+c.d+')':'y=('+c.k+')/x';}
+                if(fitInputMode==='coefficients'){const fields=Array.from(root.querySelectorAll('[data-math-field]'));if(!fields.some(function(el){return el.value.trim()!=='';}))return '';const c=getCoeffs();if(Object.keys(c).some(function(k){return !Number.isFinite(c[k]);}))return '';return fitKind==='linear'?'y=('+c.a+')*x+('+c.b+')':fitKind==='quad'?'y=('+c.a+')*x^2+('+c.b+')*x+('+c.c+')':fitKind==='cubic'?'y=('+c.a+')*x^3+('+c.b+')*x^2+('+c.c+')*x+('+c.d+')':'y=('+c.k+')/x';}
                 const points=[];let valid=true;
                 root.querySelectorAll('.structured-point').forEach(function(p){const a=p.querySelector('[data-math-field^="x"]'),b=p.querySelector('[data-math-field^="y"]'),x=a.value.trim(),y=b.value.trim();if(!x&&!y)return;if(!x||!y||!Number.isFinite(Number(x))||!Number.isFinite(Number(y))){valid=false;return;}points.push('('+x+','+y+')');});
                 if(!valid)return '';
@@ -2383,6 +2382,7 @@ function zxEvalArithmetic(src) {
                 const t = b.getAttribute('data-fit');
                 if (!t) return;   /* 没带 data-fit 的是示例按钮，交给上面的处理 */
                 fitKind = t;
+                if(t==='auto'&&fitInputMode==='coefficients')fitInputMode='points';
                 types.querySelectorAll('[data-fit]').forEach(function (x) { x.classList.toggle('is-active', x === b); });
                 ui.render();
                 if (fitSolver) fitSolver.solve(true);
