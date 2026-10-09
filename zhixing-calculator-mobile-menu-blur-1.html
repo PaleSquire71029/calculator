@@ -1953,6 +1953,76 @@ function zxEvalArithmetic(src) {
                 el.dispatchEvent(new Event('input',{bubbles:true}));try{el.focus({preventScroll:true})}catch(err){el.focus();}
             });
         }
+
+        /* 移动端统一数学键盘：点击数字字段呼出，避免系统键盘遮挡页面。 */
+        function initMobileMathPad(){
+            if(document.getElementById('zxMobileMathPad'))return;
+            const pad=document.createElement('section');
+            pad.id='zxMobileMathPad';pad.className='zx-mobile-mathpad';pad.setAttribute('aria-label','数学输入键盘');
+            pad.innerHTML='<div class="zx-mobile-mathpad-head"><span id="zxMathPadLabel">数学输入</span><button type="button" data-value="DONE">收起键盘</button></div><div class="zx-mobile-mathpad-grid">'+
+                [['7','7'],['8','8'],['9','9'],['DEL','DEL'],['NEXT','下一个'],
+                 ['4','4'],['5','5'],['6','6'],['+','+'],['-','−'],
+                 ['1','1'],['2','2'],['3','3'],['*','×'],['/','÷'],
+                 ['0','0'],['.','.'],['(', '('],[')',')'],['^','^'],
+                 ['x','x'],['pi','π'],['CLEAR','清空'],['=','='],['DONE','完成']]
+                .map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>';
+            document.body.appendChild(pad);
+            let active=null;
+            const mobile=window.matchMedia('(max-width: 768px)');
+            const selector='.view.is-active input[data-math-field],.view.is-active input[data-custom-expression]';
+            function candidates(){return Array.from(document.querySelectorAll(selector)).filter(function(el){return !el.disabled&&el.offsetParent!==null;});}
+            function show(el){
+                if(!mobile.matches||!el)return;
+                active=el;el.readOnly=true;
+                const label=el.getAttribute('aria-label')||el.getAttribute('data-math-field')||'数学输入';
+                const lab=document.getElementById('zxMathPadLabel');if(lab)lab.textContent='输入：'+label;
+                pad.classList.add('is-visible');document.body.classList.add('zx-mathpad-open');
+            }
+            function hide(){pad.classList.remove('is-visible');document.body.classList.remove('zx-mathpad-open');}
+            document.addEventListener('focusin',function(e){
+                const el=e.target;
+                if(!el.matches||!el.matches(selector))return;
+                if(mobile.matches){e.preventDefault();show(el);}
+            });
+            document.addEventListener('click',function(e){
+                const el=e.target.closest&&e.target.closest(selector);
+                if(el&&mobile.matches){active=el;show(el);return;}
+                const key=e.target.closest&&e.target.closest('#zxMobileMathPad [data-value]');
+                if(!key)return;
+                const action=key.getAttribute('data-value');
+                if(action==='DONE'){hide();if(active)active.blur();return;}
+                if(action==='NEXT'){const list=candidates();if(!list.length)return;const next=(list.indexOf(active)+1)%list.length;show(list[next]);list[next].focus({preventScroll:true});return;}
+                if(!active||!active.isConnected)return;
+                let start=typeof active.selectionStart==='number'?active.selectionStart:active.value.length;
+                let end=typeof active.selectionEnd==='number'?active.selectionEnd:active.value.length;
+                if(action==='CLEAR'){active.value='';start=end=0;}
+                else if(action==='DEL'){if(start===end&&start>0)start--;active.value=active.value.slice(0,start)+active.value.slice(end);end=start;}
+                else{
+                    const values={'−':'-','×':'*','÷':'/' ,'π':'pi'};
+                    const insert=values[action]||action;
+                    active.value=active.value.slice(0,start)+insert+active.value.slice(end);
+                    start+=insert.length;end=start;
+                }
+                try{active.setSelectionRange(start,end);}catch(err){}
+                active.dispatchEvent(new Event('input',{bubbles:true}));
+                active.dispatchEvent(new Event('change',{bubbles:true}));
+            });
+            document.addEventListener('click',function(e){
+                if(!pad.classList.contains('is-visible'))return;
+                if(pad.contains(e.target)||(e.target.matches&&e.target.matches(selector)))return;
+                if(e.target.closest&&e.target.closest('.zx-btn,.zx-chip,[data-fit-task],[data-fit-mode],[data-solve-tab]'))hide();
+            });
+            function sync(){
+                document.querySelectorAll('input[data-math-field],input[data-custom-expression]').forEach(function(el){
+                    if(mobile.matches){el.setAttribute('inputmode','none');if(el.matches(selector))el.readOnly=true;}
+                    else{el.readOnly=false;}
+                });
+                if(!mobile.matches)hide();
+            }
+            sync();
+            if(mobile.addEventListener)mobile.addEventListener('change',sync);else if(mobile.addListener)mobile.addListener(sync);
+        }
+
         /* ==================================================================
            七、深浅色（与主站共用 zhixing_appearance 键）
            ================================================================== */
@@ -2723,6 +2793,7 @@ function zxEvalArithmetic(src) {
             });
 
             initSolveKeypad();
+            initMobileMathPad();
             initBasic();
             initEquation();
             initInequality();
