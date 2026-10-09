@@ -2203,7 +2203,7 @@ function zxEvalArithmetic(src) {
             const examples=kind==='equation'
                 ? {'linear':'2x+3=0','quadratic':'x^2-5x+6=0','cubic':'x^3-6x=0','custom':'(x-1)(x+2)=0'}
                 : {'linear':'2x+3>0','quadratic':'x^2-5x+6<0','cubic':'x^3-x>=0','custom':'1/x>=2'};
-            function fields(){return degree==='linear'?[['a','a','2'],['b','b','3']]:degree==='quadratic'?[['a','a','1'],['b','b','-5'],['c','c','6']]:degree==='cubic'?[['a','a','1'],['b','b','0'],['c','c','-6'],['d','d','0']]:[];}
+            function fields(){return degree==='linear'?[['a','a',''],['b','b','']]:degree==='quadratic'?[['a','a',''],['b','b',''],['c','c','']]:degree==='cubic'?[['a','a',''],['b','b',''],['c','c',''],['d','d','']]:[];}
             function render(){
                 if(!root)return;
                 root.innerHTML='<div class="structured-top"><label class="structured-select"><span>方程形式</span><select data-degree><option value="linear">一次标准式</option><option value="quadratic">二次标准式</option><option value="cubic">三次标准式</option><option value="custom">分式 / 括号 / 自定义</option></select></label>'+
@@ -2234,7 +2234,9 @@ function zxEvalArithmetic(src) {
             }
             function getRaw(){
                 if(degree==='custom'){const el=root.querySelector('[data-custom-expression]');return el?el.value.trim():'';}
-                const v={};root.querySelectorAll('[data-math-field]').forEach(function(el){v[el.getAttribute('data-math-field')]=String(el.value||'').trim()||'0';});
+                const coefficientInputs=Array.from(root.querySelectorAll('[data-math-field]'));
+                if(!coefficientInputs.some(function(el){return String(el.value||'').trim()!=='';}))return '';
+                const v={};coefficientInputs.forEach(function(el){v[el.getAttribute('data-math-field')]=String(el.value||'').trim()||'0';});
                 if(Object.keys(v).some(function(k){return v[k]!==''&&!Number.isFinite(Number(v[k]));}))return '';
                 if(degree==='linear')return '('+v.a+')*x+('+v.b+')'+(kind==='equation'?'=0':relation+'0');
                 if(degree==='quadratic')return '('+v.a+')*x^2+('+v.b+')*x+('+v.c+')'+(kind==='equation'?'=0':relation+'0');
