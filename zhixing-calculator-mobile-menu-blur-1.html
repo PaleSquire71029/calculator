@@ -2207,6 +2207,7 @@ function zxEvalArithmetic(src) {
                 const normalized = raw.replace(/[,，\s]/g, '');
                 if (!normalized || !/^[+-]?(?:(?:\d+(?:\.\d*)?)|(?:\.\d+))(?:e[+-]?\d+)?$/i.test(normalized)) return { error: '请输入有效数字' };
                 const v = Number(normalized);
+                if (v === 0 && /[1-9]/.test(normalized)) return { error: '数值过小，超出当前数值精度范围' };
                 const from = fromEl.value, to = toEl.value;
                 const a = unitDef(curUnitCat, from), b = unitDef(curUnitCat, to);
                 if (!Number.isFinite(v) || !a || !b) return { error: '请输入有效且有限的数值' };
