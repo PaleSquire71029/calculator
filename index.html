@@ -1951,7 +1951,7 @@ function zxEvalArithmetic(src) {
             const inputs=Array.from(document.querySelectorAll('.solve-subview input')), mq=window.matchMedia('(max-width: 768px)');
             function sync(){inputs.forEach(function(el){el.readOnly=mq.matches;});}
             sync();if(mq.addEventListener)mq.addEventListener('change',sync);else if(mq.addListener)mq.addListener(sync);
-            inputs.forEach(function(el){el.addEventListener('focus',function(){solveActiveInput=el;});el.addEventListener('click',function(){solveActiveInput=el;});});
+            inputs.forEach(function(el){el.addEventListener('focus',function(){solveActiveInput=el;});el.addEventListener('click',function(){solveActiveInput=el;if(el.readOnly){try{el.setSelectionRange(el.value.length,el.value.length)}catch(err){}}});});
             document.addEventListener('click',function(e){
                 const tab=e.target.closest&&e.target.closest('[data-solve-tab]');if(tab){setSolveMode(tab.getAttribute('data-solve-tab'));return;}
                 const key=e.target.closest&&e.target.closest('[data-solve-key]');if(!key||!mq.matches)return;
