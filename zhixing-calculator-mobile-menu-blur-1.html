@@ -1217,7 +1217,7 @@ function zxSolveEquation(src) {
         const kept=[],dropped=[];roots.forEach(function(x){(nearPole(x)?dropped:kept).push(x);});
         dropped.forEach(function(x){lines.push('x ≈ '+zxFmtNum(x)+' 使分母为 0（增根），舍去');});
         lines.push(kept.length?'实数解：'+kept.map(function(x,i){return 'x'+(i+1)+' ≈ '+zxNumText(x);}).join('；'):'实数范围内无解');
-        return {ok:true,text:lines.join('\\n')};
+        return {ok:true,text:lines.join('\n')};
     }
     if (deg === 1) {
         const a = num[1], b = num[0], x = -b / a;
