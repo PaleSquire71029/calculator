@@ -794,7 +794,7 @@ html.light .zx-step-text{color:#5a6376}
                         <div class="view-head-mark"><i class="fa-solid fa-chart-line"></i></div>
                         <div>
                             <div class="view-title">由坐标求函数解析式</div>
-                            <div class="view-sub">支持两点求一次、三点求二次函数，以及单点求反比例函数；按点数自动判断。</div>
+                            <div class="view-sub">支持两点求一次、三点求二次、四点求三次函数，以及单点求反比例函数；自动按点数判断。</div>
                         </div>
                     </div>
                     <div class="zx-label">坐标输入</div>
@@ -804,10 +804,12 @@ html.light .zx-step-text{color:#5a6376}
                         <button type="button" class="zx-chip" data-fit="linear">一次函数</button>
                         <button type="button" class="zx-chip" data-fit="quad">二次函数</button>
                         <button type="button" class="zx-chip" data-fit="inverse">反比例函数</button>
+                        <button type="button" class="zx-chip" data-fit="cubic">三次函数</button>
                         <span class="text-[10px] text-slate-600 font-mono ml-0.5">示例</span>
                         <button type="button" class="zx-chip zx-eg" data-eg="(1,2) (3,6)">两点</button>
                         <button type="button" class="zx-chip zx-eg" data-eg="(0,1) (1,-1) (2,1)">三点</button>
                         <button type="button" class="zx-chip zx-eg" data-eg="(2,3)">反比例</button>
+                        <button type="button" class="zx-chip zx-eg" data-eg="(0,1) (1,0) (2,3) (3,10)">四点</button>
                     </div>
                     <div class="flex flex-wrap gap-2 mt-3">
                         <button type="button" id="fitBtn" class="zx-btn is-go"><i class="fa-solid fa-chart-line"></i>求解析式</button>
@@ -1478,10 +1480,20 @@ function zxFitFunction(src, type) {
     const pts = parsed.points;
     const t = type || 'auto';
     let kind = t;
-    if (t === 'auto') kind = (pts.length >= 3) ? 'quad' : (pts.length === 2 ? 'linear' : 'inverse');
+    if (t === 'auto') kind = (pts.length >= 4) ? 'cubic' : (pts.length === 3 ? 'quad' : (pts.length === 2 ? 'linear' : 'inverse'));
 
+    if (kind === 'cubic') {
+        if (pts.length !== 4) return { ok: false, error: '三次函数需要 4 个点，当前 ' + pts.length + ' 个' };
+        const xs=pts.map(function(q){return q.x;});
+        for(let i=0;i<xs.length;i++)for(let j=i+1;j<xs.length;j++)if(Math.abs(xs[i]-xs[j])<1e-12)return {ok:false,error:'四个点的 x 坐标不能重复'};
+        const A=pts.map(function(q){return [q.x*q.x*q.x,q.x*q.x,q.x,1];});
+        const sol=zxSolveLinearSystem(A,pts.map(function(q){return q.y;}));
+        if(!sol)return {ok:false,error:'这四个点无法确定函数解析式'};
+        const a=sol[0],b=sol[1],c=sol[2],d=sol[3];
+        return {ok:true,text:'设 y=ax³+bx²+cx+d\\n代入四点解四元一次方程组：a='+zxFmtNum(a)+'，b='+zxFmtNum(b)+'，c='+zxFmtNum(c)+'，d='+zxFmtNum(d)+'\\n\\n解析式：y = '+zxPolyText([d,c,b,a])+(Math.abs(a)<1e-12?'\\n（最高次项系数为 0，实际次数低于三次）':'')};
+    }
     if (kind === 'inverse') {
-        if (pts.length !== 1) return { ok: false, error: '反比例函数只需 1 个点，当前 ' + pts.length + ' 个（多点请选一次 / 二次函数）' };
+        if (pts.length !== 1) return { ok: false, error: '反比例函数只需 1 个点，当前 ' + pts.length + ' 个（多点请选一次 / 二次 / 三次函数）' };
         const p0 = pts[0];
         if (Math.abs(p0.x) < 1e-12) return { ok: false, error: '反比例函数要求 x ≠ 0' };
         if (Math.abs(p0.y) < 1e-12) return { ok: false, error: '该点 y = 0，k 会是 0，不是反比例函数' };
