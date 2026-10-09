@@ -1973,7 +1973,9 @@ function zxEvalArithmetic(src) {
             function candidates(){return Array.from(document.querySelectorAll(selector)).filter(function(el){return !el.disabled&&el.offsetParent!==null;});}
             function show(el){
                 if(!mobile.matches||!el)return;
+                const changed=active!==el;
                 active=el;el.readOnly=true;
+                if(changed){try{el.setSelectionRange(el.value.length,el.value.length);}catch(err){}}
                 const label=el.getAttribute('aria-label')||el.getAttribute('data-math-field')||'数学输入';
                 const lab=document.getElementById('zxMathPadLabel');if(lab)lab.textContent='输入：'+label;
                 pad.classList.add('is-visible');document.body.classList.add('zx-mathpad-open');
@@ -2466,7 +2468,8 @@ function zxEvalArithmetic(src) {
                 if(prev){
                     const dx=p.x-prev.x,dy=Math.abs(p.y-prev.y);
                     // 斜率突变或跳跃大于图窗高度的一半，断开路径，避免跨渐近线连线。
-                    if(dx<=0||dy>span*.28||dy/Math.max(dx,1e-9)>span/Math.max((xMax-xMin),1)*28){pen=false;}
+                    // 降低突跳阈值，避免把渐近线两侧错误连成一条曲线。
+                    if(dx<=0||dy>span*.08||dy/Math.max(dx,1e-9)>span/Math.max((xMax-xMin),1)*18){pen=false;}
                 }
                 const px=X(p.x),py=Y(p.y);
                 if(!pen){d+='M'+px.toFixed(2)+','+py.toFixed(2);pen=true;}
