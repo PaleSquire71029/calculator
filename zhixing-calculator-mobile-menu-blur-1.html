@@ -1199,7 +1199,7 @@ function zxSolveEquation(src) {
     if (deg > 3) return { ok: false, error: '整理后是 ' + deg + ' 次方程，目前最高支持三次' };
 
     const poles = (den.length > 1) ? zxRealRoots(den) : [];
-    if (poles === null) return { ok: false, error: '分母次数超过 2，无法可靠排除分母零点' };
+    if (poles === null) return { ok: false, error: '分母次数超过 3，无法可靠排除分母零点' };
     const nearPole = function (x) {
         for (let i = 0; i < poles.length; i++) if (Math.abs(x - poles[i]) < 1e-7) return true;
         return false;
@@ -1403,7 +1403,7 @@ function zxSolveInequality(src) {
     let poles = [];
     if (d.length > 1) {
         poles = zxRealRoots(d);
-        if (poles === null) return { ok: false, error: '分母次数超过 2，无法可靠排除分母零点' };
+        if (poles === null) return { ok: false, error: '分母次数超过 3，无法可靠排除分母零点' };
     }
     if (zxPolyIsZero(n)) {
         if (strict) return { ok: true, text: '移项后恒为 0；严格不等式不成立 —— 解集：无解（空集）' };
