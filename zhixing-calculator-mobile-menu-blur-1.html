@@ -730,7 +730,7 @@ html.light .zx-step-text{color:#5a6376}
                         <div class="view-head-mark"><i class="fa-solid fa-equals"></i></div>
                         <div>
                             <div class="view-title">方程求解</div>
-                            <div class="view-sub">支持一次、二次方程、括号展开与分式方程，展示关键步骤和标准解。</div>
+                            <div class="view-sub">选择一次、二次、三次标准式，分别填写系数；分式与括号形式可切换到自定义输入。</div>
                         </div>
                     </div>
                     <div class="zx-label">方程输入</div>
@@ -765,7 +765,7 @@ html.light .zx-step-text{color:#5a6376}
                         <div class="view-head-mark"><i class="fa-solid fa-less-than-equal"></i></div>
                         <div>
                             <div class="view-title">不等式</div>
-                            <div class="view-sub">支持一次、二次与分式不等式，结果同时给出解集和区间表示。</div>
+                            <div class="view-sub">选择次数，填写 a、b、c 等系数并设置不等号；也支持分式和括号形式。</div>
                         </div>
                     </div>
                     <div class="zx-label">不等式输入</div>
@@ -801,7 +801,7 @@ html.light .zx-step-text{color:#5a6376}
                         <div class="view-head-mark"><i class="fa-solid fa-chart-line"></i></div>
                         <div>
                             <div class="view-title">由坐标求函数解析式</div>
-                            <div class="view-sub">支持两点求一次、三点求二次、四点求三次函数，以及单点求反比例函数；自动按点数判断。</div>
+                            <div class="view-sub">按函数类型填写独立坐标 x、y；自动模式可输入 1–4 个点，直接求出解析式。</div>
                         </div>
                     </div>
                     <div class="zx-label">坐标输入</div>
@@ -1899,20 +1899,19 @@ function zxEvalArithmetic(src) {
             const h = hist.filter(function (x) { return x.id === id; })[0];
             if (!h) return;
             if (h.kind === 'basic') { go('basic'); const el = $('calcInput'); if (el) { el.value = h.restore || ''; el.dispatchEvent(new Event('input')); el.focus(); } return; }
-            if (h.kind === 'equation') { go('equation'); const el = $('eqInput'); if (el) { el.value = h.restore || ''; $('eqSolveBtn').click(); } return; }
-            if (h.kind === 'inequality') { go('inequality'); const el = $('ineqInput'); if (el) { el.value = h.restore || ''; $('ineqSolveBtn').click(); } return; }
+            if (h.kind === 'equation') { go('equation'); if (eqStructuredApi) eqStructuredApi.setRaw(h.restore || ''); $('eqSolveBtn').click(); return; }
+            if (h.kind === 'inequality') { go('inequality'); if (ineqStructuredApi) ineqStructuredApi.setRaw(h.restore || ''); $('ineqSolveBtn').click(); return; }
             if (h.kind === 'fit') {
                 go('fit');
                 let cfg = null;
                 try { cfg = JSON.parse(h.restore || 'null'); } catch (e) { cfg = null; }
-                const el = $('fitInput');
-                if (el) el.value = (cfg && cfg.points) || (h.restore || '');
                 if (cfg && cfg.type) {
                     document.querySelectorAll('#fitTypes [data-fit]').forEach(function (b) {
                         b.classList.toggle('is-active', b.getAttribute('data-fit') === cfg.type);
                     });
                     fitKind = cfg.type;
                 }
+                if (fitStructuredApi) { fitStructuredApi.render(); fitStructuredApi.setExample((cfg && cfg.points) || (h.restore || '')); }
                 $('fitBtn').click();
                 return;
             }
@@ -1965,7 +1964,7 @@ function zxEvalArithmetic(src) {
             solveMode=mode;
             document.querySelectorAll('.solve-subview').forEach(function(el){el.classList.toggle('is-active',el.getAttribute('data-solve-mode')===mode);});
             document.querySelectorAll('[data-solve-tab]').forEach(function(el){const on=el.getAttribute('data-solve-tab')===mode;el.classList.toggle('is-active',on);el.setAttribute('aria-selected',on?'true':'false');});
-            const input=document.querySelector('.solve-subview.is-active input');if(input)solveActiveInput=input;
+            const input=document.querySelector('.solve-subview.is-active input[data-math-field],.solve-subview.is-active input[data-custom-expression]');if(input)solveActiveInput=input;
         }
         let solveKeypadInitialized = false;
         function initSolveKeypad() {
@@ -2123,6 +2122,7 @@ function zxEvalArithmetic(src) {
            八、界面 2/3/4：方程、不等式、解析式（共用一套求解框架）
            ================================================================== */
         let fitKind = 'auto';
+        let eqStructuredApi = null, ineqStructuredApi = null, fitStructuredApi = null;
 
         function makeSolver(cfg) {
             const input = $(cfg.input), out = $(cfg.out), btn = $(cfg.btn), clr = $(cfg.clear), ins = $(cfg.inserts);
@@ -2257,7 +2257,8 @@ function zxEvalArithmetic(src) {
                 else{fields[0].value='1';fields[1].value='0';fields[2].value=expr.includes('-6x')?'-6':expr.includes('-x')?'-1':'0';fields[3].value='0';}
             }
             function clear(){root.querySelectorAll('[data-math-field]').forEach(function(el){el.value='';});const custom=root.querySelector('[data-custom-expression]');if(custom)custom.value='';}
-            render();return {getRaw:getRaw,clear:clear,setExample:setExample};
+            function setRaw(raw){degree='custom';render();const el=root.querySelector('[data-custom-expression]');if(el)el.value=String(raw||'');}
+            render();return {getRaw:getRaw,clear:clear,setExample:setExample,setRaw:setRaw};
         }
         function initPointFields(rootId){
             const root=$(rootId);
@@ -2286,6 +2287,7 @@ function zxEvalArithmetic(src) {
 
         function initEquation() {
             const ui = initPolynomialFields('eqStructured','equation');
+            eqStructuredApi = ui;
             makeSolver({
                 kind: 'equation', input: 'eqInput', out: 'eqOut', btn: 'eqSolveBtn', clear: 'eqClearBtn', inserts: 'eqInserts',
                 run: function (s) { return zxSolveEquation(s); }, getRaw: ui.getRaw, onClear: ui.clear,
@@ -2296,6 +2298,7 @@ function zxEvalArithmetic(src) {
 
         function initInequality() {
             const ui = initPolynomialFields('ineqStructured','inequality');
+            ineqStructuredApi = ui;
             makeSolver({
                 kind: 'inequality', input: 'ineqInput', out: 'ineqOut', btn: 'ineqSolveBtn', clear: 'ineqClearBtn', inserts: 'ineqInserts',
                 run: function (s) { return zxSolveInequality(s); }, getRaw: ui.getRaw, onClear: ui.clear,
@@ -2306,6 +2309,7 @@ function zxEvalArithmetic(src) {
 
         function initFit() {
             const ui = initPointFields('fitStructured');
+            fitStructuredApi = ui;
             const fitSolver = makeSolver({
                 kind: 'fit', input: 'fitInput', out: 'fitOut', btn: 'fitBtn', clear: 'fitClearBtn', inserts: 'fitTypes',
                 run: function (s) { return zxFitFunction(s, fitKind); }, getRaw: ui.getRaw, onClear: ui.clear,
