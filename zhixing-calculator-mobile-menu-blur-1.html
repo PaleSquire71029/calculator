@@ -2393,12 +2393,32 @@ function zxEvalArithmetic(src) {
         function zxAnalyzeFunctionExpression(source,xValue){
             const f=zxCompileFunctionExpression(source);if(!f.ok)return f;
             const lines=['函数表达式：f(x) = '+f.source];
-            if(xValue!==null){if(!Number.isFinite(xValue))return {ok:false,error:'x 必须是有效数字'};const y=f.eval(xValue);lines.push('函数值：f('+zxFmtNum(xValue)+') = '+(Number.isFinite(y)?zxNumText(y):'无定义（该点不在函数定义域内）'));}
-            const roots=[];let prevX=-50,prevY;try{prevY=f.eval(prevX);}catch(e){prevY=NaN;}
-            for(let j=1;j<=1000;j++){const x=-50+j*0.1;let y;try{y=f.eval(x);}catch(e){y=NaN;}if(Number.isFinite(prevY)&&Number.isFinite(y)){if(Math.abs(prevY)<1e-7)roots.push(prevX);else if(prevY*y<0){let lo=prevX,hi=x,fl=prevY;for(let k=0;k<35;k++){const mid=(lo+hi)/2,fm=f.eval(mid);if(!Number.isFinite(fm))break;if(fl*fm<=0)hi=mid;else{lo=mid;fl=fm;}}roots.push((lo+hi)/2);}}prevX=x;prevY=y;}
-            const unique=[];roots.forEach(function(r){if(!unique.some(function(q){return Math.abs(q-r)<1e-3;}))unique.push(r);});
-            lines.push('零点数值搜索（−50 至 50）：'+(unique.length?unique.slice(0,8).map(function(v){return 'x ≈ '+zxFmtNum(v,4);}).join('，')+(unique.length>8?'等':''):'未检测到零点；偶重根或区间外零点可能未被识别'));
-            lines.push('定义域提示：请结合表达式中的分母、根式、对数等限制判断；图像为数值采样结果。');
+            function val(x){try{const y=f.eval(x);return Number.isFinite(y)&&Math.abs(y)<1e8?y:NaN;}catch(e){return NaN;}}
+            if(xValue!==null){if(!Number.isFinite(xValue))return {ok:false,error:'x 必须是有效数字'};const y=val(xValue);lines.push('函数值：f('+zxFmtNum(xValue)+') = '+(Number.isFinite(y)?zxNumText(y):'无定义（该点不在函数定义域内）'));}
+            const step=0.05,xMin=-50,xMax=50,count=Math.round((xMax-xMin)/step),samples=[];let valid=0,minY=Infinity,maxY=-Infinity;
+            for(let i=0;i<=count;i++){const x=xMin+i*step,y=val(x);samples.push({x:x,y:y});if(Number.isFinite(y)){valid++;minY=Math.min(minY,y);maxY=Math.max(maxY,y);}}
+            if(!valid)return {ok:false,error:'在当前数值分析区间内未找到有效的实数函数值，请检查表达式或定义域。'};
+            lines.push('数值分析区间：['+xMin+', '+xMax+']（采样步长 '+step+'，以下结论均为数值估计，不替代严格证明）');
+            lines.push('定义域采样：约 '+(valid/(count+1)*100).toFixed(1)+'% 的采样点有实数函数值；精确定义域需根据分母、根式、对数等条件判断。');
+            lines.push('区间内函数值范围估计：['+zxFmtNum(minY,4)+', '+zxFmtNum(maxY,4)+']；这不是全局值域结论。');
+            const roots=[];
+            for(let i=1;i<samples.length;i++){const a=samples[i-1],b=samples[i];if(!Number.isFinite(a.y)||!Number.isFinite(b.y))continue;
+                if(Math.abs(a.y)<1e-7)roots.push(a.x);
+                if(a.y*b.y<0){let lo=a.x,hi=b.x,fl=a.y;for(let k=0;k<45;k++){const mid=(lo+hi)/2,fm=val(mid);if(!Number.isFinite(fm))break;if(Math.abs(fm)<1e-10){lo=hi=mid;break;}if(fl*fm<=0)hi=mid;else{lo=mid;fl=fm;}}roots.push((lo+hi)/2);}
+            }
+            for(let i=1;i<samples.length-1;i++){const q=samples[i];if(!Number.isFinite(q.y)||!Number.isFinite(samples[i-1].y)||!Number.isFinite(samples[i+1].y))continue;if(Math.abs(q.y)<=Math.abs(samples[i-1].y)&&Math.abs(q.y)<=Math.abs(samples[i+1].y)&&Math.abs(q.y)<0.02)roots.push(q.x);}
+            const unique=[];roots.sort(function(a,b){return a-b;}).forEach(function(r){if(!unique.some(function(q){return Math.abs(q-r)<0.02;}))unique.push(r);});
+            lines.push('零点数值估计：'+(unique.length?unique.slice(0,12).map(function(v){return 'x ≈ '+zxFmtNum(v,4);}).join('，')+(unique.length>12?' 等':''):'当前区间未检测到零点（偶重根仍可能遗漏）'));
+            const turns=[];for(let i=1;i<samples.length-1;i++){const a=samples[i-1],b=samples[i],c=samples[i+1];if(!Number.isFinite(a.y)||!Number.isFinite(b.y)||!Number.isFinite(c.y))continue;const d1=b.y-a.y,d2=c.y-b.y;if(d1<0&&d2>0)turns.push({x:b.x,y:b.y,type:'极小值候选'});else if(d1>0&&d2<0)turns.push({x:b.x,y:b.y,type:'极大值候选'});}
+            lines.push('局部极值候选：'+(turns.length?turns.slice(0,8).map(function(q){return q.type+'约在 ('+zxFmtNum(q.x,3)+', '+zxFmtNum(q.y,4)+')';}).join('；')+(turns.length>8?'；其余略':''):'当前采样未发现明显极值'));
+            const dirs=[];let runStart=null,lastSign=0,lastX=null;
+            for(let i=1;i<samples.length;i++){const a=samples[i-1],b=samples[i];if(!Number.isFinite(a.y)||!Number.isFinite(b.y)){if(runStart!==null&&lastX!==null)dirs.push({s:runStart,e:lastX,sign:lastSign});runStart=null;lastSign=0;continue;}const dy=b.y-a.y,sign=Math.abs(dy)<1e-7?0:(dy>0?1:-1);if(sign===0){lastX=b.x;continue;}if(runStart===null){runStart=a.x;lastSign=sign;}else if(sign!==lastSign){dirs.push({s:runStart,e:a.x,sign:lastSign});runStart=a.x;lastSign=sign;}lastX=b.x;}
+            if(runStart!==null&&lastX!==null)dirs.push({s:runStart,e:lastX,sign:lastSign});
+            const merged=[];dirs.forEach(function(q){if(q.e-q.s<0.15)return;const prev=merged[merged.length-1];if(prev&&prev.sign===q.sign&&Math.abs(prev.e-q.s)<0.11)prev.e=q.e;else merged.push({s:q.s,e:q.e,sign:q.sign});});
+            lines.push('单调区间数值估计：'+(merged.length?merged.slice(0,8).map(function(q){return '在约 ['+zxFmtNum(q.s,2)+', '+zxFmtNum(q.e,2)+'] 上'+(q.sign>0?'递增':'递减');}).join('；')+(merged.length>8?'；其余略':''):'采样数据不足以判断'));
+            let evenScore=0,oddScore=0,compared=0;for(let x=0.5;x<=10;x+=0.5){const a=val(x),b=val(-x);if(Number.isFinite(a)&&Number.isFinite(b)){evenScore=Math.max(evenScore,Math.abs(a-b));oddScore=Math.max(oddScore,Math.abs(a+b));compared++;}}
+            if(compared>5){if(evenScore<1e-5)lines.push('奇偶性数值检验：疑似偶函数（仍需验证定义域关于原点对称）');else if(oddScore<1e-5)lines.push('奇偶性数值检验：疑似奇函数（仍需验证定义域关于原点对称）');else lines.push('奇偶性数值检验：未检测到明显的奇函数或偶函数特征');}
+            lines.push('注意：数值搜索可能遗漏偶重零点、狭窄区间内的变化和区间外性质；精确定义域、值域、单调区间应结合代数推导。');
             return {ok:true,text:lines.join('\n'),compiled:f};
         }
         function zxRenderFunctionGraph(source){
