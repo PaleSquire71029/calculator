@@ -1320,8 +1320,8 @@ function zxSolvePolySign(p, wantPos, strict) {
         const roots=zxRealRoots(p);if(roots===null)return null;
         const bounds=[-Infinity].concat(roots,[Infinity]),out=[];
         const sample=function(lo,hi){if(lo===-Infinity&&hi===Infinity)return 0;if(lo===-Infinity)return hi-Math.max(1,Math.abs(hi)+1);if(hi===Infinity)return lo+Math.max(1,Math.abs(lo)+1);return (lo+hi)/2;};
-        for(let i=0;i<bounds.length-1;i++){const lo=bounds[i],hi=bounds[i+1],v=zxPolyEval(p,sample(lo,hi));if(Math.abs(v)>1e-10&&((v>0)===wantPos))out.push({lo:lo,loOpen:lo!==-Infinity,hi:hi,hiOpen:hi!==Infinity});}
-        if(!strict)roots.forEach(function(r){out.push({lo:r,loOpen:false,hi:r,hiOpen:false});});
+        for(let i=0;i<bounds.length-1;i++){const lo=bounds[i],hi=bounds[i+1],v=zxPolyEval(p,sample(lo,hi));if(Math.abs(v)>1e-10&&((v>0)===wantPos))out.push({lo:lo,loOpen:lo!==-Infinity&&strict,hi:hi,hiOpen:hi!==Infinity&&strict});}
+        if(!strict)roots.forEach(function(r){if(!out.some(function(iv){return r>=iv.lo-1e-9&&r<=iv.hi+1e-9;}))out.push({lo:r,loOpen:false,hi:r,hiOpen:false});});
         out.sort(function(a,b){return a.lo-b.lo;});const merged=[];
         out.forEach(function(iv){const last=merged[merged.length-1];if(last&&last.hi===iv.lo&&(!last.hiOpen||!iv.loOpen)){last.hi=iv.hi;last.hiOpen=iv.hiOpen;}else merged.push(iv);});
         return merged;
