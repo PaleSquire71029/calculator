@@ -70,7 +70,9 @@
 
 /* 字体工具类跟随页内字体切换（Tailwind CDN 的样式运行时注入，故用 !important 保证优先级） */
 .font-sans,.font-serif,.font-mono{font-family:var(--zx-font) !important}
-    </style>
+    
+.solve-mode-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45rem;margin:.25rem 0 1rem}.solve-mode-tab{min-height:2.65rem;border:1px solid rgba(255,255,255,.1);border-radius:.7rem;background:rgba(255,255,255,.035);color:#94A3B8;font-size:.8rem;font-weight:650}.solve-mode-tab.is-active{color:#08090C;background:rgb(var(--zx-gold));border-color:rgb(var(--zx-gold))}.solve-subview{display:none;margin-top:1rem}.solve-subview.is-active{display:block;animation:viewIn .2s var(--zx-ease)}.solve-keypad-wrap{border:1px solid rgba(255,255,255,.08);border-radius:.85rem;padding:.75rem;background:rgba(0,0,0,.16)}.solve-keypad-title{display:flex;justify-content:space-between;gap:.6rem;margin-bottom:.6rem;font-size:.66rem;color:#94A3B8}.solve-keypad-title b{color:rgb(var(--zx-gold))}.solve-keypad{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.4rem}.solve-keypad button{min-width:0;min-height:2.4rem;border-radius:.55rem;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.055);color:#E2E8F0;font:600 .9rem var(--zx-mono);touch-action:manipulation;user-select:none;-webkit-user-select:none}.solve-keypad button.key-action{color:rgb(var(--zx-gold));background:rgba(var(--zx-gold),.08);font-family:var(--zx-font);font-size:.72rem}.solve-keypad button.key-next{grid-column:span 3}html.light .solve-mode-tab{color:#64748B;background:rgba(60,50,35,.035)}html.light .solve-mode-tab.is-active{color:#fff;background:#8E6D35}html.light .solve-keypad button{color:#302A20;border-color:rgba(60,50,35,.13);background:rgba(60,50,35,.045)}@media(min-width:769px){.solve-keypad-wrap{display:none}}@media(max-width:420px){.solve-mode-tab{font-size:.72rem}.solve-keypad{gap:.3rem}.solve-keypad button{min-height:2.3rem}.solve-keypad-title{font-size:.6rem}}
+</style>
 
     <script>
         /* 与主站完全一致的 Tailwind 主题：同一套金色/深色令牌与字体栈 */
@@ -608,12 +610,10 @@ html.light .zx-step-text{color:#5a6376}
             <div class="zx-menu-group">
                 <div class="zx-menu-title">计算</div>
                 <button type="button" class="zx-menu-item is-active" data-go="basic"><i class="fa-solid fa-calculator"></i><span>基础计算</span></button>
-                <button type="button" class="zx-menu-item" data-go="equation"><i class="fa-solid fa-equals"></i><span>方程求解</span></button>
-                <button type="button" class="zx-menu-item" data-go="inequality"><i class="fa-solid fa-less-than-equal"></i><span>不等式</span></button>
+                <button type="button" class="zx-menu-item" data-go="solve"><i class="fa-solid fa-square-root-variable"></i><span>解题</span></button>
             </div>
             <div class="zx-menu-group">
-                <div class="zx-menu-title">函数</div>
-                <button type="button" class="zx-menu-item" data-go="fit"><i class="fa-solid fa-chart-line"></i><span>函数解析式</span></button>
+                <div class="zx-menu-title">函数</div><div class="text-xs text-slate-500 px-3 py-1.5">函数题已收纳在「解题」</div>
             </div>
             <div class="zx-menu-group">
                 <div class="zx-menu-title">工具</div>
@@ -701,14 +701,34 @@ html.light .zx-step-text{color:#5a6376}
                 </div>
             </section>
 
+            <!-- 解题工作台：方程、不等式、函数统一入口 -->
+            <section class="view" data-view="solve">
+              <div class="glass-panel view-card">
+                <div class="view-head"><div class="view-head-mark"><i class="fa-solid fa-square-root-variable"></i></div><div><div class="view-title">解题</div><div class="view-sub">方程、不等式与函数题统一在此处理，支持数学键盘输入和步骤化结果。</div></div></div>
+                <div class="solve-mode-tabs" role="tablist" aria-label="解题类型">
+                  <button type="button" class="solve-mode-tab is-active" data-solve-tab="equation" role="tab" aria-selected="true">方程</button>
+                  <button type="button" class="solve-mode-tab" data-solve-tab="inequality" role="tab" aria-selected="false">不等式</button>
+                  <button type="button" class="solve-mode-tab" data-solve-tab="fit" role="tab" aria-selected="false">函数</button>
+                </div>
+                <div class="solve-keypad-wrap"><div class="solve-keypad-title"><b>数学键盘</b><span>手机端不呼出系统输入法</span></div>
+                  <div class="solve-keypad">
+                    <button type="button" data-solve-key="7">7</button><button type="button" data-solve-key="8">8</button><button type="button" data-solve-key="9">9</button><button type="button" data-solve-key="DEL" class="key-action">⌫</button><button type="button" data-solve-key="CLEAR" class="key-action">清空</button>
+                    <button type="button" data-solve-key="4">4</button><button type="button" data-solve-key="5">5</button><button type="button" data-solve-key="6">6</button><button type="button" data-solve-key="+">+</button><button type="button" data-solve-key="-">−</button>
+                    <button type="button" data-solve-key="1">1</button><button type="button" data-solve-key="2">2</button><button type="button" data-solve-key="3">3</button><button type="button" data-solve-key="*">×</button><button type="button" data-solve-key="/">÷</button>
+                    <button type="button" data-solve-key="0">0</button><button type="button" data-solve-key=".">.</button><button type="button" data-solve-key="x">x</button><button type="button" data-solve-key="^">xⁿ</button><button type="button" data-solve-key="=">=</button>
+                    <button type="button" data-solve-key="(">(</button><button type="button" data-solve-key=")">)</button><button type="button" data-solve-key=",">,</button><button type="button" data-solve-key="&lt;">&lt;</button><button type="button" data-solve-key="&gt;">&gt;</button>
+                    <button type="button" data-solve-key="≤">≤</button><button type="button" data-solve-key="≥">≥</button><button type="button" data-solve-key="NEXT" class="key-action key-next">切换输入项 ↔</button>
+                  </div>
+                </div>
+              </div>
             <!-- ========== 界面 2：方程求解 ========== -->
-            <section class="view" data-view="equation">
+            <section class="solve-subview is-active" data-solve-mode="equation">
                 <div class="glass-panel view-card">
                     <div class="view-head">
                         <div class="view-head-mark"><i class="fa-solid fa-equals"></i></div>
                         <div>
                             <div class="view-title">方程求解</div>
-                            <div class="view-sub">一元一次、一元二次与分式方程（含反比例）。先给移项通分的推导过程，再给标准写法的解。</div>
+                            <div class="view-sub">支持一次、二次方程、括号展开与分式方程，展示关键步骤和标准解。</div>
                         </div>
                     </div>
                     <div class="zx-label">方程输入</div>
@@ -734,13 +754,13 @@ html.light .zx-step-text{color:#5a6376}
             </section>
 
             <!-- ========== 界面 3：不等式 ========== -->
-            <section class="view" data-view="inequality">
+            <section class="solve-subview" data-solve-mode="inequality">
                 <div class="glass-panel view-card">
                     <div class="view-head">
                         <div class="view-head-mark"><i class="fa-solid fa-less-than-equal"></i></div>
                         <div>
                             <div class="view-title">不等式</div>
-                            <div class="view-sub">一元一次、一元二次与分式不等式。结果统一写成不等式解集与区间两种标准形式。</div>
+                            <div class="view-sub">支持一次、二次与分式不等式，结果同时给出解集和区间表示。</div>
                         </div>
                     </div>
                     <div class="zx-label">不等式输入</div>
@@ -768,13 +788,13 @@ html.light .zx-step-text{color:#5a6376}
             </section>
 
             <!-- ========== 界面 4：函数解析式 ========== -->
-            <section class="view" data-view="fit">
+            <section class="solve-subview" data-solve-mode="fit">
                 <div class="glass-panel view-card">
                     <div class="view-head">
                         <div class="view-head-mark"><i class="fa-solid fa-chart-line"></i></div>
                         <div>
                             <div class="view-title">由坐标求函数解析式</div>
-                            <div class="view-sub">给两个点求一次函数、三个点求二次函数，一个点求反比例函数；也可以交给「自动」按点数判断。</div>
+                            <div class="view-sub">支持两点求一次、三点求二次函数，以及单点求反比例函数；按点数自动判断。</div>
                         </div>
                     </div>
                     <div class="zx-label">坐标输入</div>
@@ -796,6 +816,8 @@ html.light .zx-step-text{color:#5a6376}
                     <div class="zx-label mt-4">计算结果</div>
                     <div id="fitOut" class="zx-out"><div class="zx-steps">等待输入…</div></div>
                 </div>
+            </section>
+
             </section>
 
             <!-- ========== 界面 5：单位换算 ========== -->
@@ -1866,15 +1888,19 @@ function zxEvalArithmetic(src) {
         /* ==================================================================
            五、界面路由：一个菜单项 = 一个界面
            ================================================================== */
-        const VIEW_TITLES = { basic: '基础计算', equation: '方程求解', inequality: '不等式', fit: '函数解析式', units: '单位换算', history: '历史记录' };
+        const VIEW_TITLES = { basic: '基础计算', solve: '解题', equation: '解题', inequality: '解题', fit: '解题', units: '单位换算', history: '历史记录' };
         let currentView = 'basic';
+        let solveMode = 'equation';
+        let solveActiveInput = null;
 
         function go(view, opts) {
+            if (view === 'equation' || view === 'inequality' || view === 'fit') { solveMode = view; view = 'solve'; }
             if (!VIEW_TITLES[view]) view = 'basic';
             currentView = view;
             document.querySelectorAll('.view').forEach(function (sec) {
                 sec.classList.toggle('is-active', sec.getAttribute('data-view') === view);
             });
+            if (view === 'solve') setSolveMode(solveMode);
             document.querySelectorAll('.zx-menu-item').forEach(function (btn) {
                 btn.classList.toggle('is-active', btn.getAttribute('data-go') === view);
             });
@@ -1890,6 +1916,30 @@ function zxEvalArithmetic(src) {
             }
         }
 
+        function setSolveMode(mode) {
+            if (['equation','inequality','fit'].indexOf(mode)<0) mode='equation';
+            solveMode=mode;
+            document.querySelectorAll('.solve-subview').forEach(function(el){el.classList.toggle('is-active',el.getAttribute('data-solve-mode')===mode);});
+            document.querySelectorAll('[data-solve-tab]').forEach(function(el){const on=el.getAttribute('data-solve-tab')===mode;el.classList.toggle('is-active',on);el.setAttribute('aria-selected',on?'true':'false');});
+            const input=document.querySelector('.solve-subview.is-active input');if(input)solveActiveInput=input;
+        }
+        function initSolveKeypad() {
+            const inputs=Array.from(document.querySelectorAll('.solve-subview input')), mq=window.matchMedia('(max-width: 768px)');
+            function sync(){inputs.forEach(function(el){el.readOnly=mq.matches;});}
+            sync();if(mq.addEventListener)mq.addEventListener('change',sync);else if(mq.addListener)mq.addListener(sync);
+            inputs.forEach(function(el){el.addEventListener('focus',function(){solveActiveInput=el;});el.addEventListener('click',function(){solveActiveInput=el;});});
+            document.addEventListener('click',function(e){
+                const tab=e.target.closest&&e.target.closest('[data-solve-tab]');if(tab){setSolveMode(tab.getAttribute('data-solve-tab'));return;}
+                const key=e.target.closest&&e.target.closest('[data-solve-key]');if(!key||!mq.matches)return;
+                const act=key.getAttribute('data-solve-key');
+                if(act==='NEXT'){const list=Array.from(document.querySelectorAll('.solve-subview.is-active input'));if(list.length){solveActiveInput=list[(list.indexOf(solveActiveInput)+1+list.length)%list.length];solveActiveInput.focus();}return;}
+                if(!solveActiveInput||!solveActiveInput.closest('.solve-subview.is-active'))solveActiveInput=document.querySelector('.solve-subview.is-active input');
+                const el=solveActiveInput;if(!el)return;let x=typeof el.selectionStart==='number'?el.selectionStart:el.value.length,y=typeof el.selectionEnd==='number'?el.selectionEnd:el.value.length;
+                if(act==='CLEAR')el.value='';else if(act==='DEL'){if(x===y&&x>0)x--;el.value=el.value.slice(0,x)+el.value.slice(y);try{el.setSelectionRange(x,x)}catch(err){}}
+                else{const v=act.replace(/&lt;/g,'<').replace(/&gt;/g,'>');el.value=el.value.slice(0,x)+v+el.value.slice(y);try{el.setSelectionRange(x+v.length,x+v.length)}catch(err){}}
+                el.dispatchEvent(new Event('input',{bubbles:true}));try{el.focus({preventScroll:true})}catch(err){el.focus();}
+            });
+        }
         /* ==================================================================
            七、深浅色（与主站共用 zhixing_appearance 键）
            ================================================================== */
@@ -2385,6 +2435,7 @@ function zxEvalArithmetic(src) {
                 btn.addEventListener('click', function () { go(btn.getAttribute('data-go'), { focus: true }); });
             });
 
+            initSolveKeypad();
             initBasic();
             initEquation();
             initInequality();
