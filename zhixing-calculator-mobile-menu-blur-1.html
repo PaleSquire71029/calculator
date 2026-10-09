@@ -510,9 +510,8 @@
         @media (max-width: 420px) {
             .calc-key { padding: .6rem 0; font-size: .75rem; }
         }
-        /* 软键盘弹起时（脚本给 <html> 加 .kb-open）取消分类菜单吸顶，
-           否则它会盖住刚刚聚焦的输入框。判据见脚本里的 visualViewport 检测。 */
-        html.kb-open .zx-menu.is-mobile-open { position: fixed; }
+        /* 软键盘弹起时由脚本自动收起菜单，避免固定菜单遮挡输入区域。 */
+        html.kb-open .zx-menu.is-mobile-open { display: none; }
 
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -996,7 +995,7 @@ function zxTokenize(src) {
     return { tokens: tk };
 }
 
-/* ---- 递归下降：+−  <  ×÷ 与隐式乘法  <  幂与后缀%  <  一元  <  括号/数字/x ---- */
+/* ---- 递归下降：加减 < 乘除/隐式乘法 < 一元符号 < 乘方与后缀% < 括号/数字/x ---- */
 function zxParseExpr(tk, st) {
     let left = zxParseTerm(tk, st);
     if (!left) return null;
@@ -1011,13 +1010,13 @@ function zxParseExpr(tk, st) {
     return left;
 }
 function zxParseTerm(tk, st) {
-    let left = zxParsePower(tk, st);
+    let left = zxParseUnary(tk, st);
     if (!left) return null;
     for (;;) {
         const cur = tk[st.i];
         if (cur && (cur.k === '*' || cur.k === '/')) {
             st.i++;
-            const right = zxParsePower(tk, st);
+            const right = zxParseUnary(tk, st);
             if (!right) return null;
             if (cur.k === '*') left = zxRMul(left, right);
             else {
@@ -1028,7 +1027,7 @@ function zxParseTerm(tk, st) {
         }
         /* 隐式乘法：2x、3(x+1)、(x+1)(x-2)、(x+1)x */
         if (cur && (cur.k === 'num' || cur.k === 'x' || cur.k === '(')) {
-            const right = zxParsePower(tk, st);
+            const right = zxParseUnary(tk, st);
             if (!right) return null;
             left = zxRMul(left, right);
             continue;
@@ -1037,7 +1036,7 @@ function zxParseTerm(tk, st) {
     }
 }
 function zxParsePower(tk, st) {
-    let base = zxParseUnary(tk, st);
+    let base = zxParsePrimary(tk, st);
     if (!base) return null;
     if (tk[st.i] && tk[st.i].k === '^') {
         st.i++;
@@ -1070,7 +1069,7 @@ function zxParseUnary(tk, st) {
         if (!v) return null;
         return cur.k === '-' ? zxRScaled(v, -1) : v;
     }
-    return zxParsePrimary(tk, st);
+    return zxParsePower(tk, st);
 }
 function zxParsePrimary(tk, st) {
     const cur = tk[st.i];
@@ -1170,7 +1169,8 @@ function zxSolveEquation(src) {
     }
     if (deg > 2) return { ok: false, error: '整理后是 ' + deg + ' 次方程，目前只支持一次与二次' };
 
-    const poles = (den.length > 1) ? (zxRealRoots(den) || []) : [];
+    const poles = (den.length > 1) ? zxRealRoots(den) : [];
+    if (poles === null) return { ok: false, error: '分母次数超过 2，无法可靠排除分母零点' };
     const nearPole = function (x) {
         for (let i = 0; i < poles.length; i++) if (Math.abs(x - poles[i]) < 1e-7) return true;
         return false;
@@ -1198,8 +1198,18 @@ function zxSolveEquation(src) {
     const a = num[2], b = num[1], c = num[0];
     const D = b * b - 4 * a * c;
     const sg = function (v) { return v < 0 ? ('− ' + zxFmtNum(Math.abs(v))) : zxFmtNum(v); };
-    lines.push('二次方程：' + zxFmtNum(a) + 'x² + ' + zxFmtNum(b) + 'x + ' + zxFmtNum(c) + ' = 0');
+    const term = function (v, symbol, first) {
+        if (Math.abs(v) < 1e-12) return '';
+        const abs = Math.abs(v);
+        const coefficient = symbol && Math.abs(abs - 1) < 1e-12 ? '' : zxFmtNum(abs);
+        const body = coefficient + symbol;
+        if (first) return v < 0 ? '− ' + body : body;
+        return v < 0 ? ' − ' + body : ' + ' + body;
+    };
+    const equation = term(a, 'x²', true) + term(b, 'x', false) + term(c, '', false);
+    lines.push('二次方程：' + equation + ' = 0');
     lines.push('判别式 Δ = b² − 4ac = ' + zxFmtNum(D));
+    lines.push('求根公式：x = (−b ± √Δ) / (2a)');
     lines.push('');
     if (D < -1e-12) {
         const re = -b / (2 * a), im = Math.abs(Math.sqrt(-D) / (2 * a));
@@ -1341,9 +1351,18 @@ function zxSolveInequality(src) {
     if (!R.ok) return { ok: false, error: '右边：' + R.error };
     const F = zxRSub(L.r, R.r);
     const n = zxPolyTrim(F.n), d = zxPolyTrim(F.d);
+    const strict = (cmp.op === '<' || cmp.op === '>');
+    let poles = [];
+    if (d.length > 1) {
+        poles = zxRealRoots(d);
+        if (poles === null) return { ok: false, error: '分母次数超过 2，无法可靠排除分母零点' };
+    }
     if (zxPolyIsZero(n)) {
-        const t = (cmp.op === '<=' || cmp.op === '>=') ? '全体实数' : '无解（空集）';
-        return { ok: true, text: '移项后恒为 0 —— 解集：' + t };
+        if (strict) return { ok: true, text: '移项后恒为 0；严格不等式不成立 —— 解集：无解（空集）' };
+        let all = [{ lo: -Infinity, loOpen: true, hi: Infinity, hiOpen: true }];
+        if (poles.length) all = zxIneqRemovePoints(all, poles);
+        const note = poles.length ? '（已排除分母零点 x = ' + poles.map(function (v) { return zxFmtNum(v); }).join('、') + '）' : '';
+        return { ok: true, text: '移项后恒为 0；原式要求分母不为 0 —— 解集：' + zxIneqText(all) + note };
     }
     const P = zxPolyTrim(zxPolyMul(n, d));
     const deg = P.length - 1;
@@ -1355,12 +1374,10 @@ function zxSolveInequality(src) {
         lines.push('移项整理：' + zxPolyText(P) + ' ' + cmp.op + ' 0');
     }
     if (deg > 2) return { ok: false, error: '整理后是 ' + deg + ' 次不等式，目前只支持一次与二次' };
-    const strict = (cmp.op === '<' || cmp.op === '>');
     const wantPos = (cmp.op === '>' || cmp.op === '>=');
     let intervals = zxSolvePolySign(P, wantPos, strict);
     if (intervals === null) return { ok: false, error: '整理后次数过高' };
-    if (!strict && d.length > 1) {
-        const poles = zxRealRoots(d) || [];
+    if (!strict && poles.length) {
         if (poles.length) {
             intervals = zxIneqRemovePoints(intervals, poles);
             lines.push('注意 ' + zxPolyText(d) + ' ≠ 0，需剔除分母零点 x = ' + poles.map(function (v) { return zxFmtNum(v); }).join('、'));
@@ -1438,7 +1455,7 @@ function zxFitFunction(src, type) {
     if (kind === 'quad') {
         if (pts.length !== 3) return { ok: false, error: '二次函数需要 3 个点，当前 ' + pts.length + ' 个' };
         const xs = pts.map(function (q) { return q.x; });
-        if (xs[0] === xs[1] || xs[1] === xs[2] || xs[0] === xs[2]) return { ok: false, error: '有重复的 x，无法确定二次函数' };
+        if (Math.abs(xs[0] - xs[1]) < 1e-12 || Math.abs(xs[1] - xs[2]) < 1e-12 || Math.abs(xs[0] - xs[2]) < 1e-12) return { ok: false, error: '有重复或过于接近的 x，无法稳定确定二次函数' };
         const A = pts.map(function (q) { return [q.x * q.x, q.x, 1]; });
         const sol = zxSolveLinearSystem(A, pts.map(function (q) { return q.y; }));
         if (!sol) return { ok: false, error: '三点共线或退化，无法确定二次函数' };
@@ -2094,12 +2111,13 @@ function zxEvalArithmetic(src) {
         }
 
         function initFit() {
-            makeSolver({
+            const fitSolver = makeSolver({
                 kind: 'fit', input: 'fitInput', out: 'fitOut', btn: 'fitBtn', clear: 'fitClearBtn', inserts: 'fitTypes',
                 run: function (s) { return zxFitFunction(s, fitKind); },
                 emptyHint: '请输入坐标，例如 (1,2) (3,6)、(0,1) (1,-1) (2,1)',
                 restore: function (raw) { return JSON.stringify({ points: raw, type: fitKind }); }
-            }).solve(true);
+            });
+            if (fitSolver) fitSolver.solve(true);
 
             const types = $('fitTypes');
             if (types) types.addEventListener('click', function (e) {
@@ -2109,6 +2127,7 @@ function zxEvalArithmetic(src) {
                 if (!t) return;   /* 没带 data-fit 的是示例按钮，交给上面的处理 */
                 fitKind = t;
                 types.querySelectorAll('[data-fit]').forEach(function (x) { x.classList.toggle('is-active', x === b); });
+                if (fitSolver) fitSolver.solve(true);
             });
         }
 
@@ -2184,11 +2203,19 @@ function zxEvalArithmetic(src) {
 
             function current() {
                 const raw = String(valEl.value || '').trim();
-                const v = Number(raw.replace(/[,，\s]/g, ''));
+                if (!raw) return { error: '请输入数值' };
+                const normalized = raw.replace(/[,，\s]/g, '');
+                if (!normalized || !/^[+-]?(?:(?:\d+(?:\.\d*)?)|(?:\.\d+))(?:e[+-]?\d+)?$/i.test(normalized)) return { error: '请输入有效数字' };
+                const v = Number(normalized);
                 const from = fromEl.value, to = toEl.value;
                 const a = unitDef(curUnitCat, from), b = unitDef(curUnitCat, to);
-                if (!isFinite(v) || !a || !b) return null;
-                const res = b.fromBase(a.toBase(v));
+                if (!Number.isFinite(v) || !a || !b) return { error: '请输入有效且有限的数值' };
+                const base = a.toBase(v);
+                const res = b.fromBase(base);
+                if (!Number.isFinite(base) || !Number.isFinite(res)) return { error: '数值超出当前单位的可处理范围' };
+                for (let i = 0; i < ZX_UNITS[curUnitCat].units.length; i++) {
+                    if (!Number.isFinite(ZX_UNITS[curUnitCat].units[i].fromBase(base))) return { error: '数值过大或过小，无法稳定显示全部单位换算结果' };
+                }
                 const gv = zxDec(v, 10), gr = zxDec(res, 10);
                 const fr = zxFracSmall(res, 64);
                 return {
@@ -2201,9 +2228,9 @@ function zxEvalArithmetic(src) {
 
             function update(save) {
                 const c = current();
-                if (!c) {
+                if (!c || c.error) {
                     outExpr.textContent = '—';
-                    outMain.textContent = '请输入数值';
+                    outMain.textContent = c && c.error ? c.error : '请输入数值';
                     if (table) table.querySelector('tbody').innerHTML = '<tr><td colspan="2" class="text-slate-500">—</td></tr>';
                     return;
                 }
@@ -2332,7 +2359,8 @@ function zxEvalArithmetic(src) {
                 closeMobileMenu();
             });
             document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMobileMenu(); });
-            window.addEventListener('resize', function () { if (window.innerWidth > 900) closeMobileMenu(); });
+            window.addEventListener('resize', function () { closeMobileMenu(); });
+            window.addEventListener('orientationchange', closeMobileMenu);
 
             /* 软键盘检测：可视视口比布局视口矮 120px 以上就认为输入法弹起了，
                给 <html> 加 .kb-open，由 CSS 取消菜单吸顶，避免遮挡输入框。 */
@@ -2342,6 +2370,7 @@ function zxEvalArithmetic(src) {
                 const apply = function () {
                     const kbOpen = (window.innerHeight - vv.height) > 120;
                     document.documentElement.classList.toggle('kb-open', kbOpen);
+                    if (kbOpen) closeMobileMenu();
                 };
                 vv.addEventListener('resize', apply);
                 vv.addEventListener('scroll', apply);
