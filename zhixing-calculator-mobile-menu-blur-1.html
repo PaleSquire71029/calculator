@@ -2407,14 +2407,14 @@ function zxEvalArithmetic(src) {
                 if(a.y*b.y<0){let lo=a.x,hi=b.x,fl=a.y;for(let k=0;k<45;k++){const mid=(lo+hi)/2,fm=val(mid);if(!Number.isFinite(fm))break;if(Math.abs(fm)<1e-10){lo=hi=mid;break;}if(fl*fm<=0)hi=mid;else{lo=mid;fl=fm;}}roots.push((lo+hi)/2);}
             }
             for(let i=1;i<samples.length-1;i++){const q=samples[i];if(!Number.isFinite(q.y)||!Number.isFinite(samples[i-1].y)||!Number.isFinite(samples[i+1].y))continue;if(Math.abs(q.y)<=Math.abs(samples[i-1].y)&&Math.abs(q.y)<=Math.abs(samples[i+1].y)&&Math.abs(q.y)<0.02)roots.push(q.x);}
-            const unique=[];roots.sort(function(a,b){return a-b;}).forEach(function(r){if(!unique.some(function(q){return Math.abs(q-r)<0.02;}))unique.push(r);});
+            const unique=[];roots.sort(function(a,b){return a-b;}).forEach(function(r){if(!unique.some(function(q){return Math.abs(q-r)<0.055;}))unique.push(r);});
             lines.push('零点数值估计：'+(unique.length?unique.slice(0,12).map(function(v){return 'x ≈ '+zxFmtNum(v,4);}).join('，')+(unique.length>12?' 等':''):'当前区间未检测到零点（偶重根仍可能遗漏）'));
             const turns=[];for(let i=1;i<samples.length-1;i++){const a=samples[i-1],b=samples[i],c=samples[i+1];if(!Number.isFinite(a.y)||!Number.isFinite(b.y)||!Number.isFinite(c.y))continue;const d1=b.y-a.y,d2=c.y-b.y;if(d1<0&&d2>0)turns.push({x:b.x,y:b.y,type:'极小值候选'});else if(d1>0&&d2<0)turns.push({x:b.x,y:b.y,type:'极大值候选'});}
             lines.push('局部极值候选：'+(turns.length?turns.slice(0,8).map(function(q){return q.type+'约在 ('+zxFmtNum(q.x,3)+', '+zxFmtNum(q.y,4)+')';}).join('；')+(turns.length>8?'；其余略':''):'当前采样未发现明显极值'));
             const dirs=[];let runStart=null,lastSign=0,lastX=null;
             for(let i=1;i<samples.length;i++){const a=samples[i-1],b=samples[i];if(!Number.isFinite(a.y)||!Number.isFinite(b.y)){if(runStart!==null&&lastX!==null)dirs.push({s:runStart,e:lastX,sign:lastSign});runStart=null;lastSign=0;continue;}const dy=b.y-a.y,sign=Math.abs(dy)<1e-7?0:(dy>0?1:-1);if(sign===0){lastX=b.x;continue;}if(runStart===null){runStart=a.x;lastSign=sign;}else if(sign!==lastSign){dirs.push({s:runStart,e:a.x,sign:lastSign});runStart=a.x;lastSign=sign;}lastX=b.x;}
             if(runStart!==null&&lastX!==null)dirs.push({s:runStart,e:lastX,sign:lastSign});
-            const merged=[];dirs.forEach(function(q){if(q.e-q.s<0.15)return;const prev=merged[merged.length-1];if(prev&&prev.sign===q.sign&&Math.abs(prev.e-q.s)<0.11)prev.e=q.e;else merged.push({s:q.s,e:q.e,sign:q.sign});});
+            const merged=[];dirs.forEach(function(q){if(q.e-q.s<0.15)return;const prev=merged[merged.length-1];if(prev&&prev.sign===q.sign&&Math.abs(prev.e-q.s)<0.055)prev.e=q.e;else merged.push({s:q.s,e:q.e,sign:q.sign});});
             lines.push('单调区间数值估计：'+(merged.length?merged.slice(0,8).map(function(q){return '在约 ['+zxFmtNum(q.s,2)+', '+zxFmtNum(q.e,2)+'] 上'+(q.sign>0?'递增':'递减');}).join('；')+(merged.length>8?'；其余略':''):'采样数据不足以判断'));
             let evenScore=0,oddScore=0,compared=0;for(let x=0.5;x<=10;x+=0.5){const a=val(x),b=val(-x);if(Number.isFinite(a)&&Number.isFinite(b)){evenScore=Math.max(evenScore,Math.abs(a-b));oddScore=Math.max(oddScore,Math.abs(a+b));compared++;}}
             if(compared>5){if(evenScore<1e-5)lines.push('奇偶性数值检验：疑似偶函数（仍需验证定义域关于原点对称）');else if(oddScore<1e-5)lines.push('奇偶性数值检验：疑似奇函数（仍需验证定义域关于原点对称）');else lines.push('奇偶性数值检验：未检测到明显的奇函数或偶函数特征');}
@@ -2424,14 +2424,14 @@ function zxEvalArithmetic(src) {
         function zxRenderFunctionGraph(source){
             const host=$('fitGraph');if(!host)return;const f=zxCompileFunctionExpression(source);if(!f.ok){host.innerHTML='';return;}
             const W=640,H=260,L=38,R=12,T=12,B=26,xMin=-10,xMax=10,plotW=W-L-R,plotH=H-T-B;
-            const samples=[];let min=Infinity,max=-Infinity;
-            for(let i=0;i<=500;i++){const x=xMin+(xMax-xMin)*i/500;let y;try{y=f.eval(x);}catch(e){y=NaN;}if(!Number.isFinite(y)||Math.abs(y)>1e5)y=NaN;samples.push({x:x,y:y});if(Number.isFinite(y)){min=Math.min(min,y);max=Math.max(max,y);}}
-            if(!Number.isFinite(min)){host.innerHTML='<div class="function-graph-empty">当前区间内没有可绘制的实数值。</div>';return;}
-            let yMin=min,yMax=max;if(Math.abs(yMax-yMin)<1e-9){yMin-=1;yMax+=1;}else{const pad=(yMax-yMin)*0.12;yMin-=pad;yMax+=pad;}yMin=Math.max(yMin,-1000);yMax=Math.min(yMax,1000);if(yMin>=yMax){yMin=-10;yMax=10;}
+            const samples=[];const finite=[];
+            for(let i=0;i<=500;i++){const x=xMin+(xMax-xMin)*i/500;let y;try{y=f.eval(x);}catch(e){y=NaN;}if(!Number.isFinite(y)||Math.abs(y)>1e5)y=NaN;samples.push({x:x,y:y});if(Number.isFinite(y))finite.push(y);}
+            if(!finite.length){host.innerHTML='<div class="function-graph-empty">当前区间内没有可绘制的实数值。</div>';return;}
+            finite.sort(function(a,b){return a-b;});let yMin=finite[Math.floor((finite.length-1)*0.02)],yMax=finite[Math.floor((finite.length-1)*0.98)];if(Math.abs(yMax-yMin)<1e-9){yMin-=1;yMax+=1;}else{const pad=(yMax-yMin)*0.12;yMin-=pad;yMax+=pad;}if(yMin>=yMax){yMin=-10;yMax=10;}
             const X=x=>L+(x-xMin)/(xMax-xMin)*plotW,Y=y=>T+(yMax-y)/(yMax-yMin)*plotH;
             let grid='';for(let k=0;k<=4;k++){const yy=T+plotH*k/4,val=yMax-(yMax-yMin)*k/4;grid+='<line x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'" stroke="currentColor" opacity=".12"/><text x="'+(L-5)+'" y="'+(yy+4)+'" text-anchor="end" font-size="10" fill="currentColor" opacity=".65">'+zxFmtNum(val,2)+'</text>';}
             const zeroY=Y(0),zeroX=X(0);if(zeroY>=T&&zeroY<=T+plotH)grid+='<line x1="'+L+'" y1="'+zeroY+'" x2="'+(W-R)+'" y2="'+zeroY+'" stroke="currentColor" opacity=".55"/>';if(zeroX>=L&&zeroX<=W-R)grid+='<line x1="'+zeroX+'" y1="'+T+'" x2="'+zeroX+'" y2="'+(T+plotH)+'" stroke="currentColor" opacity=".55"/>';
-            let d='',pen=false; samples.forEach(function(q){if(!Number.isFinite(q.y)){pen=false;return;}const px=X(q.x),py=Y(Math.max(yMin,Math.min(yMax,q.y)));if(!pen){d+='M'+px.toFixed(2)+','+py.toFixed(2);pen=true;}else d+='L'+px.toFixed(2)+','+py.toFixed(2);});
+            let d='',pen=false,last=null; samples.forEach(function(q){if(!Number.isFinite(q.y)||q.y<yMin-(yMax-yMin)*0.35||q.y>yMax+(yMax-yMin)*0.35){pen=false;last=null;return;}const px=X(q.x),py=Y(q.y);if(last&&Math.abs(q.y-last.y)>(yMax-yMin)*0.55)pen=false;if(!pen){d+='M'+px.toFixed(2)+','+py.toFixed(2);pen=true;}else d+='L'+px.toFixed(2)+','+py.toFixed(2);last=q;});
             host.innerHTML='<div class="function-graph-head"><span>函数图像</span><small>显示区间：−10 ≤ x ≤ 10</small></div><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="函数图像">'+grid+'<path d="'+d+'" fill="none" stroke="var(--accent,#8b9cff)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         }
                 function zxAnalyzeFunctionCoefficients(kind,c) {
