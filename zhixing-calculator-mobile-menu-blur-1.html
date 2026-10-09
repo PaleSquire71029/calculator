@@ -72,6 +72,8 @@
 .font-sans,.font-serif,.font-mono{font-family:var(--zx-font) !important}
     
 .solve-mode-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45rem;margin:.25rem 0 1rem}.solve-mode-tab{min-height:2.65rem;border:1px solid rgba(255,255,255,.1);border-radius:.7rem;background:rgba(255,255,255,.035);color:#94A3B8;font-size:.8rem;font-weight:650}.solve-mode-tab.is-active{color:#08090C;background:rgb(var(--zx-gold));border-color:rgb(var(--zx-gold))}.solve-subview{display:none;margin-top:1rem}.solve-subview.is-active{display:block;animation:viewIn .2s var(--zx-ease)}.solve-keypad-wrap{border:1px solid rgba(255,255,255,.08);border-radius:.85rem;padding:.75rem;background:rgba(0,0,0,.16)}.solve-keypad-title{display:flex;justify-content:space-between;gap:.6rem;margin-bottom:.6rem;font-size:.66rem;color:#94A3B8}.solve-keypad-title b{color:rgb(var(--zx-gold))}.solve-keypad{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.4rem}.solve-keypad button{min-width:0;min-height:2.4rem;border-radius:.55rem;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.055);color:#E2E8F0;font:600 .9rem var(--zx-mono);touch-action:manipulation;user-select:none;-webkit-user-select:none}.solve-keypad button.key-action{color:rgb(var(--zx-gold));background:rgba(var(--zx-gold),.08);font-family:var(--zx-font);font-size:.72rem}.solve-keypad button.key-next{grid-column:span 3}html.light .solve-mode-tab{color:#64748B;background:rgba(60,50,35,.035)}html.light .solve-mode-tab.is-active{color:#fff;background:#8E6D35}html.light .solve-keypad button{color:#302A20;border-color:rgba(60,50,35,.13);background:rgba(60,50,35,.045)}@media(min-width:769px){.solve-keypad-wrap{display:none}}@media(max-width:420px){.solve-mode-tab{font-size:.72rem}.solve-keypad{gap:.3rem}.solve-keypad button{min-height:2.3rem}.solve-keypad-title{font-size:.6rem}}
+
+.zx-legacy-solver-input{display:none!important}.structured-solver{margin-top:.65rem}.structured-top{display:flex;gap:.65rem;align-items:end;flex-wrap:wrap;margin-bottom:.7rem}.structured-select{display:flex;flex-direction:column;gap:.35rem;flex:1;min-width:135px}.structured-select span,.structured-field span{font-size:.68rem;color:#94A3B8;font-weight:650}.structured-select select{width:100%;min-height:2.65rem;border-radius:.65rem;border:1px solid rgba(255,255,255,.12);background:#11151D;color:#E2E8F0;padding:0 .65rem;font-size:.78rem}.structured-equation{font-family:var(--zx-mono);font-size:.88rem;color:rgb(var(--zx-gold));padding:.65rem .8rem;border-radius:.65rem;background:rgba(var(--zx-gold),.07);margin-bottom:.65rem}.structured-coefficients{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem}.structured-field{display:flex;flex-direction:column;gap:.35rem;min-width:0}.structured-field input{width:100%;min-width:0;height:2.8rem;border-radius:.65rem;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);color:#F8FAFC;padding:0 .7rem;font-family:var(--zx-mono);font-size:1rem}.structured-hint{margin-top:.6rem;font-size:.68rem;line-height:1.5;color:#94A3B8}.structured-examples{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.65rem}.structured-points{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}.structured-point{padding:.65rem;border:1px solid rgba(255,255,255,.08);border-radius:.7rem;background:rgba(255,255,255,.025);display:grid;grid-template-columns:1fr 1fr;gap:.45rem}.structured-point>b{grid-column:1/-1;font-size:.7rem;color:rgb(var(--zx-gold))}.structured-form-title{font-size:.75rem;color:#94A3B8}.html.light .structured-select select{background:#fff;color:#302A20;border-color:rgba(60,50,35,.16)}html.light .structured-field input{background:#fff;color:#302A20;border-color:rgba(60,50,35,.16)}html.light .structured-equation{color:#8E6D35;background:rgba(142,109,53,.08)}@media(max-width:420px){.structured-coefficients{gap:.4rem}.structured-field input{padding:0 .5rem}.structured-points{gap:.4rem}.structured-point{padding:.5rem;gap:.35rem}.structured-select{min-width:120px}}
 </style>
 
     <script>
@@ -732,8 +734,9 @@ html.light .zx-step-text{color:#5a6376}
                         </div>
                     </div>
                     <div class="zx-label">方程输入</div>
-                    <input id="eqInput" type="text" autocomplete="off" spellcheck="false" placeholder="例如 x^3-6x=0、(x-1)(x+2)=0、1/x=2" aria-label="方程输入" class="zx-field font-mono">
-                    <div id="eqInserts" class="flex flex-wrap items-center gap-1.5 mt-2">
+                    <input id="eqInput" type="text" autocomplete="off" spellcheck="false" aria-label="方程计算内部输入" class="zx-field font-mono zx-legacy-solver-input" tabindex="-1" aria-hidden="true">
+                    <div id="eqStructured" class="structured-solver"></div>
+                    <div id="eqInserts" class="flex flex-wrap items-center gap-1.5 mt-2" hidden>
                         <button type="button" class="zx-chip" data-ins="x" title="插入 x">x</button>
                         <button type="button" class="zx-chip" data-ins="^2" title="插入平方">x²</button>
                         <button type="button" class="zx-chip" data-ins="=" title="插入等号">=</button>
@@ -766,8 +769,9 @@ html.light .zx-step-text{color:#5a6376}
                         </div>
                     </div>
                     <div class="zx-label">不等式输入</div>
-                    <input id="ineqInput" type="text" autocomplete="off" spellcheck="false" placeholder="例如 2x+3&gt;7、x^2-5x+6&lt;0、1/x≥2" aria-label="不等式输入" class="zx-field font-mono">
-                    <div id="ineqInserts" class="flex flex-wrap items-center gap-1.5 mt-2">
+                    <input id="ineqInput" type="text" autocomplete="off" spellcheck="false" aria-label="不等式计算内部输入" class="zx-field font-mono zx-legacy-solver-input" tabindex="-1" aria-hidden="true">
+                    <div id="ineqStructured" class="structured-solver"></div>
+                    <div id="ineqInserts" class="flex flex-wrap items-center gap-1.5 mt-2" hidden>
                         <button type="button" class="zx-chip" data-ins="x" title="插入 x">x</button>
                         <button type="button" class="zx-chip" data-ins="^2" title="插入平方">x²</button>
                         <button type="button" class="zx-chip" data-ins="&lt;" title="小于">&lt;</button>
@@ -801,7 +805,8 @@ html.light .zx-step-text{color:#5a6376}
                         </div>
                     </div>
                     <div class="zx-label">坐标输入</div>
-                    <input id="fitInput" type="text" autocomplete="off" spellcheck="false" placeholder="例如 (1,2) (3,6)" aria-label="坐标输入" class="zx-field font-mono">
+                    <input id="fitInput" type="text" autocomplete="off" spellcheck="false" aria-label="函数拟合内部输入" class="zx-field font-mono zx-legacy-solver-input" tabindex="-1" aria-hidden="true">
+                    <div id="fitStructured" class="structured-solver"></div>
                     <div id="fitTypes" class="flex flex-wrap items-center gap-1.5 mt-2">
                         <button type="button" class="zx-chip is-active" data-fit="auto">自动</button>
                         <button type="button" class="zx-chip" data-fit="linear">一次函数</button>
@@ -1963,7 +1968,7 @@ function zxEvalArithmetic(src) {
             const input=document.querySelector('.solve-subview.is-active input');if(input)solveActiveInput=input;
         }
         function initSolveKeypad() {
-            const inputs=Array.from(document.querySelectorAll('.solve-subview input')), mq=window.matchMedia('(max-width: 768px)');
+            const inputs=Array.from(document.querySelectorAll('.solve-subview input[data-math-field],.solve-subview input[data-custom-expression]')), mq=window.matchMedia('(max-width: 768px)');
             function sync(){inputs.forEach(function(el){el.readOnly=mq.matches;});}
             sync();if(mq.addEventListener)mq.addEventListener('change',sync);else if(mq.addListener)mq.addListener(sync);
             inputs.forEach(function(el){el.addEventListener('focus',function(){solveActiveInput=el;});el.addEventListener('click',function(){solveActiveInput=el;if(el.readOnly){try{el.setSelectionRange(el.value.length,el.value.length)}catch(err){}}});});
@@ -1971,8 +1976,8 @@ function zxEvalArithmetic(src) {
                 const tab=e.target.closest&&e.target.closest('[data-solve-tab]');if(tab){setSolveMode(tab.getAttribute('data-solve-tab'));return;}
                 const key=e.target.closest&&e.target.closest('[data-solve-key]');if(!key||!mq.matches)return;
                 const act=key.getAttribute('data-solve-key');
-                if(act==='NEXT'){const list=Array.from(document.querySelectorAll('.solve-subview.is-active input'));if(list.length){solveActiveInput=list[(list.indexOf(solveActiveInput)+1+list.length)%list.length];solveActiveInput.focus();}return;}
-                if(!solveActiveInput||!solveActiveInput.closest('.solve-subview.is-active'))solveActiveInput=document.querySelector('.solve-subview.is-active input');
+                if(act==='NEXT'){const list=Array.from(document.querySelectorAll('.solve-subview.is-active input[data-math-field],.solve-subview.is-active input[data-custom-expression]'));if(list.length){solveActiveInput=list[(list.indexOf(solveActiveInput)+1+list.length)%list.length];solveActiveInput.focus();}return;}
+                if(!solveActiveInput||!solveActiveInput.closest('.solve-subview.is-active'))solveActiveInput=document.querySelector('.solve-subview.is-active input[data-math-field],.solve-subview.is-active input[data-custom-expression]');
                 const el=solveActiveInput;if(!el)return;let x=typeof el.selectionStart==='number'?el.selectionStart:el.value.length,y=typeof el.selectionEnd==='number'?el.selectionEnd:el.value.length;
                 if(act==='CLEAR')el.value='';else if(act==='DEL'){if(x===y&&x>0)x--;el.value=el.value.slice(0,x)+el.value.slice(y);try{el.setSelectionRange(x,x)}catch(err){}}
                 else{const v=act.replace(/&lt;/g,'<').replace(/&gt;/g,'>');el.value=el.value.slice(0,x)+v+el.value.slice(y);try{el.setSelectionRange(x+v.length,x+v.length)}catch(err){}}
@@ -2129,7 +2134,8 @@ function zxEvalArithmetic(src) {
             }
 
             function solve(silent) {
-                const raw = String(input.value || '').trim();
+                const raw = String(cfg.getRaw ? cfg.getRaw() : input.value || '').trim();
+                input.value = raw;
                 if (!raw) { out.innerHTML = emptyHtml; return; }
                 const r = cfg.run(raw);
                 if (!r.ok) {
@@ -2167,43 +2173,136 @@ function zxEvalArithmetic(src) {
 
             if (btn) btn.addEventListener('click', function () { solve(false); });
             if (clr) clr.addEventListener('click', function () {
-                input.value = ''; out.innerHTML = emptyHtml; input.focus();
+                if (cfg.onClear) cfg.onClear();
+                input.value = ''; out.innerHTML = emptyHtml;
+                if (!input.classList.contains('zx-legacy-solver-input')) input.focus();
             });
             input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); solve(false); } });
             if (ins) ins.addEventListener('click', function (e) {
                 const t = e.target.closest ? e.target.closest('button') : null;
                 if (!t) return;
                 const eg = t.getAttribute('data-eg');
-                if (eg !== null) { input.value = eg; solve(false); input.focus(); return; }
+                if (eg !== null) { input.value = eg; if (cfg.setRawFromExample) cfg.setRawFromExample(eg); solve(false); return; }
                 const v = t.getAttribute('data-ins');
                 if (v !== null) { insertAt(input, v); input.focus(); }
             });
             return { solve: solve };
         }
 
+        function structuredField(id,label,value) {
+            return '<label class="structured-field"><span>'+label+'</span><input type="text" inputmode="none" autocomplete="off" spellcheck="false" data-math-field="'+id+'" placeholder="0" value="'+(value==null?'':value)+'" aria-label="'+label+'"></label>';
+        }
+        function initPolynomialFields(rootId,kind) {
+            const root=$(rootId), hidden=$(kind==='equation'?'eqInput':'ineqInput');
+            let degree='quadratic', relation='>=';
+            const examples=kind==='equation'
+                ? {'linear':'2x+3=0','quadratic':'x^2-5x+6=0','cubic':'x^3-6x=0','custom':'(x-1)(x+2)=0'}
+                : {'linear':'2x+3>0','quadratic':'x^2-5x+6<0','cubic':'x^3-x>=0','custom':'1/x>=2'};
+            function fields(){return degree==='linear'?[['a','a','2'],['b','b','3']]:degree==='quadratic'?[['a','a','1'],['b','b','-5'],['c','c','6']]:degree==='cubic'?[['a','a','1'],['b','b','0'],['c','c','-6'],['d','d','0']]:[];}
+            function render(){
+                if(!root)return;
+                root.innerHTML='<div class="structured-top"><label class="structured-select"><span>方程形式</span><select data-degree><option value="linear">一次标准式</option><option value="quadratic">二次标准式</option><option value="cubic">三次标准式</option><option value="custom">分式 / 括号 / 自定义</option></select></label>'+
+                    (kind==='inequality'?'<label class="structured-select"><span>不等号</span><select data-relation><option value=">">大于（&gt;）</option><option value=">=">大于等于（≥）</option><option value="<">小于（&lt;）</option><option value="<=">小于等于（≤）</option></select></label>':'')+'</div>'+
+                    '<div class="structured-equation" data-equation-preview></div><div class="structured-coefficients" data-coefficients></div>'+
+                    '<div class="structured-hint">选择标准式后分别填写系数；未填写的系数按 0 处理。</div>'+
+                    '<div class="structured-examples">'+Object.keys(examples).map(function(k){return '<button type="button" class="zx-chip" data-structured-example="'+k+'">'+({linear:'一次示例',quadratic:'二次示例',cubic:'三次示例',custom:'分式/括号示例'}[k])+'</button>';}).join('')+'</div>';
+                const sel=root.querySelector('[data-degree]');sel.value=degree;
+                const rel=root.querySelector('[data-relation]');if(rel)rel.value=relation;
+                drawCoefficients();
+                sel.addEventListener('change',function(){degree=sel.value;drawCoefficients();});
+                if(rel)rel.addEventListener('change',function(){relation=rel.value;});
+                root.querySelectorAll('[data-structured-example]').forEach(function(b){b.addEventListener('click',function(){setExample(examples[b.getAttribute('data-structured-example')]);});});
+            }
+            function drawCoefficients(){
+                const box=root.querySelector('[data-coefficients]'),preview=root.querySelector('[data-equation-preview]');
+                if(degree==='custom'){
+                    box.innerHTML=structuredField('custom','输入完整表达式',examples.custom);
+                    box.querySelector('input').setAttribute('data-custom-expression','1');
+                    preview.textContent=kind==='equation'?'自定义方程：左侧 = 右侧':'自定义不等式：表达式与不等号';
+                }else{
+                    box.innerHTML=fields().map(function(f){return structuredField(f[0],f[1],f[2]);}).join('');
+                    preview.textContent=degree==='linear'?'ax + b = 0':degree==='quadratic'?'ax² + bx + c = 0':'ax³ + bx² + cx + d = 0';
+                    if(kind==='inequality')preview.textContent=preview.textContent.replace('= 0',relation+' 0');
+                }
+                if(typeof initSolveKeypad==='function')initSolveKeypad();
+            }
+            function getRaw(){
+                if(degree==='custom'){const el=root.querySelector('[data-custom-expression]');return el?el.value.trim():'';}
+                const v={};root.querySelectorAll('[data-math-field]').forEach(function(el){v[el.getAttribute('data-math-field')]=String(el.value||'').trim()||'0';});
+                if(Object.keys(v).some(function(k){return v[k]!==''&&!Number.isFinite(Number(v[k]));}))return '';
+                if(degree==='linear')return v.a+'*x+'+v.b+(kind==='equation'?'=0':relation+'0');
+                if(degree==='quadratic')return v.a+'*x^2+'+v.b+'*x+'+v.c+(kind==='equation'?'=0':relation+'0');
+                return v.a+'*x^3+'+v.b+'*x^2+'+v.c+'*x+'+v.d+(kind==='equation'?'=0':relation+'0');
+            }
+            function setExample(expr){
+                if(expr.indexOf('x^3')>=0)degree='cubic';else if(expr.indexOf('x^2')>=0)degree='quadratic';else if(expr.indexOf('/')>=0||expr.indexOf('(')>=0)degree='custom';else degree='linear';
+                render();
+                if(degree==='custom'){const el=root.querySelector('[data-custom-expression]');if(el)el.value=expr;return;}
+                const relationMatch=expr.match(/(>=|<=|>|<)/);if(kind==='inequality'&&relationMatch){relation=relationMatch[1];const rel=root.querySelector('[data-relation]');if(rel)rel.value=relation;}
+                const left=expr.split(kind==='equation'?'=':/(?:>=|<=|>|<)/)[0];
+                const map={a:'0',b:'0',c:'0',d:'0'};
+                let m;
+                const regex=/([+-]?)\s*(?:(\d*\.?\d*)\s*\*?\s*)?x(?:\s*\^\s*(\d+))?/g;
+                while((m=regex.exec(left))){const power=m[3]?Number(m[3]):1;const coeff=m[2]===''||m[2]==null?1:Number(m[2]);map[power===3?'a':power===2?'b':power===1?'c':'d']=String((m[1]==='-'?-1:1)*coeff);}
+                // Built-in examples use simple coefficients; assign by direct expression parsing fallback.
+                const fields=root.querySelectorAll('[data-math-field]');
+                if(degree==='linear'){fields[0].value=expr.includes('2x')?'2':'1';fields[1].value=expr.includes('+3')?'3':expr.includes('-3')?'-3':'0';}
+                else if(degree==='quadratic'){fields[0].value='1';fields[1].value=expr.includes('-5x')?'-5':'0';fields[2].value=expr.includes('+6')?'6':expr.includes('-6')?'-6':'0';}
+                else{fields[0].value='1';fields[1].value='0';fields[2].value=expr.includes('-6x')?'-6':expr.includes('-x')?'-1':'0';fields[3].value='0';}
+            }
+            function clear(){root.querySelectorAll('[data-math-field]').forEach(function(el){el.value='';});const custom=root.querySelector('[data-custom-expression]');if(custom)custom.value='';}
+            render();return {getRaw:getRaw,clear:clear,setExample:setExample};
+        }
+        function initPointFields(rootId){
+            const root=$(rootId);
+            function count(){return fitKind==='linear'?2:fitKind==='quad'?3:fitKind==='cubic'?4:1;}
+            function render(){
+                const n=count();root.innerHTML='<div class="structured-top"><div class="structured-form-title">'+({linear:'一次函数：输入 2 个点',quad:'二次函数：输入 3 个点',cubic:'三次函数：输入 4 个点',inverse:'反比例函数：输入 1 个点',auto:'自动判断点数'}[fitKind]||'输入坐标点')+'</div></div>'+
+                    '<div class="structured-points">'+Array.from({length:n},function(_,i){return '<div class="structured-point"><b>点 '+(i+1)+'</b>'+structuredField('x'+i,'x'+(i+1),'')+structuredField('y'+i,'y'+(i+1),'')+'</div>';}).join('')+'</div>'+
+                    '<div class="structured-hint">每个坐标的 x、y 分开填写；切换函数类型会调整所需点数。</div>';
+                if(typeof initSolveKeypad==='function')initSolveKeypad();
+            }
+            function getRaw(){
+                const points=[];let valid=true;
+                root.querySelectorAll('.structured-point').forEach(function(p){const a=p.querySelector('[data-math-field^="x"]'),b=p.querySelector('[data-math-field^="y"]');if(!a.value.trim()||!b.value.trim())valid=false;points.push('('+a.value.trim()+','+b.value.trim()+')');});
+                return valid?points.join(' '):'';
+            }
+            function setExample(src){
+                const pts=src.match(/\([^()]+\)/g)||[];
+                render();const inputs=root.querySelectorAll('[data-math-field]');
+                pts.forEach(function(p,i){const nums=p.slice(1,-1).split(',');if(inputs[i*2])inputs[i*2].value=nums[0];if(inputs[i*2+1])inputs[i*2+1].value=nums[1];});
+            }
+            function clear(){root.querySelectorAll('[data-math-field]').forEach(function(el){el.value='';});}
+            render();return {getRaw:getRaw,clear:clear,setExample:setExample,render:render};
+        }
+
         function initEquation() {
+            const ui = initPolynomialFields('eqStructured','equation');
             makeSolver({
                 kind: 'equation', input: 'eqInput', out: 'eqOut', btn: 'eqSolveBtn', clear: 'eqClearBtn', inserts: 'eqInserts',
-                run: function (s) { return zxSolveEquation(s); },
-                setOf: true,
-                emptyHint: '请输入方程，例如 2x+3=7、x^2-5x+6=0'
+                run: function (s) { return zxSolveEquation(s); }, getRaw: ui.getRaw, onClear: ui.clear,
+                setRawFromExample: ui.setExample, setOf: true,
+                emptyHint: '请输入方程系数'
             }).solve(true);
         }
 
         function initInequality() {
+            const ui = initPolynomialFields('ineqStructured','inequality');
             makeSolver({
                 kind: 'inequality', input: 'ineqInput', out: 'ineqOut', btn: 'ineqSolveBtn', clear: 'ineqClearBtn', inserts: 'ineqInserts',
-                run: function (s) { return zxSolveInequality(s); },
-                interval: true,
-                emptyHint: '请输入不等式，例如 2x+3>7、x^2-5x+6<0'
+                run: function (s) { return zxSolveInequality(s); }, getRaw: ui.getRaw, onClear: ui.clear,
+                setRawFromExample: ui.setExample, interval: true,
+                emptyHint: '请输入不等式系数'
             }).solve(true);
         }
 
         function initFit() {
+            const ui = initPointFields('fitStructured');
             const fitSolver = makeSolver({
                 kind: 'fit', input: 'fitInput', out: 'fitOut', btn: 'fitBtn', clear: 'fitClearBtn', inserts: 'fitTypes',
-                run: function (s) { return zxFitFunction(s, fitKind); },
-                emptyHint: '请输入坐标，例如 (1,2) (3,6)、(0,1) (1,-1) (2,1)',
+                run: function (s) { return zxFitFunction(s, fitKind); }, getRaw: ui.getRaw, onClear: ui.clear,
+                setRawFromExample: ui.setExample,
+                emptyHint: '请填写所需坐标点',
                 restore: function (raw) { return JSON.stringify({ points: raw, type: fitKind }); }
             });
             if (fitSolver) fitSolver.solve(true);
@@ -2216,6 +2315,7 @@ function zxEvalArithmetic(src) {
                 if (!t) return;   /* 没带 data-fit 的是示例按钮，交给上面的处理 */
                 fitKind = t;
                 types.querySelectorAll('[data-fit]').forEach(function (x) { x.classList.toggle('is-active', x === b); });
+                ui.render();
                 if (fitSolver) fitSolver.solve(true);
             });
         }
