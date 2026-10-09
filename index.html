@@ -732,7 +732,7 @@ html.light .zx-step-text{color:#5a6376}
                         </div>
                     </div>
                     <div class="zx-label">方程输入</div>
-                    <input id="eqInput" type="text" autocomplete="off" spellcheck="false" placeholder="例如 2x+3=7、x^2-5x+6=0、1/x=2" aria-label="方程输入" class="zx-field font-mono">
+                    <input id="eqInput" type="text" autocomplete="off" spellcheck="false" placeholder="例如 x^3-6x=0、(x-1)(x+2)=0、1/x=2" aria-label="方程输入" class="zx-field font-mono">
                     <div id="eqInserts" class="flex flex-wrap items-center gap-1.5 mt-2">
                         <button type="button" class="zx-chip" data-ins="x" title="插入 x">x</button>
                         <button type="button" class="zx-chip" data-ins="^2" title="插入平方">x²</button>
@@ -743,6 +743,8 @@ html.light .zx-step-text{color:#5a6376}
                         <button type="button" class="zx-chip zx-eg" data-eg="x^2-5x+6=0">x²-5x+6=0</button>
                         <button type="button" class="zx-chip zx-eg" data-eg="1/x=2">1/x=2</button>
                         <button type="button" class="zx-chip zx-eg" data-eg="x^2-2x+5=0">x²-2x+5=0</button>
+                        <button type="button" class="zx-chip zx-eg" data-eg="x^3-6x=0">x³−6x=0</button>
+                        <button type="button" class="zx-chip zx-eg" data-eg="(x-1)(x+2)=0">(x−1)(x+2)=0</button>
                     </div>
                     <div class="flex flex-wrap gap-2 mt-3">
                         <button type="button" id="eqSolveBtn" class="zx-btn is-go"><i class="fa-solid fa-equals"></i>求解</button>
@@ -777,6 +779,7 @@ html.light .zx-step-text{color:#5a6376}
                         <button type="button" class="zx-chip zx-eg" data-eg="x^2-5x+6&lt;0">x²-5x+6&lt;0</button>
                         <button type="button" class="zx-chip zx-eg" data-eg="1/x≥2">1/x≥2</button>
                         <button type="button" class="zx-chip zx-eg" data-eg="x^2+1&gt;0">x²+1&gt;0</button>
+                        <button type="button" class="zx-chip zx-eg" data-eg="x^3-x&gt;0">x³−x&gt;0</button>
                     </div>
                     <div class="flex flex-wrap gap-2 mt-3">
                         <button type="button" id="ineqSolveBtn" class="zx-btn is-go"><i class="fa-solid fa-equals"></i>求解</button>
@@ -809,7 +812,7 @@ html.light .zx-step-text{color:#5a6376}
                         <button type="button" class="zx-chip zx-eg" data-eg="(1,2) (3,6)">两点</button>
                         <button type="button" class="zx-chip zx-eg" data-eg="(0,1) (1,-1) (2,1)">三点</button>
                         <button type="button" class="zx-chip zx-eg" data-eg="(2,3)">反比例</button>
-                        <button type="button" class="zx-chip zx-eg" data-eg="(0,1) (1,0) (2,3) (3,10)">四点</button>
+                        <button type="button" class="zx-chip zx-eg" data-eg="(0,0) (1,1) (2,8) (3,27)">四点</button>
                     </div>
                     <div class="flex flex-wrap gap-2 mt-3">
                         <button type="button" id="fitBtn" class="zx-btn is-go"><i class="fa-solid fa-chart-line"></i>求解析式</button>
