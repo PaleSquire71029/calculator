@@ -1197,13 +1197,13 @@ function zxSolveEquation(src) {
 
     const a = num[2], b = num[1], c = num[0];
     const D = b * b - 4 * a * c;
-    const sg = function (v) { return v < 0 ? ('− ' + zxFmtNum(Math.abs(v))) : zxFmtNum(v); };
+    const sg = function (v) { return v < 0 ? ('−' + zxFmtNum(Math.abs(v))) : zxFmtNum(v); };
     const term = function (v, symbol, first) {
         if (Math.abs(v) < 1e-12) return '';
         const abs = Math.abs(v);
         const coefficient = symbol && Math.abs(abs - 1) < 1e-12 ? '' : zxFmtNum(abs);
         const body = coefficient + symbol;
-        if (first) return v < 0 ? '− ' + body : body;
+        if (first) return v < 0 ? '−' + body : body;
         return v < 0 ? ' − ' + body : ' + ' + body;
     };
     const equation = term(a, 'x²', true) + term(b, 'x', false) + term(c, '', false);
@@ -1235,7 +1235,7 @@ function zxSolveEquation(src) {
     const isSq = Math.abs(sq - Math.round(sq)) < 1e-9;
     const r1 = (-b + sq) / (2 * a), r2 = (-b - sq) / (2 * a);
     lines.push('Δ > 0 → 两个不相等的实根');
-    lines.push('x = (' + sg(-b) + ' ± ' + (isSq ? zxFmtNum(sq) : ('√' + zxFmtNum(D))) + ') / ' + zxFmtNum(2 * a));
+    lines.push('x = (' + sg(-b) + ' ± ' + (isSq ? zxFmtNum(sq) : ('√' + zxFmtNum(D))) + ') / ' + sg(2 * a));
     lines.push('');
     const kept = [], dropped = [];
     [r1, r2].forEach(function (x) { (nearPole(x) ? dropped : kept).push(x); });
