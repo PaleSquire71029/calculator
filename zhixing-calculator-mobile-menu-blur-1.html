@@ -1981,12 +1981,12 @@ function zxEvalArithmetic(src) {
             function hide(){pad.classList.remove('is-visible');document.body.classList.remove('zx-mathpad-open');}
             document.addEventListener('focusin',function(e){
                 const el=e.target;
-                if(!el.matches||!el.matches(selector))return;
+                if(!el.matches||!el.matches(selector)||el.closest('.solve-subview'))return;
                 if(mobile.matches){e.preventDefault();show(el);}
             });
             document.addEventListener('click',function(e){
                 const el=e.target.closest&&e.target.closest(selector);
-                if(el&&mobile.matches){active=el;show(el);return;}
+                if(el&&mobile.matches&&!el.closest('.solve-subview')){active=el;show(el);return;}
                 const key=e.target.closest&&e.target.closest('#zxMobileMathPad [data-value]');
                 if(!key)return;
                 const action=key.getAttribute('data-value');
