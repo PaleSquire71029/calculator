@@ -576,6 +576,27 @@ html.light .zx-process{border-top-color:rgba(31,36,48,.08)}
 html.light .zx-step{border-bottom-color:rgba(31,36,48,.08)}
 html.light .zx-step-text{color:#5a6376}
 </style>
+<style>
+.function-task-tabs{margin-bottom:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.function-task-tabs button,.function-expr-examples button{border:1px solid var(--border-color,rgba(148,163,184,.22));border-radius:10px;padding:9px 10px;font-size:12px;line-height:1.35;color:var(--text-secondary,#a1a1aa);background:rgba(127,127,127,.06);transition:background .15s,border-color .15s,color .15s}
+.function-task-tabs button.is-active{color:var(--text-primary,#f4f4f5);border-color:var(--accent,#8b9cff);background:rgba(139,156,255,.13)}
+.function-expression-panel,.function-point-workbench{display:grid;gap:12px;min-width:0}
+.function-expression-field{display:flex!important;flex-direction:row!important;align-items:center;gap:12px}
+.function-expression-field span{white-space:nowrap;font-weight:650}
+.function-expression-field input{min-width:0;flex:1;font-size:16px!important}
+.function-expr-examples{display:flex;flex-wrap:wrap;gap:6px}
+.function-expr-examples button{padding:7px 9px;font-size:11px}
+.function-value-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.function-value-row .structured-field{flex:0 1 190px}
+.function-value-note{font-size:11px;color:var(--text-secondary,#a1a1aa)}
+.function-graph{min-width:0;border:1px solid var(--border-color,rgba(148,163,184,.18));border-radius:14px;overflow:hidden;background:rgba(127,127,127,.035)}
+.function-graph:empty{display:none}
+.function-graph-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;font-size:12px;font-weight:650}
+.function-graph-head small{font-size:10px;font-weight:400;opacity:.65}
+.function-graph svg{display:block;width:100%;height:auto;color:var(--text-primary,#e4e4e7)}
+.function-graph-empty{padding:14px;font-size:12px;color:var(--text-secondary,#a1a1aa)}
+@media(max-width:520px){.function-task-tabs button{padding:8px 4px;font-size:11px}.function-value-row .structured-field{flex:1 1 100%}.function-graph-head small{font-size:9px}}
+</style>
 </head>
 <body class="text-slate-300 antialiased">
 
@@ -1914,7 +1935,9 @@ function zxEvalArithmetic(src) {
                     fitKind = cfg.type;
                 }
                 if (fitStructuredApi) {
-                    if(cfg&&cfg.mode==='coefficients'){fitInputMode='coefficients';fitStructuredApi.setCoeffs(cfg.coeffs||{});}
+                    fitTaskMode=(cfg&&cfg.task)||((cfg&&cfg.mode==='coefficients')?'coefficients':'points');
+                    if(fitTaskMode==='expression'){fitStructuredApi.render();const exprEl=document.querySelector('#fitStructured [data-math-field="expr"]');if(exprEl)exprEl.value=(cfg&&cfg.points)||'';const xEl=document.querySelector('#fitStructured [data-math-field="exprX"]');if(xEl&&cfg&&cfg.expressionX!==null&&cfg.expressionX!==undefined)xEl.value=String(cfg.expressionX);}
+                    else if(cfg&&cfg.mode==='coefficients'){fitInputMode='coefficients';fitStructuredApi.setCoeffs(cfg.coeffs||{});}
                     else{fitInputMode='points';fitStructuredApi.render();fitStructuredApi.setExample((cfg&&cfg.points)||(h.restore||''));}
                 }
                 $('fitBtn').click();
@@ -2126,7 +2149,7 @@ function zxEvalArithmetic(src) {
         /* ==================================================================
            八、界面 2/3/4：方程、不等式、解析式（共用一套求解框架）
            ================================================================== */
-        let fitKind = 'auto', fitInputMode = 'points';
+        let fitKind = 'auto', fitInputMode = 'points', fitTaskMode = 'expression';
         let eqStructuredApi = null, ineqStructuredApi = null, fitStructuredApi = null;
 
         function makeSolver(cfg) {
@@ -2273,7 +2296,21 @@ function zxEvalArithmetic(src) {
             function coeffNames(){return fitKind==='linear'?['a','b']:fitKind==='quad'?['a','b','c']:fitKind==='cubic'?['a','b','c','d']:['k'];}
             function render(){
                 const n=count();
+                const taskButtons='<div class="structured-mode-tabs function-task-tabs" role="tablist" aria-label="函数任务"><button type="button" data-fit-task="expression" class="'+(fitTaskMode==='expression'?'is-active':'')+'">解析式分析</button><button type="button" data-fit-task="points" class="'+(fitTaskMode==='points'?'is-active':'')+'">由条件求解析式</button><button type="button" data-fit-task="coefficients" class="'+(fitTaskMode==='coefficients'?'is-active':'')+'">系数与性质</button></div>';
                 const modeButtons='<div class="structured-mode-tabs"><button type="button" data-fit-input-mode="points" class="'+(fitInputMode==='points'?'is-active':'')+'">由坐标求解析式</button><button type="button" data-fit-input-mode="coefficients" class="'+(fitInputMode==='coefficients'?'is-active':'')+'">标准式系数输入</button></div>';
+                const typeBar=$('fitTypes');if(typeBar)typeBar.style.display=fitTaskMode==='expression'?'none':'';
+                if(fitTaskMode==='expression'){
+                    root.innerHTML=taskButtons+'<div class="function-expression-panel"><div class="structured-form-title">输入函数表达式</div>'+
+                    '<label class="structured-field function-expression-field"><span>f(x) =</span><input type="text" data-math-field="expr" autocomplete="off" spellcheck="false" inputmode="none" placeholder="例如：(x-2)^2+3" aria-label="函数表达式"></label>'+
+                    '<div class="function-expr-examples"><button type="button" data-expr-example="(x-2)^2+3">二次函数</button><button type="button" data-expr-example="(x-1)*(x+2)">因式分解式</button><button type="button" data-expr-example="1/(x-2)">分式函数</button><button type="button" data-expr-example="sqrt(x+3)">根式函数</button><button type="button" data-expr-example="sin(x)">三角函数</button><button type="button" data-expr-example="ln(x)">对数函数</button></div>'+
+                    '<div class="function-value-row"><label class="structured-field"><span>求函数值 x =</span><input type="text" data-math-field="exprX" inputmode="none" autocomplete="off" placeholder="选填" aria-label="函数值的自变量"></label><span class="function-value-note">留空则分析表达式并绘图</span></div>'+
+                    '<div class="structured-hint">支持 + − × ÷、乘方、括号、隐式乘法（如 2x）、π、e，以及 sin、cos、tan、sqrt、abs、ln、log、exp 等常用函数。三角函数默认使用弧度。</div><div id="fitGraph" class="function-graph" aria-label="函数图像"></div></div>';
+                    root.querySelectorAll('[data-expr-example]').forEach(function(btn){btn.addEventListener('click',function(){const el=root.querySelector('[data-math-field="expr"]');if(el)el.value=btn.getAttribute('data-expr-example');});});
+                    root.querySelectorAll('[data-fit-task]').forEach(function(btn){btn.addEventListener('click',function(){fitTaskMode=btn.getAttribute('data-fit-task');if(fitTaskMode==='coefficients')fitInputMode='coefficients';else if(fitTaskMode==='points')fitInputMode='points';render();});});
+                    const fitBtnEl=$('fitBtn');if(fitBtnEl)fitBtnEl.innerHTML='<i class="fa-solid fa-chart-line"></i>分析函数';
+                    if(typeof initSolveKeypad==='function')initSolveKeypad();
+                    return;
+                }
                 const title=({linear:'一次函数',quad:'二次函数',cubic:'三次函数',inverse:'反比例函数',auto:'自动判断点数'}[fitKind]||'函数');
                 let body='';
                 if(fitInputMode==='coefficients'){
@@ -2283,15 +2320,17 @@ function zxEvalArithmetic(src) {
                     body='<div class="structured-points">'+Array.from({length:n},function(_,i){return '<div class="structured-point"><b>点 '+(i+1)+'</b>'+structuredField('x'+i,'x'+(i+1),'')+structuredField('y'+i,'y'+(i+1),'')+'</div>';}).join('')+'</div>'+
                         '<div class="structured-hint">'+(fitKind==='auto'?'自动模式最多填写 4 个点：1 个点求反比例，2 个点求一次，3 个点求二次，4 个点求三次；空白点会忽略。':'每个坐标的 x、y 分开填写；切换函数类型会调整所需点数。')+'</div>';
                 }
-                root.innerHTML=modeButtons+'<div class="structured-top"><div class="structured-form-title">'+title+(fitInputMode==='coefficients'?'：分别输入系数':'：输入坐标')+'</div></div>'+body;
+                root.innerHTML=taskButtons+'<div class="function-point-workbench">'+modeButtons+'<div class="structured-top"><div class="structured-form-title">'+title+(fitInputMode==='coefficients'?'：分别输入系数':'：输入坐标')+'</div></div>'+body+'</div>';
                 const fitBtnEl=$('fitBtn');if(fitBtnEl)fitBtnEl.innerHTML=fitInputMode==='coefficients'?'<i class="fa-solid fa-chart-line"></i>分析函数':'<i class="fa-solid fa-chart-line"></i>求解析式';
-                root.querySelectorAll('[data-fit-input-mode]').forEach(function(btn){btn.addEventListener('click',function(){fitInputMode=btn.getAttribute('data-fit-input-mode');if(fitInputMode==='coefficients'&&fitKind==='auto')fitKind='quad';document.querySelectorAll('#fitTypes [data-fit]').forEach(function(b){b.classList.toggle('is-active',b.getAttribute('data-fit')===fitKind);});render();});});
+                root.querySelectorAll('[data-fit-task]').forEach(function(btn){btn.addEventListener('click',function(){fitTaskMode=btn.getAttribute('data-fit-task');fitInputMode=fitTaskMode==='coefficients'?'coefficients':'points';if(fitInputMode==='coefficients'&&fitKind==='auto')fitKind='quad';document.querySelectorAll('#fitTypes [data-fit]').forEach(function(b){b.classList.toggle('is-active',b.getAttribute('data-fit')===fitKind);});render();});});
+                root.querySelectorAll('[data-fit-input-mode]').forEach(function(btn){btn.addEventListener('click',function(){fitInputMode=btn.getAttribute('data-fit-input-mode');fitTaskMode=fitInputMode==='coefficients'?'coefficients':'points';if(fitInputMode==='coefficients'&&fitKind==='auto')fitKind='quad';document.querySelectorAll('#fitTypes [data-fit]').forEach(function(b){b.classList.toggle('is-active',b.getAttribute('data-fit')===fitKind);});render();});});
                 if(typeof initSolveKeypad==='function')initSolveKeypad();
             }
             function getCoeffs(){
                 const names=coeffNames(),out={};names.forEach(function(name){const el=root.querySelector('[data-math-field="coef'+name+'"]');const raw=el?el.value.trim():'';out[name]=raw===''?0:Number(raw);if(!Number.isFinite(out[name]))out[name]=NaN;});return out;
             }
             function getRaw(){
+                if(fitTaskMode==='expression'){const el=root.querySelector('[data-math-field="expr"]');return el?el.value.trim():'';}
                 if(fitInputMode==='coefficients'){const fields=Array.from(root.querySelectorAll('[data-math-field]'));if(!fields.some(function(el){return el.value.trim()!=='';}))return '';const c=getCoeffs();if(Object.keys(c).some(function(k){return !Number.isFinite(c[k]);}))return '';return fitKind==='linear'?'y=('+c.a+')*x+('+c.b+')':fitKind==='quad'?'y=('+c.a+')*x^2+('+c.b+')*x+('+c.c+')':fitKind==='cubic'?'y=('+c.a+')*x^3+('+c.b+')*x^2+('+c.c+')*x+('+c.d+')':'y=('+c.k+')/x';}
                 const points=[];let valid=true;
                 root.querySelectorAll('.structured-point').forEach(function(p){const a=p.querySelector('[data-math-field^="x"]'),b=p.querySelector('[data-math-field^="y"]'),x=a.value.trim(),y=b.value.trim();if(!x&&!y)return;if(!x||!y||!Number.isFinite(Number(x))||!Number.isFinite(Number(y))){valid=false;return;}points.push('('+x+','+y+')');});
@@ -2305,8 +2344,9 @@ function zxEvalArithmetic(src) {
                 render();const inputs=root.querySelectorAll('[data-math-field]');
                 pts.forEach(function(p,i){const nums=p.slice(1,-1).split(',');if(inputs[i*2])inputs[i*2].value=nums[0];if(inputs[i*2+1])inputs[i*2+1].value=nums[1];});
             }
-            function clear(){root.querySelectorAll('[data-math-field]').forEach(function(el){el.value='';});}
-            render();return {getRaw:getRaw,getCoeffs:getCoeffs,clear:clear,setExample:setExample,setCoeffs:setCoeffs,render:render};
+            function clear(){root.querySelectorAll('[data-math-field]').forEach(function(el){el.value='';});const g=$('fitGraph');if(g)g.innerHTML='';}
+            function getExpressionX(){const el=root.querySelector('[data-math-field="exprX"]');if(!el||el.value.trim()==='')return null;const n=Number(el.value);return Number.isFinite(n)?n:NaN;}
+            render();return {getRaw:getRaw,getCoeffs:getCoeffs,getExpressionX:getExpressionX,clear:clear,setExample:setExample,setCoeffs:setCoeffs,render:render};
         }
 
         function initEquation() {
@@ -2331,7 +2371,50 @@ function zxEvalArithmetic(src) {
             }).solve(true);
         }
 
-        function zxAnalyzeFunctionCoefficients(kind,c) {
+/* 安全的函数表达式解析器：不使用 eval / Function，支持常见初等函数与隐式乘法。 */
+        function zxCompileFunctionExpression(source){
+            let raw=String(source||'').trim().replace(/π/g,'pi').replace(/×/g,'*').replace(/÷/g,'/');
+            raw=raw.replace(/^\s*(?:y|f\s*\(\s*x\s*\))\s*=/i,'').trim();
+            if(!raw)return {ok:false,error:'请先输入函数表达式'};
+            const tokens=[];let i=0;
+            while(i<raw.length){if(/\s/.test(raw[i])){i++;continue;}const m=raw.slice(i).match(/^(?:(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+\-]?\d+)?|[A-Za-z_][A-Za-z_0-9]*|[+\-*\/^(),])/);if(!m)return {ok:false,error:'无法识别的位置：'+raw.slice(i,i+12)};tokens.push(m[0]);i+=m[0].length;}
+            let p=0;const peek=()=>tokens[p]||'',take=()=>tokens[p++];
+            const funcs={sin:Math.sin,cos:Math.cos,tan:Math.tan,asin:Math.asin,acos:Math.acos,atan:Math.atan,sqrt:Math.sqrt,abs:Math.abs,ln:Math.log,log:function(x){return Math.log10?Math.log10(x):Math.log(x)/Math.LN10;},log10:function(x){return Math.log10?Math.log10(x):Math.log(x)/Math.LN10;},exp:Math.exp,floor:Math.floor,ceil:Math.ceil,round:Math.round};
+            function primary(){const t=take();if(!t)throw Error('表达式不完整');if(t==='('){const n=add();if(take()!==')')throw Error('缺少右括号 )');return n;}if(/^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+\-]?\d+)?$/.test(t))return {type:'num',v:Number(t)};if(/^[A-Za-z_]/.test(t)){const name=t.toLowerCase();if(peek()==='('&&funcs[name]){take();const args=[add()];while(peek()===','){take();args.push(add());}if(take()!==')')throw Error('函数 '+name+' 缺少右括号');if(args.length!==1)throw Error(name+' 目前需要一个参数');return {type:'call',name:name,arg:args[0]};}if(name==='x')return {type:'x'};if(name==='pi')return {type:'num',v:Math.PI};if(name==='e')return {type:'num',v:Math.E};throw Error('未知变量或函数：'+t);}throw Error('表达式中出现意外符号：'+t);}
+            function power(){let n=primary();if(peek()==='^'){take();n={type:'bin',op:'^',a:n,b:unary()};}return n;}
+            function unary(){if(peek()==='+'){take();return unary();}if(peek()==='-'){take();return {type:'neg',a:unary()};}return power();}
+            function startsPrimary(t){return !!t&&(t==='('||/^(?:\d|\.)/.test(t)||/^[A-Za-z_]/.test(t));}
+            function mul(){let n=unary();while(true){const op=peek();if(op==='*'||op==='/'){take();n={type:'bin',op:op,a:n,b:unary()};}else if(startsPrimary(op)){n={type:'bin',op:'*',a:n,b:unary()};}else break;}return n;}
+            function add(){let n=mul();while(peek()==='+'||peek()==='-'){const op=take();n={type:'bin',op:op,a:n,b:mul()};}return n;}
+            let ast;try{ast=add();if(p<tokens.length)throw Error('多余内容：'+tokens.slice(p).join(''));}catch(e){return {ok:false,error:e.message||'表达式格式有误'};}
+            function evalNode(n,x){let v;if(n.type==='num')return n.v;if(n.type==='x')return x;if(n.type==='neg')return -evalNode(n.a,x);if(n.type==='call')return funcs[n.name](evalNode(n.arg,x));const a=evalNode(n.a,x),b=evalNode(n.b,x);if(n.op==='+')v=a+b;else if(n.op==='-')v=a-b;else if(n.op==='*')v=a*b;else if(n.op==='/')v=a/b;else v=Math.pow(a,b);return v;}
+            return {ok:true,source:raw,eval:function(x){return evalNode(ast,x);}};
+        }
+        function zxAnalyzeFunctionExpression(source,xValue){
+            const f=zxCompileFunctionExpression(source);if(!f.ok)return f;
+            const lines=['函数表达式：f(x) = '+f.source];
+            if(xValue!==null){if(!Number.isFinite(xValue))return {ok:false,error:'x 必须是有效数字'};const y=f.eval(xValue);lines.push('函数值：f('+zxFmtNum(xValue)+') = '+(Number.isFinite(y)?zxNumText(y):'无定义（该点不在函数定义域内）'));}
+            const roots=[];let prevX=-50,prevY;try{prevY=f.eval(prevX);}catch(e){prevY=NaN;}
+            for(let j=1;j<=1000;j++){const x=-50+j*0.1;let y;try{y=f.eval(x);}catch(e){y=NaN;}if(Number.isFinite(prevY)&&Number.isFinite(y)){if(Math.abs(prevY)<1e-7)roots.push(prevX);else if(prevY*y<0){let lo=prevX,hi=x,fl=prevY;for(let k=0;k<35;k++){const mid=(lo+hi)/2,fm=f.eval(mid);if(!Number.isFinite(fm))break;if(fl*fm<=0)hi=mid;else{lo=mid;fl=fm;}}roots.push((lo+hi)/2);}}prevX=x;prevY=y;}
+            const unique=[];roots.forEach(function(r){if(!unique.some(function(q){return Math.abs(q-r)<1e-3;}))unique.push(r);});
+            lines.push('零点数值搜索（−50 至 50）：'+(unique.length?unique.slice(0,8).map(function(v){return 'x ≈ '+zxFmtNum(v,4);}).join('，')+(unique.length>8?'等':''):'未检测到零点；偶重根或区间外零点可能未被识别'));
+            lines.push('定义域提示：请结合表达式中的分母、根式、对数等限制判断；图像为数值采样结果。');
+            return {ok:true,text:lines.join('\n'),compiled:f};
+        }
+        function zxRenderFunctionGraph(source){
+            const host=$('fitGraph');if(!host)return;const f=zxCompileFunctionExpression(source);if(!f.ok){host.innerHTML='';return;}
+            const W=640,H=260,L=38,R=12,T=12,B=26,xMin=-10,xMax=10,plotW=W-L-R,plotH=H-T-B;
+            const samples=[];let min=Infinity,max=-Infinity;
+            for(let i=0;i<=500;i++){const x=xMin+(xMax-xMin)*i/500;let y;try{y=f.eval(x);}catch(e){y=NaN;}if(!Number.isFinite(y)||Math.abs(y)>1e5)y=NaN;samples.push({x:x,y:y});if(Number.isFinite(y)){min=Math.min(min,y);max=Math.max(max,y);}}
+            if(!Number.isFinite(min)){host.innerHTML='<div class="function-graph-empty">当前区间内没有可绘制的实数值。</div>';return;}
+            let yMin=min,yMax=max;if(Math.abs(yMax-yMin)<1e-9){yMin-=1;yMax+=1;}else{const pad=(yMax-yMin)*0.12;yMin-=pad;yMax+=pad;}yMin=Math.max(yMin,-1000);yMax=Math.min(yMax,1000);if(yMin>=yMax){yMin=-10;yMax=10;}
+            const X=x=>L+(x-xMin)/(xMax-xMin)*plotW,Y=y=>T+(yMax-y)/(yMax-yMin)*plotH;
+            let grid='';for(let k=0;k<=4;k++){const yy=T+plotH*k/4,val=yMax-(yMax-yMin)*k/4;grid+='<line x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'" stroke="currentColor" opacity=".12"/><text x="'+(L-5)+'" y="'+(yy+4)+'" text-anchor="end" font-size="10" fill="currentColor" opacity=".65">'+zxFmtNum(val,2)+'</text>';}
+            const zeroY=Y(0),zeroX=X(0);if(zeroY>=T&&zeroY<=T+plotH)grid+='<line x1="'+L+'" y1="'+zeroY+'" x2="'+(W-R)+'" y2="'+zeroY+'" stroke="currentColor" opacity=".55"/>';if(zeroX>=L&&zeroX<=W-R)grid+='<line x1="'+zeroX+'" y1="'+T+'" x2="'+zeroX+'" y2="'+(T+plotH)+'" stroke="currentColor" opacity=".55"/>';
+            let d='',pen=false; samples.forEach(function(q){if(!Number.isFinite(q.y)){pen=false;return;}const px=X(q.x),py=Y(Math.max(yMin,Math.min(yMax,q.y)));if(!pen){d+='M'+px.toFixed(2)+','+py.toFixed(2);pen=true;}else d+='L'+px.toFixed(2)+','+py.toFixed(2);});
+            host.innerHTML='<div class="function-graph-head"><span>函数图像</span><small>显示区间：−10 ≤ x ≤ 10</small></div><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="函数图像">'+grid+'<path d="'+d+'" fill="none" stroke="var(--accent,#8b9cff)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        }
+                function zxAnalyzeFunctionCoefficients(kind,c) {
             if(Object.keys(c||{}).some(function(k){return !Number.isFinite(c[k]);}))return {ok:false,error:'系数必须是有效数字'};
             const lines=[];
             if(kind==='linear'){
@@ -2369,12 +2452,15 @@ function zxEvalArithmetic(src) {
             fitStructuredApi = ui;
             const fitSolver = makeSolver({
                 kind: 'fit', input: 'fitInput', out: 'fitOut', btn: 'fitBtn', clear: 'fitClearBtn', inserts: 'fitTypes',
-                run: function (s) { return fitInputMode==='coefficients' ? zxAnalyzeFunctionCoefficients(fitKind,ui.getCoeffs()) : zxFitFunction(s, fitKind); }, getRaw: ui.getRaw, onClear: ui.clear,
+                run: function (s) { return fitTaskMode==='expression' ? zxAnalyzeFunctionExpression(s,ui.getExpressionX()) : (fitInputMode==='coefficients' ? zxAnalyzeFunctionCoefficients(fitKind,ui.getCoeffs()) : zxFitFunction(s, fitKind)); }, getRaw: ui.getRaw, onClear: ui.clear,
                 setRawFromExample: ui.setExample,
-                emptyHint: '请填写所需坐标或函数系数',
-                restore: function (raw) { return JSON.stringify({ points: raw, type: fitKind, mode: fitInputMode, coeffs: ui.getCoeffs() }); }
+                emptyHint: '请输入函数表达式，或填写坐标 / 系数',
+                restore: function (raw) { return JSON.stringify({ task:fitTaskMode, points: raw, type: fitKind, mode: fitInputMode, coeffs: ui.getCoeffs(), expressionX:ui.getExpressionX() }); }
             });
             if (fitSolver) fitSolver.solve(true);
+            const fitBtn=$('fitBtn'),fitClear=$('fitClearBtn');
+            if(fitBtn)fitBtn.addEventListener('click',function(){if(fitTaskMode==='expression'){const raw=ui.getRaw();if(raw)zxRenderFunctionGraph(raw);}});
+            if(fitClear)fitClear.addEventListener('click',function(){const g=$('fitGraph');if(g)g.innerHTML='';});
 
             const types = $('fitTypes');
             if (types) types.addEventListener('click', function (e) {
