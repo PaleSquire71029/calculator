@@ -2284,6 +2284,7 @@ function zxEvalArithmetic(src) {
                         '<div class="structured-hint">'+(fitKind==='auto'?'自动模式最多填写 4 个点：1 个点求反比例，2 个点求一次，3 个点求二次，4 个点求三次；空白点会忽略。':'每个坐标的 x、y 分开填写；切换函数类型会调整所需点数。')+'</div>';
                 }
                 root.innerHTML=modeButtons+'<div class="structured-top"><div class="structured-form-title">'+title+(fitInputMode==='coefficients'?'：分别输入系数':'：输入坐标')+'</div></div>'+body;
+                const fitBtnEl=$('fitBtn');if(fitBtnEl)fitBtnEl.innerHTML=fitInputMode==='coefficients'?'<i class="fa-solid fa-chart-line"></i>分析函数':'<i class="fa-solid fa-chart-line"></i>求解析式';
                 root.querySelectorAll('[data-fit-input-mode]').forEach(function(btn){btn.addEventListener('click',function(){fitInputMode=btn.getAttribute('data-fit-input-mode');if(fitInputMode==='coefficients'&&fitKind==='auto')fitKind='quad';document.querySelectorAll('#fitTypes [data-fit]').forEach(function(b){b.classList.toggle('is-active',b.getAttribute('data-fit')===fitKind);});render();});});
                 if(typeof initSolveKeypad==='function')initSolveKeypad();
             }
