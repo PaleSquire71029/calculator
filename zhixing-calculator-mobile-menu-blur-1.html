@@ -1967,12 +1967,17 @@ function zxEvalArithmetic(src) {
             document.querySelectorAll('[data-solve-tab]').forEach(function(el){const on=el.getAttribute('data-solve-tab')===mode;el.classList.toggle('is-active',on);el.setAttribute('aria-selected',on?'true':'false');});
             const input=document.querySelector('.solve-subview.is-active input');if(input)solveActiveInput=input;
         }
+        let solveKeypadInitialized = false;
         function initSolveKeypad() {
-            const inputs=Array.from(document.querySelectorAll('.solve-subview input[data-math-field],.solve-subview input[data-custom-expression]')), mq=window.matchMedia('(max-width: 768px)');
-            function sync(){inputs.forEach(function(el){el.readOnly=mq.matches;});}
-            sync();if(mq.addEventListener)mq.addEventListener('change',sync);else if(mq.addListener)mq.addListener(sync);
-            inputs.forEach(function(el){el.addEventListener('focus',function(){solveActiveInput=el;});el.addEventListener('click',function(){solveActiveInput=el;if(el.readOnly){try{el.setSelectionRange(el.value.length,el.value.length)}catch(err){}}});});
+            const mq=window.matchMedia('(max-width: 768px)');
+            function sync(){document.querySelectorAll('.solve-subview input[data-math-field],.solve-subview input[data-custom-expression]').forEach(function(el){el.readOnly=mq.matches;});}
+            sync();
+            if(solveKeypadInitialized)return;
+            solveKeypadInitialized=true;
+            if(mq.addEventListener)mq.addEventListener('change',sync);else if(mq.addListener)mq.addListener(sync);
+            document.addEventListener('focusin',function(e){if(e.target.matches&&e.target.matches('.solve-subview input[data-math-field],.solve-subview input[data-custom-expression]'))solveActiveInput=e.target;});
             document.addEventListener('click',function(e){
+                if(e.target.matches&&e.target.matches('.solve-subview input[data-math-field],.solve-subview input[data-custom-expression]')){solveActiveInput=e.target;if(e.target.readOnly){try{e.target.setSelectionRange(e.target.value.length,e.target.value.length)}catch(err){}}}
                 const tab=e.target.closest&&e.target.closest('[data-solve-tab]');if(tab){setSolveMode(tab.getAttribute('data-solve-tab'));return;}
                 const key=e.target.closest&&e.target.closest('[data-solve-key]');if(!key||!mq.matches)return;
                 const act=key.getAttribute('data-solve-key');
@@ -2216,8 +2221,9 @@ function zxEvalArithmetic(src) {
             function drawCoefficients(){
                 const box=root.querySelector('[data-coefficients]'),preview=root.querySelector('[data-equation-preview]');
                 if(degree==='custom'){
-                    box.innerHTML=structuredField('custom','输入完整表达式',examples.custom);
+                    box.innerHTML=structuredField('custom','输入完整表达式','');
                     box.querySelector('input').setAttribute('data-custom-expression','1');
+                    box.querySelector('input').setAttribute('placeholder','例如 (x-1)(x+2)=0 或 1/x≥2');
                     preview.textContent=kind==='equation'?'自定义方程：左侧 = 右侧':'自定义不等式：表达式与不等号';
                 }else{
                     box.innerHTML=fields().map(function(f){return structuredField(f[0],f[1],f[2]);}).join('');
@@ -2230,9 +2236,9 @@ function zxEvalArithmetic(src) {
                 if(degree==='custom'){const el=root.querySelector('[data-custom-expression]');return el?el.value.trim():'';}
                 const v={};root.querySelectorAll('[data-math-field]').forEach(function(el){v[el.getAttribute('data-math-field')]=String(el.value||'').trim()||'0';});
                 if(Object.keys(v).some(function(k){return v[k]!==''&&!Number.isFinite(Number(v[k]));}))return '';
-                if(degree==='linear')return v.a+'*x+'+v.b+(kind==='equation'?'=0':relation+'0');
-                if(degree==='quadratic')return v.a+'*x^2+'+v.b+'*x+'+v.c+(kind==='equation'?'=0':relation+'0');
-                return v.a+'*x^3+'+v.b+'*x^2+'+v.c+'*x+'+v.d+(kind==='equation'?'=0':relation+'0');
+                if(degree==='linear')return '('+v.a+')*x+('+v.b+')'+(kind==='equation'?'=0':relation+'0');
+                if(degree==='quadratic')return '('+v.a+')*x^2+('+v.b+')*x+('+v.c+')'+(kind==='equation'?'=0':relation+'0');
+                return '('+v.a+')*x^3+('+v.b+')*x^2+('+v.c+')*x+('+v.d+')'+(kind==='equation'?'=0':relation+'0');
             }
             function setExample(expr){
                 if(expr.indexOf('x^3')>=0)degree='cubic';else if(expr.indexOf('x^2')>=0)degree='quadratic';else if(expr.indexOf('/')>=0||expr.indexOf('(')>=0)degree='custom';else degree='linear';
@@ -2255,17 +2261,19 @@ function zxEvalArithmetic(src) {
         }
         function initPointFields(rootId){
             const root=$(rootId);
-            function count(){return fitKind==='linear'?2:fitKind==='quad'?3:fitKind==='cubic'?4:1;}
+            function count(){return fitKind==='linear'?2:fitKind==='quad'?3:fitKind==='cubic'?4:fitKind==='inverse'?1:4;}
             function render(){
                 const n=count();root.innerHTML='<div class="structured-top"><div class="structured-form-title">'+({linear:'一次函数：输入 2 个点',quad:'二次函数：输入 3 个点',cubic:'三次函数：输入 4 个点',inverse:'反比例函数：输入 1 个点',auto:'自动判断点数'}[fitKind]||'输入坐标点')+'</div></div>'+
                     '<div class="structured-points">'+Array.from({length:n},function(_,i){return '<div class="structured-point"><b>点 '+(i+1)+'</b>'+structuredField('x'+i,'x'+(i+1),'')+structuredField('y'+i,'y'+(i+1),'')+'</div>';}).join('')+'</div>'+
-                    '<div class="structured-hint">每个坐标的 x、y 分开填写；切换函数类型会调整所需点数。</div>';
+                    '<div class="structured-hint">'+(fitKind==='auto'?'自动模式最多填写 4 个点：1 个点求反比例，2 个点求一次，3 个点求二次，4 个点求三次；空白点会忽略。':'每个坐标的 x、y 分开填写；切换函数类型会调整所需点数。')+'</div>';
                 if(typeof initSolveKeypad==='function')initSolveKeypad();
             }
             function getRaw(){
                 const points=[];let valid=true;
-                root.querySelectorAll('.structured-point').forEach(function(p){const a=p.querySelector('[data-math-field^="x"]'),b=p.querySelector('[data-math-field^="y"]');if(!a.value.trim()||!b.value.trim())valid=false;points.push('('+a.value.trim()+','+b.value.trim()+')');});
-                return valid?points.join(' '):'';
+                root.querySelectorAll('.structured-point').forEach(function(p){const a=p.querySelector('[data-math-field^="x"]'),b=p.querySelector('[data-math-field^="y"]'),x=a.value.trim(),y=b.value.trim();if(!x&&!y)return;if(!x||!y||!Number.isFinite(Number(x))||!Number.isFinite(Number(y))){valid=false;return;}points.push('('+x+','+y+')');});
+                if(!valid)return '';
+                if(fitKind!=='auto'&&points.length!==count())return '';
+                return points.join(' ');
             }
             function setExample(src){
                 const pts=src.match(/\([^()]+\)/g)||[];
