@@ -74,6 +74,8 @@
 .solve-mode-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45rem;margin:.25rem 0 1rem}.solve-mode-tab{min-height:2.65rem;border:1px solid rgba(255,255,255,.1);border-radius:.7rem;background:rgba(255,255,255,.035);color:#94A3B8;font-size:.8rem;font-weight:650}.solve-mode-tab.is-active{color:#08090C;background:rgb(var(--zx-gold));border-color:rgb(var(--zx-gold))}.solve-subview{display:none;margin-top:1rem}.solve-subview.is-active{display:block;animation:viewIn .2s var(--zx-ease)}.solve-keypad-wrap{border:1px solid rgba(255,255,255,.08);border-radius:.85rem;padding:.75rem;background:rgba(0,0,0,.16)}.solve-keypad-title{display:flex;justify-content:space-between;gap:.6rem;margin-bottom:.6rem;font-size:.66rem;color:#94A3B8}.solve-keypad-title b{color:rgb(var(--zx-gold))}.solve-keypad{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.4rem}.solve-keypad button{min-width:0;min-height:2.4rem;border-radius:.55rem;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.055);color:#E2E8F0;font:600 .9rem var(--zx-mono);touch-action:manipulation;user-select:none;-webkit-user-select:none}.solve-keypad button.key-action{color:rgb(var(--zx-gold));background:rgba(var(--zx-gold),.08);font-family:var(--zx-font);font-size:.72rem}.solve-keypad button.key-next{grid-column:span 3}html.light .solve-mode-tab{color:#64748B;background:rgba(60,50,35,.035)}html.light .solve-mode-tab.is-active{color:#fff;background:#8E6D35}html.light .solve-keypad button{color:#302A20;border-color:rgba(60,50,35,.13);background:rgba(60,50,35,.045)}@media(min-width:769px){.solve-keypad-wrap{display:none}}@media(max-width:420px){.solve-mode-tab{font-size:.72rem}.solve-keypad{gap:.3rem}.solve-keypad button{min-height:2.3rem}.solve-keypad-title{font-size:.6rem}}
 
 .zx-legacy-solver-input{display:none!important}.structured-solver{margin-top:.65rem}.structured-top{display:flex;gap:.65rem;align-items:end;flex-wrap:wrap;margin-bottom:.7rem}.structured-select{display:flex;flex-direction:column;gap:.35rem;flex:1;min-width:135px}.structured-select span,.structured-field span{font-size:.68rem;color:#94A3B8;font-weight:650}.structured-select select{width:100%;min-height:2.65rem;border-radius:.65rem;border:1px solid rgba(255,255,255,.12);background:#11151D;color:#E2E8F0;padding:0 .65rem;font-size:.78rem}.structured-equation{font-family:var(--zx-mono);font-size:.88rem;color:rgb(var(--zx-gold));padding:.65rem .8rem;border-radius:.65rem;background:rgba(var(--zx-gold),.07);margin-bottom:.65rem}.structured-coefficients{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem}.structured-field{display:flex;flex-direction:column;gap:.35rem;min-width:0}.structured-field input{width:100%;min-width:0;height:2.8rem;border-radius:.65rem;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);color:#F8FAFC;padding:0 .7rem;font-family:var(--zx-mono);font-size:1rem}.structured-hint{margin-top:.6rem;font-size:.68rem;line-height:1.5;color:#94A3B8}.structured-examples{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.65rem}.structured-points{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}.structured-point{padding:.65rem;border:1px solid rgba(255,255,255,.08);border-radius:.7rem;background:rgba(255,255,255,.025);display:grid;grid-template-columns:1fr 1fr;gap:.45rem}.structured-point>b{grid-column:1/-1;font-size:.7rem;color:rgb(var(--zx-gold))}.structured-form-title{font-size:.75rem;color:#94A3B8}.html.light .structured-select select{background:#fff;color:#302A20;border-color:rgba(60,50,35,.16)}html.light .structured-field input{background:#fff;color:#302A20;border-color:rgba(60,50,35,.16)}html.light .structured-equation{color:#8E6D35;background:rgba(142,109,53,.08)}@media(max-width:420px){.structured-coefficients{gap:.4rem}.structured-field input{padding:0 .5rem}.structured-points{gap:.4rem}.structured-point{padding:.5rem;gap:.35rem}.structured-select{min-width:120px}}
+
+.structured-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.7rem}.structured-mode-tabs button{min-height:2.4rem;border-radius:.6rem;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);color:#94A3B8;font-size:.7rem;font-weight:650}.structured-mode-tabs button.is-active{background:rgb(var(--zx-gold));color:#08090C;border-color:transparent}html.light .structured-mode-tabs button{color:#64748B}html.light .structured-mode-tabs button.is-active{color:#fff;background:#8E6D35}
 </style>
 
     <script>
@@ -1911,7 +1913,10 @@ function zxEvalArithmetic(src) {
                     });
                     fitKind = cfg.type;
                 }
-                if (fitStructuredApi) { fitStructuredApi.render(); fitStructuredApi.setExample((cfg && cfg.points) || (h.restore || '')); }
+                if (fitStructuredApi) {
+                    if(cfg&&cfg.mode==='coefficients'){fitInputMode='coefficients';fitStructuredApi.setCoeffs(cfg.coeffs||{});}
+                    else{fitInputMode='points';fitStructuredApi.render();fitStructuredApi.setExample((cfg&&cfg.points)||(h.restore||''));}
+                }
                 $('fitBtn').click();
                 return;
             }
@@ -2121,7 +2126,7 @@ function zxEvalArithmetic(src) {
         /* ==================================================================
            八、界面 2/3/4：方程、不等式、解析式（共用一套求解框架）
            ================================================================== */
-        let fitKind = 'auto';
+        let fitKind = 'auto', fitInputMode = 'points';
         let eqStructuredApi = null, ineqStructuredApi = null, fitStructuredApi = null;
 
         function makeSolver(cfg) {
@@ -2265,26 +2270,43 @@ function zxEvalArithmetic(src) {
         function initPointFields(rootId){
             const root=$(rootId);
             function count(){return fitKind==='linear'?2:fitKind==='quad'?3:fitKind==='cubic'?4:fitKind==='inverse'?1:4;}
+            function coeffNames(){return fitKind==='linear'?['a','b']:fitKind==='quad'?['a','b','c']:fitKind==='cubic'?['a','b','c','d']:['k'];}
             function render(){
-                const n=count();root.innerHTML='<div class="structured-top"><div class="structured-form-title">'+({linear:'一次函数：输入 2 个点',quad:'二次函数：输入 3 个点',cubic:'三次函数：输入 4 个点',inverse:'反比例函数：输入 1 个点',auto:'自动判断点数'}[fitKind]||'输入坐标点')+'</div></div>'+
-                    '<div class="structured-points">'+Array.from({length:n},function(_,i){return '<div class="structured-point"><b>点 '+(i+1)+'</b>'+structuredField('x'+i,'x'+(i+1),'')+structuredField('y'+i,'y'+(i+1),'')+'</div>';}).join('')+'</div>'+
-                    '<div class="structured-hint">'+(fitKind==='auto'?'自动模式最多填写 4 个点：1 个点求反比例，2 个点求一次，3 个点求二次，4 个点求三次；空白点会忽略。':'每个坐标的 x、y 分开填写；切换函数类型会调整所需点数。')+'</div>';
+                const n=count(),names=coeffNames();
+                const modeButtons='<div class="structured-mode-tabs"><button type="button" data-fit-input-mode="points" class="'+(fitInputMode==='points'?'is-active':'')+'">由坐标求解析式</button><button type="button" data-fit-input-mode="coefficients" class="'+(fitInputMode==='coefficients'?'is-active':'')+'">标准式系数输入</button></div>';
+                const title=({linear:'一次函数',quad:'二次函数',cubic:'三次函数',inverse:'反比例函数',auto:'自动判断点数'}[fitKind]||'函数');
+                let body='';
+                if(fitInputMode==='coefficients'){
+                    if(fitKind==='auto')fitKind='quad';
+                    const ns=coeffNames();
+                    body='<div class="structured-equation">'+(fitKind==='linear'?'y = ax + b':fitKind==='quad'?'y = ax² + bx + c':fitKind==='cubic'?'y = ax³ + bx² + cx + d':'y = k / x')+'</div><div class="structured-coefficients">'+ns.map(function(name){return structuredField('coef'+name,name,'');}).join('')+'</div><div class="structured-hint">分别填写系数即可。空白系数按 0 处理；点击“求解析式”可查看函数表达式及适用的基本性质。</div>';
+                }else{
+                    body='<div class="structured-points">'+Array.from({length:n},function(_,i){return '<div class="structured-point"><b>点 '+(i+1)+'</b>'+structuredField('x'+i,'x'+(i+1),'')+structuredField('y'+i,'y'+(i+1),'')+'</div>';}).join('')+'</div>'+
+                        '<div class="structured-hint">'+(fitKind==='auto'?'自动模式最多填写 4 个点：1 个点求反比例，2 个点求一次，3 个点求二次，4 个点求三次；空白点会忽略。':'每个坐标的 x、y 分开填写；切换函数类型会调整所需点数。')+'</div>';
+                }
+                root.innerHTML=modeButtons+'<div class="structured-top"><div class="structured-form-title">'+title+(fitInputMode==='coefficients'?'：分别输入系数':'：输入坐标')+'</div></div>'+body;
+                root.querySelectorAll('[data-fit-input-mode]').forEach(function(btn){btn.addEventListener('click',function(){fitInputMode=btn.getAttribute('data-fit-input-mode');if(fitInputMode==='coefficients'&&fitKind==='auto')fitKind='quad';render();});});
                 if(typeof initSolveKeypad==='function')initSolveKeypad();
             }
+            function getCoeffs(){
+                const names=coeffNames(),out={};names.forEach(function(name){const el=root.querySelector('[data-math-field="coef'+name+'"]');const raw=el?el.value.trim():'';out[name]=raw===''?0:Number(raw);if(!Number.isFinite(out[name]))out[name]=NaN;});return out;
+            }
             function getRaw(){
+                if(fitInputMode==='coefficients'){const c=getCoeffs();if(Object.keys(c).some(function(k){return !Number.isFinite(c[k]);}))return '';return fitKind==='linear'?'y=('+c.a+')*x+('+c.b+')':fitKind==='quad'?'y=('+c.a+')*x^2+('+c.b+')*x+('+c.c+')':fitKind==='cubic'?'y=('+c.a+')*x^3+('+c.b+')*x^2+('+c.c+')*x+('+c.d+')':'y=('+c.k+')/x';}
                 const points=[];let valid=true;
                 root.querySelectorAll('.structured-point').forEach(function(p){const a=p.querySelector('[data-math-field^="x"]'),b=p.querySelector('[data-math-field^="y"]'),x=a.value.trim(),y=b.value.trim();if(!x&&!y)return;if(!x||!y||!Number.isFinite(Number(x))||!Number.isFinite(Number(y))){valid=false;return;}points.push('('+x+','+y+')');});
                 if(!valid)return '';
                 if(fitKind!=='auto'&&points.length!==count())return '';
                 return points.join(' ');
             }
+            function setCoeffs(c){fitInputMode='coefficients';render();Object.keys(c||{}).forEach(function(k){const el=root.querySelector('[data-math-field="coef'+k+'"]');if(el&&c[k]!==undefined)el.value=String(c[k]);});}
             function setExample(src){
-                const pts=src.match(/\([^()]+\)/g)||[];
+                fitInputMode='points';const pts=src.match(/\([^()]+\)/g)||[];
                 render();const inputs=root.querySelectorAll('[data-math-field]');
                 pts.forEach(function(p,i){const nums=p.slice(1,-1).split(',');if(inputs[i*2])inputs[i*2].value=nums[0];if(inputs[i*2+1])inputs[i*2+1].value=nums[1];});
             }
             function clear(){root.querySelectorAll('[data-math-field]').forEach(function(el){el.value='';});}
-            render();return {getRaw:getRaw,clear:clear,setExample:setExample,render:render};
+            render();return {getRaw:getRaw,getCoeffs:getCoeffs,clear:clear,setExample:setExample,setCoeffs:setCoeffs,render:render};
         }
 
         function initEquation() {
@@ -2309,15 +2331,48 @@ function zxEvalArithmetic(src) {
             }).solve(true);
         }
 
+        function zxAnalyzeFunctionCoefficients(kind,c) {
+            if(Object.keys(c||{}).some(function(k){return !Number.isFinite(c[k]);}))return {ok:false,error:'系数必须是有效数字'};
+            const lines=[];
+            if(kind==='linear'){
+                const a=c.a||0,b=c.b||0;lines.push('一次函数标准式：y = '+zxPolyText([b,a]));
+                if(Math.abs(a)<1e-12)lines.push('这是常函数，y = '+zxFmtNum(b));
+                else lines.push('零点：x = '+zxFmtNum(-b/a));
+                lines.push('定义域：全体实数');return {ok:true,text:lines.join('\n')};
+            }
+            if(kind==='quad'){
+                const a=c.a||0,b=c.b||0,d=c.c||0;
+                if(Math.abs(a)<1e-12){lines.push('二次项系数 a = 0，函数退化为：y = '+zxPolyText([d,b]));return {ok:true,text:lines.join('\n')};}
+                const axis=-b/(2*a),vertex=d-b*b/(4*a),delta=b*b-4*a*d;
+                lines.push('二次函数标准式：y = '+zxPolyText([d,b,a]));
+                lines.push('对称轴：x = '+zxFmtNum(axis));
+                lines.push('顶点：('+zxFmtNum(axis)+', '+zxFmtNum(vertex)+')');
+                lines.push('判别式：Δ = '+zxFmtNum(delta));
+                if(delta>1e-12)lines.push('与 x 轴交点横坐标：x = '+zxFmtNum((-b-Math.sqrt(delta))/(2*a))+'，'+zxFmtNum((-b+Math.sqrt(delta))/(2*a)));
+                else if(Math.abs(delta)<=1e-12)lines.push('与 x 轴相切：x = '+zxFmtNum(axis));else lines.push('与 x 轴没有交点');
+                lines.push(a>0?'单调性：在 x ≤ '+zxFmtNum(axis)+' 时递减，在 x ≥ '+zxFmtNum(axis)+' 时递增':'单调性：在 x ≤ '+zxFmtNum(axis)+' 时递增，在 x ≥ '+zxFmtNum(axis)+' 时递减');
+                lines.push('值域：'+(a>0?'y ≥ ':'y ≤ ')+zxFmtNum(vertex));return {ok:true,text:lines.join('\n')};
+            }
+            if(kind==='cubic'){
+                const a=c.a||0,b=c.b||0,d=c.d||0,e=c.c||0;
+                lines.push('三次函数标准式：y = '+zxPolyText([d,e,b,a]));
+                lines.push('定义域：全体实数');lines.push('与 y 轴交点： (0, '+zxFmtNum(d)+')');
+                if(Math.abs(a)<1e-12)lines.push('提示：a = 0，实际次数低于三次');return {ok:true,text:lines.join('\n')};
+            }
+            const k=c.k||0;lines.push('反比例函数：y = '+zxFmtNum(k)+'/x');
+            lines.push('定义域：x ≠ 0');lines.push('值域：'+(Math.abs(k)<1e-12?'y = 0（退化情况）':'y ≠ 0'));
+            return {ok:true,text:lines.join('\n')};
+        }
+
         function initFit() {
             const ui = initPointFields('fitStructured');
             fitStructuredApi = ui;
             const fitSolver = makeSolver({
                 kind: 'fit', input: 'fitInput', out: 'fitOut', btn: 'fitBtn', clear: 'fitClearBtn', inserts: 'fitTypes',
-                run: function (s) { return zxFitFunction(s, fitKind); }, getRaw: ui.getRaw, onClear: ui.clear,
+                run: function (s) { return fitInputMode==='coefficients' ? zxAnalyzeFunctionCoefficients(fitKind,ui.getCoeffs()) : zxFitFunction(s, fitKind); }, getRaw: ui.getRaw, onClear: ui.clear,
                 setRawFromExample: ui.setExample,
-                emptyHint: '请填写所需坐标点',
-                restore: function (raw) { return JSON.stringify({ points: raw, type: fitKind }); }
+                emptyHint: '请填写所需坐标或函数系数',
+                restore: function (raw) { return JSON.stringify({ points: raw, type: fitKind, mode: fitInputMode, coeffs: ui.getCoeffs() }); }
             });
             if (fitSolver) fitSolver.solve(true);
 
