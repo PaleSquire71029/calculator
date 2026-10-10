@@ -241,6 +241,8 @@
 }
 
 /* Knowledge base styles */
+.zx-menu-item[data-go="knowledge"] .zx-menu-icon{display:block;flex:0 0 22px;width:22px;height:22px;color:#d9b875;opacity:1;visibility:visible}
+
 .knowledge-mark{display:flex!important;align-items:center;justify-content:center;width:64px;height:64px;flex:0 0 64px;border:1px solid #796744;border-radius:18px;background:#211f1a;color:#e4c17d}
 .knowledge-searchbar{display:flex;align-items:center;gap:8px;margin:18px 0;padding:8px;border:1px solid #343b48;border-radius:14px;background:#10141b}.knowledge-searchbar input{flex:1;min-width:0;background:transparent;border:0!important;box-shadow:none!important}.knowledge-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}.knowledge-filters button{padding:8px 12px;border:1px solid #353d4a;border-radius:10px;background:#1a202a;color:#d7dce5}.knowledge-filters button.is-active{background:#3a3324;border-color:#b99a5e;color:#f2d69a}.knowledge-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.knowledge-item{display:flex;flex-direction:column;gap:7px;text-align:left;padding:14px;border:1px solid #343b48;border-radius:13px;background:#171c25;color:#e7eaf0}.knowledge-item small{color:#d7b879}.knowledge-item span{font-size:12px;color:#a6afbd;line-height:1.55}.knowledge-detail{margin-top:14px;padding:16px;border:1px solid #424958;border-radius:14px;background:#151a22;line-height:1.8}.knowledge-detail h2{font-size:22px;color:#f1d69b;margin:16px 0}.knowledge-detail p{white-space:pre-line;color:#d5dae3}.knowledge-formula{padding:12px;margin-top:10px;background:#262319;border:1px solid #4a4434;border-radius:10px;color:#f4d795;overflow-wrap:anywhere}@media(max-width:640px){.knowledge-list{grid-template-columns:1fr}.knowledge-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
@@ -743,7 +745,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                 <button type="button" class="zx-menu-item" data-go="units"><i class="fa-solid fa-ruler-combined"></i><span>单位换算</span></button>
                 <button type="button" class="zx-menu-item" data-go="chemistry">⚗️<span>化学方程式配平</span></button>
             </div>
-            <div class="zx-menu-group"><div class="zx-menu-title">学习</div><button type="button" class="zx-menu-item" data-go="knowledge"><i class="fa-solid fa-book-open-reader"></i><span>知识库</span></button></div>
+            <div class="zx-menu-group"><div class="zx-menu-title">学习</div><button type="button" class="zx-menu-item" data-go="knowledge"><svg class="zx-menu-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 1 4 17.5z"/><path d="M4 5.5v12M8 7h8M8 11h8M8 15h5"/></svg><span>知识库</span></button></div>
             <div class="zx-menu-group">
                 <div class="zx-menu-title">记录</div>
                 <button type="button" class="zx-menu-item" data-go="history">
@@ -2272,6 +2274,81 @@ function zxEvalArithmetic(src) {
 ['烷烃燃烧','完全燃烧生成二氧化碳和水，通常先配碳氢再配氧。','CₓHᵧ+(x+y/4)O₂→xCO₂+(y/2)H₂O'],
 ['实验室制气与安全','按反应物状态、条件和气体性质选择装置，先检查气密性并妥善处理尾气。','发生装置 + 收集装置 + 尾气处理']
 ].forEach(x=>add(x[0].includes('函数')||['集合与运算','充分必要条件','不等式性质','一元二次方程','指数与对数','三角函数基本关系','正弦定理','余弦定理','等差数列','等比数列','向量数量积','直线与圆','导数与单调性','导数求切线','概率与排列组合'].includes(x[0])?M:C,x[0],x[1],x[2]));
+
+[
+['函数的表示法','解析法、图象法、列表法是常见表示方式。判断两个函数是否相同，要看定义域和对应关系是否都相同。','解析法适合计算，图象法适合观察变化趋势。'],
+['复合函数','若y=f(u)，u=g(x)，则y=f(g(x))；求定义域时先保证g(x)有意义，再保证g(x)属于f的定义域。','先求内层函数取值范围，再代入外层定义域。'],
+['反函数','严格单调函数在其值域上存在反函数；原函数与反函数图象关于y=x对称。','求反函数：交换x、y，再解出y，并注明定义域和值域。'],
+['幂函数','常见幂函数为y=xⁿ；其图象和性质取决于指数及定义域。','先看指数奇偶、正负，再看x=0附近和无穷远处。'],
+['指数函数','a>0且a≠1；a>1时递增，0<a<1时递减。','aˣ>0；比较指数函数值时注意底数所在范围。'],
+['对数函数','y=logₐx，a>0且a≠1；定义域为(0,+∞)。','logₐ1=0，logₐa=1；换底公式logₐb=log_cb/log_ca。'],
+['对数运算','真数必须为正；积、商、幂的对数公式均需满足定义条件。','logₐ(MN)=logₐM+logₐN；logₐ(M/N)=logₐM−logₐN。'],
+['三角函数图象','y=A sin(ωx+φ)+k的振幅为|A|，周期为2π/|ω|，相位平移由φ决定。','先提取ω，写成ω(x+φ/ω)，再判断平移方向。'],
+['诱导公式','利用奇偶性和周期性把角化到熟悉范围。','口诀：奇变偶不变，符号看象限。'],
+['和差角公式','和差角公式可用于求特殊角三角函数值及恒等变形。','sin(α±β)=sinαcosβ±cosαsinβ。'],
+['二倍角公式','二倍角公式可用于降幂、化简和求值。','sin2α=2sinαcosα；cos2α=cos²α−sin²α。'],
+['解三角形面积','已知两边及夹角时可用面积公式。','S=½ab sinC。'],
+['平面向量坐标','向量加减按对应坐标运算，数量积为对应坐标乘积之和。','a=(x₁,y₁), b=(x₂,y₂)，a·b=x₁x₂+y₁y₂。'],
+['向量平行与垂直','二维向量平行可用行列式为零判断，垂直可用数量积为零判断。','x₁y₂−x₂y₁=0；a·b=0。'],
+['复数','i²=−1；复数a+bi的实部为a、虚部为b。','(a+bi)(c+di)=(ac−bd)+(ad+bc)i。'],
+['复数模','复数z=a+bi的模为其对应点到原点的距离。','|z|=√(a²+b²)。'],
+['空间几何平行垂直','证明线面平行常用线线平行；证明线面垂直常用直线垂直于平面内两条相交直线。','先明确已知条件对应的判定定理，避免只凭图形直观。'],
+['空间向量求角','两方向向量的夹角可用数量积计算。','cosθ=(a·b)/(|a||b|)，注意直线夹角通常取锐角或直角。'],
+['直线斜率','斜率描述直线倾斜程度，竖直线斜率不存在。','k=(y₂−y₁)/(x₂−x₁)，要求x₂≠x₁。'],
+['圆锥曲线识别','椭圆、双曲线、抛物线的标准方程及焦点位置不同。','椭圆：x²/a²+y²/b²=1；双曲线：x²/a²−y²/b²=1。'],
+['椭圆基本关系','椭圆焦距参数满足c²=a²−b²（a>b>0）。','焦点在长轴方向；离心率e=c/a，0<e<1。'],
+['双曲线基本关系','双曲线焦距参数满足c²=a²+b²。','离心率e=c/a>1；渐近线由对应标准方程求得。'],
+['抛物线','标准方程常见形式y²=2px或x²=2py，需注意教材所用参数约定。','先确定开口方向，再识别焦点、准线和参数。'],
+['数学归纳法','证明n∈N的命题时，先验证初始值，再假设n=k成立并证明n=k+1成立。','缺少起始验证或递推步骤都不完整。'],
+['排列与组合','排列计顺序，组合不计顺序。','Cₙᵐ=n!/[m!(n−m)!]。'],
+['二项式定理','(a+b)ⁿ展开项的二项式系数为组合数。','通项Tₖ₊₁=Cₙᵏaⁿ⁻ᵏbᵏ。'],
+['条件概率','已知B发生时A发生的概率，要求P(B)>0。','P(A|B)=P(AB)/P(B)。'],
+['独立事件','A、B独立时，一个事件发生不改变另一个事件的概率。','P(AB)=P(A)P(B)。'],
+['随机变量期望','离散型随机变量的期望是各取值与对应概率乘积之和。','E(X)=Σxᵢpᵢ。'],
+['统计相关性','相关系数反映线性相关方向和强弱，不代表因果关系。','散点图先看趋势，再结合相关系数判断。'],
+['基本不等式','a,b>0时，(a+b)/2≥√ab，等号当且仅当a=b。','求最值要检查“一正、定和或定积、能取等号”等条件。'],
+['一元二次不等式','先求对应二次方程根，再结合抛物线开口确定符号区间。','a>0时，函数在两根外为正、两根间为负（两实根情形）。'],
+['绝对值不等式','|x|表示到0的距离；|x−a|表示到a的距离。','|x−a|<r等价于a−r<x<a+r。'],
+['函数零点','零点是使f(x)=0的自变量值；连续函数在区间端点异号可用零点存在定理。','端点异号保证至少一个零点，不保证唯一。'],
+['导数四则运算','导数满足和差法则及乘积、商法则。','(uv)′=u′v+uv′；(u/v)′=(u′v−uv′)/v²。'],
+['导数与极值','导数由正变负常对应极大值，由负变正常对应极小值。','仅有f′(x₀)=0不能直接断定是极值。'],
+['定积分与面积','定积分表示带符号面积；曲线与x轴围成面积需按区间符号拆分。','若f(x)≥0，面积为∫ₐᵇf(x)dx。'],
+['抽样方法','简单随机抽样、分层随机抽样、系统抽样适用情境不同。','总体差异明显时分层抽样通常更有代表性。'],
+['频率与概率','频率是试验统计结果，概率是事件发生可能性的刻画；试验次数增加时频率通常趋近概率。','不要把一次试验的频率当作精确概率。'],
+['化学基本实验操作','取用药品、加热、过滤、蒸发、蒸馏、萃取均有对应仪器和安全要求。','实验先看目的、物质性质、装置连接和尾气处理。'],
+['物质分类','可按组成分为纯净物与混合物，纯净物再分单质与化合物。','氧化物、酸、碱、盐的分类需结合组成和化学性质。'],
+['离子检验','检验离子应选择有明显现象且干扰较少的试剂。','Cl⁻常用酸化AgNO₃；SO₄²⁻常用酸化钡盐，需排除干扰。'],
+['气体检验','不同气体可依据特征反应或物理性质检验。','CO₂使澄清石灰水变浑浊；O₂可使带火星木条复燃。'],
+['常见气体制备','实验室制气需综合考虑反应原理、反应条件、发生装置和收集方式。','密度大于空气可向上排空气；易溶于水的气体不宜排水收集。'],
+['金属活动性顺序','活动性较强金属通常可置换较弱金属的盐溶液中的金属，但需考虑反应条件和特殊情形。','K、Ca、Na等与水反应剧烈，不能简单套用普通盐溶液置换。'],
+['钠及其化合物','钠与水反应生成NaOH和H₂；Na₂CO₃、NaHCO₃性质有差异。','2Na+2H₂O→2NaOH+H₂↑。'],
+['铝及其化合物','铝和氧化铝、氢氧化铝可体现两性相关性质。','Al(OH)₃与酸、强碱均可反应。'],
+['铁及其化合物','Fe²⁺与Fe³⁺可相互转化；铁在不同条件下生成不同氧化物或盐。','Fe²⁺易被氧化；检验Fe³⁺常用SCN⁻显血红色。'],
+['氯及其化合物','氯气具有氧化性，与水反应形成含氯消毒体系；漂白性与次氯酸有关。','Cl₂+H₂O⇌HCl+HClO。'],
+['硫及其化合物','SO₂具有还原性，也可表现氧化性；硫酸具有酸的通性，浓硫酸另有特性。','SO₂使品红溶液褪色，需注意加热后现象及检验方法。'],
+['氮及其化合物','氨易溶于水且水溶液呈碱性；铵盐与强碱加热可放出氨气。','NH₄⁺+OH⁻→NH₃↑+H₂O（加热条件下更易逸出）。'],
+['卤素性质递变','同主族元素性质随原子结构变化呈规律性递变，卤素单质氧化性通常自上而下减弱。','Cl₂可置换Br⁻、I⁻中的Br₂、I₂。'],
+['原子结构与周期表','原子序数等于核电荷数；主族元素最外层电子数与常见化合价有联系，但存在例外。','先写电子层结构，再判断周期、族及性质趋势。'],
+['化学键与分子间作用力','化学键连接原子形成物质；分子间作用力影响熔沸点等物理性质。','不要把分子间作用力与共价键混为一谈。'],
+['反应热','放热反应体系能量降低，吸热反应体系从环境吸收能量。','ΔH<0通常表示放热；ΔH>0表示吸热。'],
+['盖斯定律','反应焓变只与始态和终态有关，与反应途径无关。','反应方程式反向则ΔH变号，系数倍乘则ΔH同倍变化。'],
+['化学平衡常数','一定温度下，平衡常数由平衡浓度按计量数幂次构成，纯固体和纯液体通常不写入表达式。','改变浓度可使平衡移动，但同温度下K不变。'],
+['电离平衡与pH','pH=−lg[H⁺]适用于常见稀水溶液近似；酸碱混合需先判断反应再计算。','强酸强碱先按物质的量中和，再求剩余离子浓度。'],
+['水的离子积','一定温度下Kw=[H⁺][OH⁻]；温度变化会影响Kw。','25℃时Kw≈1.0×10⁻¹⁴。'],
+['电化学电极判断','发生氧化反应的电极是阳极，发生还原反应的电极是阴极；正负极取决于装置类型。','记忆“阳氧阴还”，再判断原电池或电解池的正负极。'],
+['电解质溶液电解','放电顺序与离子性质、电极材料、浓度等有关。','写电极反应前先判断惰性/活性电极及溶液组成。'],
+['有机物命名与结构','先找主链、编号，再识别取代基和官能团；同分异构体分子式相同而结构不同。','先数碳原子，再核对不饱和度与官能团。'],
+['烷烃与取代反应','烷烃较稳定，典型反应是一定条件下与卤素发生取代。','CH₄+Cl₂→CH₃Cl+HCl（光照，第一步）。'],
+['烯烃与加成反应','碳碳双键容易发生加成、氧化和聚合反应。','CH₂=CH₂+Br₂→CH₂Br−CH₂Br。'],
+['乙醇性质','乙醇含羟基，可发生燃烧、与活泼金属反应、氧化、酯化等反应。','2C₂H₅OH+O₂→2CH₃CHO+2H₂O（催化氧化的简化表示）。'],
+['乙酸性质','乙酸具有酸性，可与活泼金属、碱、碳酸盐反应；可与醇发生酯化。','CH₃COOH+NaOH→CH₃COONa+H₂O。'],
+['酯化反应','羧酸与醇在酸催化、加热条件下生成酯和水，反应通常可逆。','CH₃COOH+C₂H₅OH⇌CH₃COOC₂H₅+H₂O。'],
+['高分子与聚合','加聚反应常由不饱和键打开形成链；缩聚反应常伴随小分子生成。','nCH₂=CH₂→(−CH₂−CH₂−)ₙ。'],
+['化学计算守恒法','化学计算常用质量守恒、原子守恒、电荷守恒、电子守恒。','先写反应方程式，再统一物质的量单位，最后检查有效数字。'],
+['氧化还原配平','用化合价升降确定电子转移总数，再配平其他原子并检查电荷和质量守恒。','酸性条件可用H⁺、H₂O配平；碱性条件可用OH⁻、H₂O配平。'],
+['离子方程式书写步骤','先写正确化学方程式，再拆强电解质可溶物，删去旁观离子，最后检查原子与电荷守恒。','弱电解质、沉淀、气体、氧化物和水通常不拆。']
+].forEach(x=>add(x[0].includes('函数')||['复合函数','反函数','幂函数','指数函数','对数函数','对数运算','三角函数图象','诱导公式','和差角公式','二倍角公式','解三角形面积','平面向量坐标','向量平行与垂直','复数','复数模','空间几何平行垂直','空间向量求角','直线斜率','圆锥曲线识别','椭圆基本关系','双曲线基本关系','抛物线','数学归纳法','排列与组合','二项式定理','条件概率','独立事件','随机变量期望','统计相关性','基本不等式','一元二次不等式','绝对值不等式','函数零点','导数四则运算','导数与极值','定积分与面积','抽样方法','频率与概率'].includes(x[0])?M:C,x[0],x[1],x[2]));
+
 const eq=[
 ['氢气燃烧','2H₂ + O₂ → 2H₂O','无常见离子方程式'],
 ['铁在氧气中燃烧','3Fe + 2O₂ → Fe₃O₄','无常见离子方程式'],
