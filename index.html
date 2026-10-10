@@ -955,8 +955,36 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                       <button type="button" class="zx-chip" data-chem="Fe2O3 + CO -> Fe + CO2">氧化还原</button>
                       <button type="button" class="zx-chip" data-chem="BaCl2 + Na2SO4 -> BaSO4 + NaCl">复分解反应</button>
                       <button type="button" class="zx-chip" data-chem="NH3 + O2 -> NO + H2O">氨的催化氧化</button>
-                      <button type="button" class="zx-chip" data-chem="Cu + HNO3 -> Cu(NO3)2 + NO + H2O">氧化性酸反应</button>
-                    </div>
+                      <button type="button" class="zx-chip" data-chem="Cu + HNO3 -> Cu(NO3)2 + NO + H2O">铜与稀硝酸</button>
+                      <button type="button" class="zx-chip" data-chem="Zn + HCl -> ZnCl2 + H2">锌与盐酸</button>
+                      <button type="button" class="zx-chip" data-chem="Na + H2O -> NaOH + H2">钠与水</button>
+                      <button type="button" class="zx-chip" data-chem="Ca(OH)2 + CO2 -> CaCO3 + H2O">石灰水检验二氧化碳</button>
+                      <button type="button" class="zx-chip" data-chem="Na2CO3 + HCl -> NaCl + H2O + CO2">碳酸盐与酸</button>
+                      <button type="button" class="zx-chip" data-chem="AgNO3 + NaCl -> AgCl + NaNO3">沉淀反应</button>
+                      <button type="button" class="zx-chip" data-chem="CuSO4 + NaOH -> Cu(OH)2 + Na2SO4">生成氢氧化铜</button>
+                      <button type="button" class="zx-chip" data-chem="P + O2 -> P2O5">磷燃烧</button>
+                      <button type="button" class="zx-chip" data-chem="KClO3 -> KCl + O2">氯酸钾分解</button>
+                      <button type="button" class="zx-chip" data-chem="H2O2 -> H2O + O2">过氧化氢分解</button>
+                      <button type="button" class="zx-chip" data-chem="Fe + CuSO4 -> FeSO4 + Cu">金属置换</button>
+                      <button type="button" class="zx-chip" data-chem="C + O2 -> CO2">碳完全燃烧</button>
+                      <button type="button" class="zx-chip" data-chem="C + O2 -> CO">碳不完全燃烧</button>
+                      <button type="button" class="zx-chip" data-chem="C2H6 + O2 -> CO2 + H2O">乙烷燃烧</button>
+                      <button type="button" class="zx-chip" data-chem="C3H8 + O2 -> CO2 + H2O">丙烷燃烧</button>
+                      <button type="button" class="zx-chip" data-chem="C6H12O6 + O2 -> CO2 + H2O">葡萄糖氧化</button>
+                      <button type="button" class="zx-chip" data-chem="NaHCO3 -> Na2CO3 + H2O + CO2">碳酸氢钠受热分解</button>
+                      <button type="button" class="zx-chip" data-chem="CuO + H2 -> Cu + H2O">氢气还原氧化铜</button>
+                      <button type="button" class="zx-chip" data-chem="FeS2 + O2 -> Fe2O3 + SO2">硫铁矿焙烧</button>
+                      <button type="button" class="zx-chip" data-chem="MnO2 + HCl -> MnCl2 + Cl2 + H2O">二氧化锰与浓盐酸</button>
+                      <button type="button" class="zx-chip" data-chem="KOH + H3PO4 -> K3PO4 + H2O">磷酸中和</button>
+                      <button type="button" class="zx-chip" data-chem="Al + O2 -> Al2O3">铝燃烧</button>
+                      <button type="button" class="zx-chip" data-chem="Mg + N2 -> Mg3N2">镁与氮气</button>
+                      <button type="button" class="zx-chip" data-chem="Na2O2 + CO2 -> Na2CO3 + O2">过氧化钠吸收二氧化碳</button>
+                      <button type="button" class="zx-chip" data-chem="NH4Cl + Ca(OH)2 -> CaCl2 + NH3 + H2O">铵盐与碱</button>
+                      <button type="button" class="zx-chip" data-chem="Cu + H2SO4 -> CuSO4 + SO2 + H2O">铜与浓硫酸</button>
+                      <button type="button" class="zx-chip" data-chem="Cl2 + NaOH -> NaCl + NaClO + H2O">氯气与冷碱</button>
+                      <button type="button" class="zx-chip" data-chem="Cl2 + NaOH -> NaCl + NaClO3 + H2O">氯气与热碱</button>
+                      <button type="button" class="zx-chip" data-chem="Na2S2O3 + I2 -> NaI + Na2S4O6">硫代硫酸钠与碘</button>
+                    </div>              </div>
                     <div class="zx-label mt-4">配平结果</div>
                     <div id="chemOutput" class="zx-out" aria-live="polite"><div class="zx-out-row"><span>等待输入</span><span>支持 →、-&gt; 或 =</span></div></div>
                     <div class="zx-label mt-4">使用说明</div>
@@ -2019,54 +2047,56 @@ function zxEvalArithmetic(src) {
             }
         }
 
-        /* Chemistry equation balancing: parse formulas and search integer coefficients */
+        /* Chemistry equation balancing */
         (function initChemistryBalancer(){
           const input=document.getElementById('chemInput'), output=document.getElementById('chemOutput');
           if(!input||!output)return;
           function parseFormula(formula){
-            formula=formula.replace(/[［【]/g,'(').replace(/[］】]/g,')').replace(/[·⋅]/g,'.').replace(/\[(?=[A-Z])/g,'(').replace(/\]/g,')');
-            const total={}; const add=(obj,mul,target)=>Object.keys(obj).forEach(k=>target[k]=(target[k]||0)+obj[k]*mul);
+            formula=formula.replace(/[［【\[]/g,'(').replace(/[］】\]]/g,')').replace(/[·⋅]/g,'.');
+            const total={};
+            function merge(dst,src,m){Object.keys(src).forEach(k=>dst[k]=(dst[k]||0)+src[k]*m);}
             function segment(str){
               let i=0,stack=[{}];
               while(i<str.length){
                 const c=str[i];
                 if(c==='('){stack.push({});i++;continue;}
-                if(c===')'){if(stack.length<2)throw Error('括号不匹配：'+formula);i++;let n='';while(/\d/.test(str[i]||''))n+=str[i++];const part=stack.pop();add(part,n?Number(n):1,stack[stack.length-1]);continue;}
-                if(/[A-Z]/.test(c)){let el=c;i++;while(/[a-z]/.test(str[i]||''))el+=str[i++];let n='';while(/\d/.test(str[i]||''))n+=str[i++];stack[stack.length-1][el]=(stack[stack.length-1][el]||0)+(n?Number(n):1);continue;}
+                if(c===')'){if(stack.length<2)throw Error('化学式括号不匹配：'+formula);i++;let n='';while(/\d/.test(str[i]||''))n+=str[i++];merge(stack[stack.length-2],stack.pop(),n?Number(n):1);continue;}
+                if(/[A-Z]/.test(c)){let el=c;i++;while(/[a-z]/.test(str[i]||''))el+=str[i++];let n='';while(/\d/.test(str[i]||''))n+=str[i++];const count=n?Number(n):1;if(!Number.isSafeInteger(count)||count<1)throw Error('下标必须是正整数');stack[stack.length-1][el]=(stack[stack.length-1][el]||0)+count;continue;}
                 throw Error('无法识别化学式：'+str);
               }
-              if(stack.length!==1)throw Error('括号不匹配：'+formula);return stack[0];
+              if(stack.length!==1)throw Error('化学式括号不匹配：'+formula);return stack[0];
             }
-            formula.split('.').forEach(piece=>{const m=piece.match(/^(\d+)(?=[A-Z(])/);let mult=1;if(m){mult=Number(m[1]);piece=piece.slice(m[0].length);}add(segment(piece),mult,total);});
+            formula.split('.').forEach(piece=>{const m=piece.match(/^(\d+)(?=[A-Z(])/);let mult=1;if(m){mult=Number(m[1]);piece=piece.slice(m[0].length);}if(!piece)throw Error('化学式为空');merge(total,segment(piece),mult);});
             return total;
           }
-          function gcd(a,b){while(b){const t=a%b;a=b%b?b:0; a=t;}return Math.abs(a);}
+          function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){const t=a%b;a=b;b=t;}return a||1;}
           function balance(raw){
             const normalized=raw.trim().replace(/⇌|⟶|→|⇒|＝|=/g,'->').replace(/−/g,'-');
             const sides=normalized.split(/->/);if(sides.length!==2)throw Error('请用 + 分隔同侧物质，并用 →、-> 或 = 分隔反应物和生成物。');
             const splitSide=x=>x.split('+').map(v=>v.trim().replace(/^\d+(?=[A-Z(])/,'')).filter(Boolean);
             const left=splitSide(sides[0]),right=splitSide(sides[1]),forms=left.concat(right);
-            if(!left.length||!right.length||forms.length>7)throw Error('请检查反应物和生成物；最多支持 7 种物质。');
+            if(!left.length||!right.length||forms.length>8)throw Error('请检查反应物和生成物；最多支持 8 种物质。');
             const parsed=forms.map(parseFormula),elements=[...new Set(parsed.flatMap(f=>Object.keys(f)))];
             const rows=elements.map(el=>parsed.map((f,i)=>(i<left.length?1:-1)*(f[el]||0)));
             const n=forms.length,vec=Array(n).fill(1);let best=null,bestSum=Infinity;
             function valid(){return rows.every(row=>row.reduce((sum,v,i)=>sum+v*vec[i],0)===0);}
             function dfs(pos,sum){
-              if(sum+n-pos>=bestSum)return;
+              if(sum+(n-pos)>=bestSum)return;
               if(pos===n-1){
-                for(let v=1;v<=40;v++){vec[pos]=v;if(valid()){const total=sum+v;if(total<bestSum){bestSum=total;best=vec.slice();}break;}}
+                for(let v=1;v<=100;v++){vec[pos]=v;if(valid()){const total=sum+v;if(total<bestSum){bestSum=total;best=vec.slice();}break;}}
                 return;
               }
-              for(let v=1;v<=18;v++){vec[pos]=v;dfs(pos+1,sum+v);}
+              for(let v=1;v<=30;v++){vec[pos]=v;dfs(pos+1,sum+v);}
             }
             dfs(0,0);
-            if(!best)throw Error('未在当前搜索范围内找到配平结果。请检查化学式，复杂反应可尝试拆分。');
-            const div=best.reduce((a,b)=>{while(b){const t=a%b;a=b;b=t;}return a;});const coeff=best.map(v=>v/div);
+            if(!best)throw Error('未找到配平结果。此反应可能超出当前搜索范围，或输入了离子方程式/特殊反应，请检查化学式与反应条件。');
+            const div=best.reduce((a,b)=>gcd(a,b),0)||1,coeff=best.map(v=>v/div);
             const pretty=f=>f.replace(/([A-Za-z)])(\d+)/g,'$1<sub>$2</sub>').replace(/\.(\d+)/g,'·$1');
-            return {result:left.map((f,i)=>(coeff[i]===1?'':coeff[i])+pretty(f)).join(' + ')+' → '+right.map((f,i)=>(coeff[left.length+i]===1?'':coeff[left.length+i])+pretty(f)).join(' + '),coeff};
+            const result=left.map((f,i)=>(coeff[i]===1?'':coeff[i])+pretty(f)).join(' + ')+' → '+right.map((f,i)=>(coeff[left.length+i]===1?'':coeff[left.length+i])+pretty(f)).join(' + ');
+            return {result,coeff,parsed,rows,forms};
           }
           function render(){
-            try{const r=balance(input.value);output.innerHTML='<div class="zx-out-row"><span>配平结果</span><strong>'+r.result+'</strong></div><div class="zx-out-row"><span>系数</span><span>'+r.coeff.join(' : ')+'</span></div><div class="zx-out-row"><span>校验</span><span>已搜索整数系数并验证元素守恒</span></div>';}
+            try{const r=balance(input.value);output.innerHTML='<div class="zx-out-row"><span>配平结果</span><strong>'+r.result+'</strong></div><div class="zx-out-row"><span>系数</span><span>'+r.coeff.join(' : ')+'</span></div><div class="zx-out-row"><span>守恒校验</span><span>所有元素两侧原子数相等</span></div>';}
             catch(e){output.textContent=e.message||'配平失败，请检查输入。';}
           }
           document.getElementById('chemBalanceBtn').addEventListener('click',render);
