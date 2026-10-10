@@ -2475,14 +2475,22 @@ function zxEvalArithmetic(src) {
             const finite=raw.filter(p=>Number.isFinite(p.y)).map(p=>p.y).sort((a,b)=>a-b);
             if(!finite.length){host.innerHTML='<div class="function-graph-empty">当前显示区间没有可绘制的实数函数值。</div>';return;}
             const quantile=q=>finite[Math.min(finite.length-1,Math.max(0,Math.floor((finite.length-1)*q)))];
-            let yMin=quantile(.03),yMax=quantile(.97);
-            if(!Number.isFinite(yMin)||!Number.isFinite(yMax)||yMax-yMin<1e-9){yMin=quantile(.1)-1;yMax=quantile(.9)+1;}
+            // 用稳健分位数限制渐近线附近的极端值，但把真正的局部极值纳入视窗；
+            // 不再只纳入“离分位范围很近”的极值，否则窄峰、窄谷会被错误裁掉。
+            let yMin=quantile(.02),yMax=quantile(.98);
+            if(!Number.isFinite(yMin)||!Number.isFinite(yMax)||yMax-yMin<1e-9){const mid=finite[Math.floor(finite.length/2)];yMin=mid-1;yMax=mid+1;}
             if(yMax-yMin<1e-9){yMin-=1;yMax+=1;}
-            // 把位于稳健区间附近的局部极值纳入缩放，避免 (x-2)^2+3 一类函数的顶点被分位数裁掉。
-            const robustSpan=Math.max(1e-9,yMax-yMin),extrema=[];
-            for(let i=1;i<raw.length-1;i++){const p0=raw[i-1],p1=raw[i],p2=raw[i+1];if(!Number.isFinite(p0.y)||!Number.isFinite(p1.y)||!Number.isFinite(p2.y))continue;const localMin=p1.y<=p0.y&&p1.y<=p2.y,localMax=p1.y>=p0.y&&p1.y>=p2.y;if((localMin||localMax)&&p1.y>=yMin-robustSpan*.15&&p1.y<=yMax+robustSpan*.15)extrema.push(p1.y);}
-            if(extrema.length){yMin=Math.min(yMin,Math.min.apply(null,extrema));yMax=Math.max(yMax,Math.max.apply(null,extrema));}
-            // 有零点时确保 y=0 位于视窗内。
+            const extrema=[];
+            for(let i=1;i<raw.length-1;i++){
+                const p0=raw[i-1],p1=raw[i],p2=raw[i+1];
+                if(!Number.isFinite(p0.y)||!Number.isFinite(p1.y)||!Number.isFinite(p2.y))continue;
+                const localMin=p1.y<=p0.y&&p1.y<=p2.y,localMax=p1.y>=p0.y&&p1.y>=p2.y;
+                if(localMin||localMax)extrema.push(p1.y);
+            }
+            // 仅纳入非渐近线型的局部极值，避免 1/(x-a) 的巨大数值破坏纵轴比例。
+            const baseSpan=Math.max(1e-9,yMax-yMin);
+            extrema.forEach(y=>{if(y>=yMin-baseSpan*.5&&y<=yMax+baseSpan*.5){yMin=Math.min(yMin,y);yMax=Math.max(yMax,y);}});
+            // 零点附近应能看见 x 轴；常值函数则给出有意义的纵向留白。
             let hasRoot=false;
             for(let i=0;i<raw.length;i++){
                 const y=raw[i].y;
@@ -2490,7 +2498,8 @@ function zxEvalArithmetic(src) {
                 if(i>0&&Number.isFinite(y)&&Number.isFinite(raw[i-1].y)&&y*raw[i-1].y<0){hasRoot=true;break;}
             }
             if(hasRoot){yMin=Math.min(yMin,0);yMax=Math.max(yMax,0);}
-            const pad=(yMax-yMin)*.1;yMin-=pad;yMax+=pad;
+            if(yMax-yMin<1e-9){yMin-=Math.max(1,Math.abs(yMin)*.1);yMax+=Math.max(1,Math.abs(yMax)*.1);}
+            const pad=(yMax-yMin)*.08;yMin-=pad;yMax+=pad;
             const span=yMax-yMin;
             const X=x=>L+(x-xMin)/(xMax-xMin)*plotW,Y=y=>T+(yMax-y)/span*plotH;
             let grid='';
@@ -2509,9 +2518,12 @@ function zxEvalArithmetic(src) {
                 if(!Number.isFinite(p.y)||p.y<yMin||p.y>yMax){pen=false;prev=null;return;}
                 if(prev){
                     const dx=p.x-prev.x,dy=Math.abs(p.y-prev.y);
-                    // 斜率突变或跳跃大于图窗高度的一半，断开路径，避免跨渐近线连线。
-                    // 降低突跳阈值，避免把渐近线两侧错误连成一条曲线。
-                    if(dx<=0||dy>span*.08||dy/Math.max(dx,1e-9)>span/Math.max((xMax-xMin),1)*18){pen=false;}
+                    const localScale=Math.max(1,Math.abs(prev.y),Math.abs(p.y),span*.08);
+                    // 除屏幕上的垂直跳跃外，也检测相邻点相对量级的突增；
+                    // 这能减少分式渐近线被直线跨接，同时避免仅凭绝对斜率切断正常陡峭曲线。
+                    const relativeJump=dy>localScale*2.5;
+                    const screenJump=dy/span*plotH>plotH*.22;
+                    if(dx<=0||relativeJump||screenJump){pen=false;prev=null;}
                 }
                 const px=X(p.x),py=Y(p.y);
                 if(!pen){d+='M'+px.toFixed(2)+','+py.toFixed(2);pen=true;}
