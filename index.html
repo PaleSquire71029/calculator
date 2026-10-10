@@ -224,6 +224,13 @@
 [data-view="chemistry"] .view-head-mark i.fa-flask{font-size:0!important}
 [data-view="chemistry"] .view-head-mark i.fa-flask::before{content:"⚗";font-family:system-ui,sans-serif;font-size:30px;line-height:1}
 
+
+/* Responsive chemistry workspace: mobile fullscreen/landscape, tablet and desktop share layout */
+@media(max-width:768px){body.zx-chem-fullscreen-active{overflow:hidden!important}[data-view="chemistry"] #chemKeyboard:not([hidden]){max-height:min(66dvh,560px)!important}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:clamp(36px,6.2dvh,48px)}}
+@media(max-width:768px) and (orientation:landscape){[data-view="chemistry"] #chemKeyboard:not([hidden]){max-height:calc(100dvh - 12px)!important;padding:6px max(10px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-tools{gap:6px;padding-bottom:4px}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;margin-top:5px}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:34px;padding:3px;font-size:13px}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button small{font-size:8px}}
+@media(min-width:769px){[data-view="chemistry"] #chemKeyboard:not([hidden]){width:100%;max-width:100%;box-sizing:border-box}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(10,minmax(0,1fr));gap:8px}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:48px}}
+@media(min-width:769px) and (max-width:1100px){[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:42px}}
+
 </style>
 <style id="zx-redesigned-app">
 
@@ -2133,9 +2140,32 @@ function zxEvalArithmetic(src) {
           document.getElementById('chemClearBtn').addEventListener('click',()=>{insert('CLEAR');output.textContent='已清空';});
           document.getElementById('chemUndoBtn').addEventListener('click',()=>{input.value=lastValue;input.focus();});
           const ime=document.getElementById('chemImeBtn');
-          if(ime)ime.addEventListener('click',()=>{const native=input.getAttribute('inputmode')==='none';input.setAttribute('inputmode',native?'text':'none');if(native){input.focus();ime.textContent='⌨ 关闭系统输入法';}else{input.blur();ime.textContent='⌨ 系统输入法';}});
+          if(ime)ime.addEventListener('click',()=>{
+            const native=input.getAttribute('inputmode')==='none';
+            if(native){
+              if(keyboard)keyboard.hidden=true;
+              const t=document.getElementById('chemKeyboardToggle');t?.setAttribute('aria-expanded','false');
+              if(t)t.innerHTML='<i class="fa-solid fa-keyboard"></i> 打开化学键盘';
+              input.setAttribute('inputmode','text');input.focus({preventScroll:true});
+              ime.innerHTML='<i class="fa-solid fa-keyboard"></i> 使用化学键盘';
+            }else{input.blur();input.setAttribute('inputmode','none');ime.innerHTML='<i class="fa-solid fa-keyboard"></i> 系统输入法';}
+          });
 
           const keyboard=document.getElementById('chemKeyboard'),toggle=document.getElementById('chemKeyboardToggle');
+          async function enterChemFullscreen(){
+            if(!window.matchMedia('(max-width: 768px)').matches)return;
+            document.body.classList.add('zx-chem-fullscreen-active');
+            try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen({navigationUI:'hide'});}catch(e){}
+            try{if(screen.orientation?.lock)await screen.orientation.lock('landscape');}catch(e){}
+          }
+          function leaveChemFullscreen(){
+            document.body.classList.remove('zx-chem-fullscreen-active');
+            try{screen.orientation?.unlock?.();}catch(e){}
+            try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen();}catch(e){}
+          }
+          document.getElementById('chemKeyboardClose')?.addEventListener('click',leaveChemFullscreen);
+          document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)document.body.classList.remove('zx-chem-fullscreen-active');});
+          window.addEventListener('orientationchange',()=>{if(keyboard&&!keyboard.hidden)setTimeout(()=>window.scrollTo(0,0),80);});
           const search=document.getElementById('chemElementSearch'),elementGrid=document.getElementById('chemElementGrid');
           const elementData=[
           ["H","氢",1],["He","氦",2],["Li","锂",3],["Be","铍",4],["B","硼",5],["C","碳",6],["N","氮",7],["O","氧",8],["F","氟",9],["Ne","氖",10],
@@ -2153,7 +2183,7 @@ function zxEvalArithmetic(src) {
           function renderElements(q=''){if(!elementGrid)return;const query=q.trim().toLowerCase();elementGrid.innerHTML='';elementData.filter((e,i)=>!query||e.join(' ').toLowerCase().includes(query)).forEach(e=>{const b=document.createElement('button');b.type='button';b.innerHTML=e[0]+'<small>'+e[1]+' · '+e[2]+'</small>';b.addEventListener('click',()=>insert(e[0]));elementGrid.appendChild(b);});if(!elementGrid.children.length)elementGrid.textContent='没有找到匹配元素';}
           renderElements();
           if(search)search.addEventListener('input',()=>renderElements(search.value));
-          if(toggle)toggle.addEventListener('click',()=>{const opening=keyboard.hidden;keyboard.hidden=!opening;toggle.setAttribute('aria-expanded',String(opening));toggle.innerHTML=opening?'<i class="fa-solid fa-keyboard"></i> 收起化学键盘':'<i class="fa-solid fa-keyboard"></i> 打开化学键盘';if(opening){renderElements(search?.value||'');}});
+          if(toggle)toggle.addEventListener('click',async()=>{const opening=keyboard.hidden;if(opening){await enterChemFullscreen();input.setAttribute('inputmode','none');if(ime)ime.innerHTML='<i class="fa-solid fa-keyboard"></i> 系统输入法';}keyboard.hidden=!opening;toggle.setAttribute('aria-expanded',String(opening));toggle.innerHTML=opening?'<i class="fa-solid fa-keyboard"></i> 收起化学键盘':'<i class="fa-solid fa-keyboard"></i> 打开化学键盘';if(opening){renderElements(search?.value||'');}});
           document.getElementById('chemKeyboardClose')?.addEventListener('click',()=>{keyboard.hidden=true;toggle?.setAttribute('aria-expanded','false');if(toggle)toggle.innerHTML='<i class="fa-solid fa-keyboard"></i> 打开化学键盘';});
           document.querySelectorAll('[data-chemtab]').forEach(b=>b.addEventListener('click',()=>{const el=b.dataset.chemtab==='elements';document.getElementById('chemElementPanel').hidden=!el;document.getElementById('chemSymbolPanel').hidden=el;document.querySelectorAll('[data-chemtab]').forEach(t=>t.setAttribute('aria-selected',String(t===b)));}));
           function gcd(a,b){a=a<0n?-a:a;b=b<0n?-b:b;while(b){const t=a%b;a=b;b=t;}return a||1n;}
