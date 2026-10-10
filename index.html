@@ -136,6 +136,28 @@
   .view.solve-subview .solve-keypad button{height:41px;min-height:41px!important;font-size:15px!important}
   .view.solve-subview .solve-keypad button[data-solve-key="NEXT"]{font-size:11px!important}
 }
+
+/* Unified mobile input: keep the active input and shared keypad reachable without page scrolling */
+@media(max-width:768px){
+  html,body{max-width:100%;overscroll-behavior-x:none}
+  .zx-mobile-mathpad.is-visible{max-height:min(48dvh,360px);overflow-y:auto;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+  .zx-mobile-mathpad.is-visible .zx-mobile-mathpad-grid button{min-height:clamp(36px,5.4dvh,44px)}
+  body.zx-mathpad-open{padding-bottom:0!important}
+  .view.is-active input[data-math-field]:focus,
+  .view.is-active input[data-custom-expression]:focus{scroll-margin-block:12px}
+  .view.is-active .calc-pad{display:none!important}
+  .view.is-active .calc-screen{margin-bottom:8px}
+  .view.is-active .calc-input{min-height:52px;font-size:clamp(22px,5vw,30px)}
+  .zx-mobile-mathpad-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .zx-mathpad-tabs button{min-height:36px}
+}
+@media(max-height:650px) and (max-width:768px){
+  .zx-mobile-mathpad.is-visible{max-height:44dvh;padding-top:7px}
+  .zx-mobile-mathpad-head{margin-bottom:4px}
+  .zx-mathpad-tabs{padding-top:3px}
+  .zx-mobile-mathpad-grid button{min-height:34px!important}
+}
+
 </style>
 <style id="zx-redesigned-app">
 
@@ -668,7 +690,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                         <div class="min-w-0">
                             <div class="zx-label">算式输入</div>
                             <div class="calc-screen">
-                                <input id="calcInput" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-label="算式输入" placeholder="0" class="calc-input">
+                                <input id="calcInput" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" data-math-field="算式输入" aria-label="算式输入" placeholder="0" class="calc-input">
                                 <div id="calcHint" class="calc-hint">可直接键盘输入，也可用下方键盘</div>
                             </div>
                             <div class="calc-pad" id="calcPad">
@@ -866,7 +888,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                     <div id="unitCats" class="flex flex-wrap gap-1.5"></div>
 
                     <div class="zx-label mt-4">数值与单位</div>
-                    <input id="unitValue" type="text" inputmode="decimal" autocomplete="off" value="1" aria-label="要换算的数值" class="zx-field">
+                    <input id="unitValue" type="text" inputmode="decimal" autocomplete="off" value="1" data-math-field="换算数值" aria-label="要换算的数值" class="zx-field">
                     <div class="zx-unit-row mt-2">
                         <select id="unitFrom" class="zx-field" aria-label="原单位"></select>
                         <button type="button" id="unitSwap" class="zx-icon-btn" title="交换两个单位"><i class="fa-solid fa-right-left"></i></button>
@@ -2015,7 +2037,7 @@ function zxEvalArithmetic(src) {
             pad.innerHTML='<div class="zx-mobile-mathpad-head"><span id="zxMathPadLabel">数学输入</span><button type="button" data-value="DONE">收起</button></div>'+
                 '<div class="zx-mathpad-tabs"><button type="button" data-pad-tab="numbers" class="is-active">数字</button><button type="button" data-pad-tab="operators">运算</button><button type="button" data-pad-tab="symbols">数学符号</button></div>'+
                 '<div class="zx-mobile-mathpad-grid" data-pad-panel="numbers">'+[['7','7'],['8','8'],['9','9'],['DEL','⌫'],['4','4'],['5','5'],['6','6'],['CLEAR','清空'],['1','1'],['2','2'],['3','3'],['NEXT','下一项'],['0','0'],['.','.']].map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>'+
-                '<div class="zx-mobile-mathpad-grid" data-pad-panel="operators" hidden>'+[['+','+'],['-','−'],['*','×'],['/','÷'],['^','xⁿ'],['(', '('],[')',')'],[',',','],['=','=']].map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>'+
+                '<div class="zx-mobile-mathpad-grid" data-pad-panel="operators" hidden>'+[['+','+'],['-','−'],['*','×'],['/','÷'],['^','xⁿ'],['%','%'],['(', '('],[')',')'],[',',','],['=','=']].map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>'+
                 '<div class="zx-mobile-mathpad-grid" data-pad-panel="symbols" hidden>'+[['x','x'],['pi','π'],['<','<'],['>','>'],['≤','≤'],['≥','≥'],['NEXT','下一项'],['DONE','完成']].map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>';
             document.body.appendChild(pad);
             let active=null;
