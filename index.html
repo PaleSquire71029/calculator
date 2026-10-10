@@ -180,6 +180,24 @@
 @media(max-width:768px){.zx-chem-keyrow{grid-template-columns:repeat(5,minmax(0,1fr))}.zx-chem-keyrow button{min-height:42px}.zx-chem-ime{display:inline-flex!important}}
 @media(min-width:769px){.zx-chem-keyboard{max-width:850px}}
 
+
+/* Chemistry page: icon fix + shared collapsible keyboard */
+[data-view="chemistry"] .view-head-mark{display:flex!important;align-items:center;justify-content:center;flex:0 0 64px;width:64px;height:64px;min-width:64px;border:1px solid #796744;border-radius:18px;background:linear-gradient(145deg,#29261f,#171a20);color:#e4c17d;box-shadow:inset 0 1px 0 #ffffff12,0 5px 14px #0003;font-size:27px}
+[data-view="chemistry"] .view-head-mark i{display:inline-block!important;font-family:"Font Awesome 6 Free","Font Awesome 5 Free",sans-serif;font-weight:900;font-size:27px;color:#e4c17d}
+.zx-chem-toolbar .zx-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.zx-chem-keyboard[hidden]{display:none!important}
+.zx-chem-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.zx-chem-search{flex:1;min-width:150px}
+.zx-chem-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.zx-chem-tabs button{min-height:40px;border:1px solid #3a414e;border-radius:10px;background:#202631;color:#dce2ec}
+.zx-chem-tabs button[aria-selected="true"]{border-color:#c5a66a;background:#393324;color:#f1d18c}
+.zx-chem-symbols{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin-top:10px}
+.zx-chem-symbols button{min-width:0;min-height:42px;border:1px solid #3a414e;border-radius:9px;background:#202631;color:#f1f3f6;font-weight:650}
+.zx-chem-symbols button small{display:block;font-size:9px;font-weight:400;color:#aab3c2;overflow:hidden;text-overflow:ellipsis}
+.zx-chem-symbols button:active{border-color:#c5a66a;background:#393324}
+.zx-chem-keyrow button{font-family:inherit}
+@media(max-width:600px){.zx-chem-symbols{grid-template-columns:repeat(5,minmax(0,1fr))}.zx-chem-tools .zx-btn{min-height:40px}}
+
 </style>
 <style id="zx-redesigned-app">
 
@@ -951,12 +969,17 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                     <div class="zx-label">输入化学方程式（点击下方按键快速输入）</div>
                     <input id="chemInput" type="text" class="zx-field" autocomplete="off" spellcheck="false" inputmode="none" placeholder="例如：Fe + O2 → Fe2O3" aria-label="待配平化学方程式">
                     <div class="zx-chem-toolbar">
-                      <button type="button" class="zx-btn is-go" id="chemBalanceBtn">⚖ 配平</button>
-                      <button type="button" class="zx-btn" id="chemClearBtn">⌫ 清空</button>
-                      <button type="button" class="zx-btn" id="chemUndoBtn">↶ 撤销</button>
-                      <button type="button" class="zx-btn zx-chem-ime" id="chemImeBtn" aria-label="切换系统输入法">⌨ 系统输入法</button>
+                      <button type="button" class="zx-btn is-go" id="chemBalanceBtn"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> 配平</button>
+                      <button type="button" class="zx-btn" id="chemKeyboardToggle" aria-expanded="false"><i class="fa-solid fa-keyboard" aria-hidden="true"></i> 打开化学键盘</button>
+                      <button type="button" class="zx-btn" id="chemClearBtn"><i class="fa-solid fa-eraser" aria-hidden="true"></i> 清空</button>
+                      <button type="button" class="zx-btn" id="chemUndoBtn"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> 撤销</button>
+                      <button type="button" class="zx-btn zx-chem-ime" id="chemImeBtn"><i class="fa-solid fa-keyboard" aria-hidden="true"></i> 系统输入法</button>
                     </div>
-                    <div id="chemKeyboard" class="zx-chem-keyboard" aria-label="化学方程式专用键盘">
+                    <div id="chemKeyboard" class="zx-chem-keyboard" aria-label="化学方程式专用键盘" hidden>
+                      <div class="zx-chem-tools"><input id="chemElementSearch" class="zx-field zx-chem-search" type="search" placeholder="查找元素：名称、符号或原子序数" aria-label="查找化学元素"><button type="button" class="zx-btn" id="chemKeyboardClose"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i> 收起键盘</button></div>
+                      <div class="zx-chem-tabs" role="tablist" aria-label="化学键盘分类"><button type="button" data-chemtab="elements" aria-selected="true">全部元素</button><button type="button" data-chemtab="symbols" aria-selected="false">方程式符号</button></div>
+                      <div id="chemElementPanel"><div id="chemElementGrid" class="zx-chem-symbols"></div></div>
+                      <div id="chemSymbolPanel" hidden>
                       <div class="zx-chem-keyrow">
                         <button type="button" data-chemkey="H">H</button><button type="button" data-chemkey="O">O</button><button type="button" data-chemkey="C">C</button><button type="button" data-chemkey="N">N</button><button type="button" data-chemkey="S">S</button><button type="button" data-chemkey="Cl">Cl</button><button type="button" data-chemkey="Na">Na</button><button type="button" data-chemkey="Fe">Fe</button>
                       </div>
@@ -971,6 +994,13 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                       </div>
                       <div class="zx-chem-keyrow">
                         <button type="button" data-chemkey="e-">e⁻</button><button type="button" data-chemkey="H^+">H⁺</button><button type="button" data-chemkey="OH^-">OH⁻</button><button type="button" data-chemkey="(aq)">(aq)</button><button type="button" data-chemkey="(s)">(s)</button><button type="button" data-chemkey="(g)">(g)</button><button type="button" data-chemkey="(l)">(l)</button><button type="button" data-chemkey="CLEAR">清空</button>
+                      </div>
+                      <div class="zx-chem-keyrow">
+                        <button type="button" data-chemkey="(">(</button><button type="button" data-chemkey=")">)</button><button type="button" data-chemkey="+">＋</button><button type="button" data-chemkey=" -> ">→</button><button type="button" data-chemkey="⇌">⇌</button><button type="button" data-chemkey="·">·</button><button type="button" data-chemkey="^">^ 电荷</button><button type="button" data-chemkey="DEL">⌫</button>
+                      </div>
+                      <div class="zx-chem-keyrow">
+                        <button type="button" data-chemkey="^+">⁺</button><button type="button" data-chemkey="^-">⁻</button><button type="button" data-chemkey="^2+">²⁺</button><button type="button" data-chemkey="^2-">²⁻</button><button type="button" data-chemkey="e-">e⁻</button><button type="button" data-chemkey="(aq)">(aq)</button><button type="button" data-chemkey="(s)">(s)</button><button type="button" data-chemkey="CLEAR">清空</button>
+                      </div>
                       </div>
                     </div>
                     <div class="zx-label mt-4">常见方程式</div>
@@ -2095,6 +2125,28 @@ function zxEvalArithmetic(src) {
           document.getElementById('chemUndoBtn').addEventListener('click',()=>{input.value=lastValue;input.focus();});
           const ime=document.getElementById('chemImeBtn');
           if(ime)ime.addEventListener('click',()=>{const native=input.getAttribute('inputmode')==='none';input.setAttribute('inputmode',native?'text':'none');if(native){input.focus();ime.textContent='⌨ 关闭系统输入法';}else{input.blur();ime.textContent='⌨ 系统输入法';}});
+
+          const keyboard=document.getElementById('chemKeyboard'),toggle=document.getElementById('chemKeyboardToggle');
+          const search=document.getElementById('chemElementSearch'),elementGrid=document.getElementById('chemElementGrid');
+          const elementData=[
+          ["H","氢",1],["He","氦",2],["Li","锂",3],["Be","铍",4],["B","硼",5],["C","碳",6],["N","氮",7],["O","氧",8],["F","氟",9],["Ne","氖",10],
+          ["Na","钠",11],["Mg","镁",12],["Al","铝",13],["Si","硅",14],["P","磷",15],["S","硫",16],["Cl","氯",17],["Ar","氩",18],["K","钾",19],["Ca","钙",20],
+          ["Sc","钪",21],["Ti","钛",22],["V","钒",23],["Cr","铬",24],["Mn","锰",25],["Fe","铁",26],["Co","钴",27],["Ni","镍",28],["Cu","铜",29],["Zn","锌",30],
+          ["Ga","镓",31],["Ge","锗",32],["As","砷",33],["Se","硒",34],["Br","溴",35],["Kr","氪",36],["Rb","铷",37],["Sr","锶",38],["Ag","银",47],["Cd","镉",48],
+          ["Sn","锡",50],["I","碘",53],["Xe","氙",54],["Cs","铯",55],["Ba","钡",56],["Pt","铂",78],["Au","金",79],["Hg","汞",80],["Pb","铅",82],["U","铀",92],
+          ["Tc","锝",43],["Ru","钌",44],["Rh","铑",45],["Pd","钯",46],["In","铟",49],["Sb","锑",51],["Te","碲",52],["La","镧",57],["Ce","铈",58],["W","钨",74],
+          ["Mo","钼",42],["Os","锇",76],["Ir","铱",77],["Bi","铋",83],["Th","钍",90],["Pu","钚",94],["Nd","钕",60],["Sm","钐",62],["Dy","镝",66],["Gd","钆",64],
+          ["Y","钇",39],["Zr","锆",40],["Nb","铌",41],["Hf","铪",72],["Ta","钽",73],["Re","铼",75],["Po","钋",84],["At","砹",85],["Rn","氡",86],["Fr","钫",87],
+          ["Ra","镭",88],["Ac","锕",89],["Pa","镤",91],["Np","镎",93],["Am","镅",95],["Cm","锔",96],["Bk","锫",97],["Cf","锎",98],["Es","锿",99],["Fm","镄",100],
+          ["Md","钔",101],["No","锘",102],["Lr","铹",103],["Rf","𬬻",104],["Db","𬭊",105],["Sg","𬭳",106],["Bh","𬭛",107],["Hs","𬭶",108],["Mt","鿏",109],["Ds","𫟼",110],
+          ["Rg","𬬭",111],["Cn","鎶",112],["Nh","鉨",113],["Fl","𫓧",114],["Mc","镆",115],["Lv","𫟷",116],["Ts","鿬",117],["Og","鿫",118],["Pr","镨",59],["Pm","钷",61],
+          ["Eu","铕",63],["Tb","铽",65],["Ho","钬",67],["Er","铒",68],["Tm","铥",69],["Yb","镱",70],["Lu","镥",71],["Ag","银",47],["Se","硒",34],["Br","溴",35]];
+          function renderElements(q=''){if(!elementGrid)return;const query=q.trim().toLowerCase();elementGrid.innerHTML='';elementData.filter((e,i)=>!query||e.join(' ').toLowerCase().includes(query)).forEach(e=>{const b=document.createElement('button');b.type='button';b.innerHTML=e[0]+'<small>'+e[1]+' · '+e[2]+'</small>';b.addEventListener('click',()=>insert(e[0]));elementGrid.appendChild(b);});if(!elementGrid.children.length)elementGrid.textContent='没有找到匹配元素';}
+          renderElements();
+          if(search)search.addEventListener('input',()=>renderElements(search.value));
+          if(toggle)toggle.addEventListener('click',()=>{const opening=keyboard.hidden;keyboard.hidden=!opening;toggle.setAttribute('aria-expanded',String(opening));toggle.innerHTML=opening?'<i class="fa-solid fa-keyboard"></i> 收起化学键盘':'<i class="fa-solid fa-keyboard"></i> 打开化学键盘';if(opening){renderElements(search?.value||'');}});
+          document.getElementById('chemKeyboardClose')?.addEventListener('click',()=>{keyboard.hidden=true;toggle?.setAttribute('aria-expanded','false');if(toggle)toggle.innerHTML='<i class="fa-solid fa-keyboard"></i> 打开化学键盘';});
+          document.querySelectorAll('[data-chemtab]').forEach(b=>b.addEventListener('click',()=>{const el=b.dataset.chemtab==='elements';document.getElementById('chemElementPanel').hidden=!el;document.getElementById('chemSymbolPanel').hidden=el;document.querySelectorAll('[data-chemtab]').forEach(t=>t.setAttribute('aria-selected',String(t===b)));}));
           function gcd(a,b){a=a<0n?-a:a;b=b<0n?-b:b;while(b){const t=a%b;a=b;b=t;}return a||1n;}
           function lcm(a,b){return a/gcd(a,b)*b;}
           function frac(n,d=1n){if(d<0n){n=-n;d=-d;}const g=gcd(n,d);return {n:n/g,d:d/g};}
