@@ -620,18 +620,18 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                                 <button type="button" class="calc-key" data-calc="8">8</button>
                                 <button type="button" class="calc-key" data-calc="9">9</button>
                                 <button type="button" class="calc-key is-op" data-calc="*" title="乘">×</button>
-                                <button type="button" class="calc-key is-op" data-calc="-" title="减">−</button>
+                                <button type="button" class="calc-key is-op" data-calc="^" title="乘方">xʸ</button>
 
                                 <button type="button" class="calc-key" data-calc="4">4</button>
                                 <button type="button" class="calc-key" data-calc="5">5</button>
                                 <button type="button" class="calc-key" data-calc="6">6</button>
-                                <button type="button" class="calc-key is-op" data-calc="+" title="加">+</button>
-                                <button type="button" class="calc-key is-op" data-calc="^" title="乘方">xʸ</button>
+                                <button type="button" class="calc-key is-op" data-calc="-" title="减">−</button>
+                                <button type="button" class="calc-key is-fn" data-calc="%" title="百分比（除以 100）">%</button>
 
                                 <button type="button" class="calc-key" data-calc="1">1</button>
                                 <button type="button" class="calc-key" data-calc="2">2</button>
                                 <button type="button" class="calc-key" data-calc="3">3</button>
-                                <button type="button" class="calc-key is-fn" data-calc="%" title="百分比（除以 100）">%</button>
+                                <button type="button" class="calc-key is-op" data-calc="+" title="加">+</button>
                                 <button type="button" class="calc-key is-fn" data-calc="NEG" title="正负号">±</button>
 
                                 <button type="button" class="calc-key col-span-2" data-calc="0">0</button>
@@ -2448,6 +2448,14 @@ function zxEvalArithmetic(src) {
             let yMin=quantile(.03),yMax=quantile(.97);
             if(!Number.isFinite(yMin)||!Number.isFinite(yMax)||yMax-yMin<1e-9){yMin=quantile(.1)-1;yMax=quantile(.9)+1;}
             if(yMax-yMin<1e-9){yMin-=1;yMax+=1;}
+            // 分位数缩放会裁掉 x²、(x-1)² 等函数的顶点；存在数值零点时，确保 y=0 落在视窗内。
+            let hasRoot=false;
+            for(let i=0;i<raw.length;i++){
+                const y=raw[i].y;
+                if(Number.isFinite(y)&&Math.abs(y)<1e-10){hasRoot=true;break;}
+                if(i>0&&Number.isFinite(y)&&Number.isFinite(raw[i-1].y)&&y*raw[i-1].y<0){hasRoot=true;break;}
+            }
+            if(hasRoot){yMin=Math.min(yMin,0);yMax=Math.max(yMax,0);}
             const pad=(yMax-yMin)*.1;yMin-=pad;yMax+=pad;
             const span=yMax-yMin;
             const X=x=>L+(x-xMin)/(xMax-xMin)*plotW,Y=y=>T+(yMax-y)/span*plotH;
