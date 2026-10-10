@@ -678,7 +678,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
             <div class="zx-menu-group">
                 <div class="zx-menu-title">工具</div>
                 <button type="button" class="zx-menu-item" data-go="units"><i class="fa-solid fa-ruler-combined"></i><span>单位换算</span></button>
-                <button type="button" class="zx-menu-item" data-go="chemistry"><i class="fa-solid fa-flask"></i><span>化学方程式配平</span></button>
+                <button type="button" class="zx-menu-item" data-go="chemistry">⚗️<span>化学方程式配平</span></button>
             </div>
             <div class="zx-menu-group">
                 <div class="zx-menu-title">记录</div>
@@ -2101,6 +2101,8 @@ function zxEvalArithmetic(src) {
           const add=(a,b)=>frac(a.n*b.d+b.n*a.d,a.d*b.d),sub=(a,b)=>frac(a.n*b.d-b.n*a.d,a.d*b.d),mul=(a,b)=>frac(a.n*b.n,a.d*b.d),div=(a,b)=>frac(a.n*b.d,a.d*b.n);
           const zero=()=>frac(0n),one=()=>frac(1n);
           function parseFormula(raw){
+            if(/^e-$/i.test(raw.trim()))return {__charge:-1n};
+            if(/^e\+$/i.test(raw.trim()))return {__charge:1n};
             let formula=raw.replace(/[［【\[]/g,'(').replace(/[］】\]]/g,')').replace(/[·⋅]/g,'.');
             let charge=0n;
             const cm=formula.match(/\^(?:(\d+))?([+-])$/);if(cm){charge=BigInt(cm[1]||'1')*(cm[2]==='-'?-1n:1n);formula=formula.slice(0,cm.index);}
