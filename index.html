@@ -2019,6 +2019,62 @@ function zxEvalArithmetic(src) {
             }
         }
 
+        /* Chemistry equation balancing: parse formulas and search integer coefficients */
+        (function initChemistryBalancer(){
+          const input=document.getElementById('chemInput'), output=document.getElementById('chemOutput');
+          if(!input||!output)return;
+          function parseFormula(formula){
+            formula=formula.replace(/[［【]/g,'(').replace(/[］】]/g,')').replace(/[·⋅]/g,'.').replace(/\[(?=[A-Z])/g,'(').replace(/\]/g,')');
+            const total={}; const add=(obj,mul,target)=>Object.keys(obj).forEach(k=>target[k]=(target[k]||0)+obj[k]*mul);
+            function segment(str){
+              let i=0,stack=[{}];
+              while(i<str.length){
+                const c=str[i];
+                if(c==='('){stack.push({});i++;continue;}
+                if(c===')'){if(stack.length<2)throw Error('括号不匹配：'+formula);i++;let n='';while(/\d/.test(str[i]||''))n+=str[i++];const part=stack.pop();add(part,n?Number(n):1,stack[stack.length-1]);continue;}
+                if(/[A-Z]/.test(c)){let el=c;i++;while(/[a-z]/.test(str[i]||''))el+=str[i++];let n='';while(/\d/.test(str[i]||''))n+=str[i++];stack[stack.length-1][el]=(stack[stack.length-1][el]||0)+(n?Number(n):1);continue;}
+                throw Error('无法识别化学式：'+str);
+              }
+              if(stack.length!==1)throw Error('括号不匹配：'+formula);return stack[0];
+            }
+            formula.split('.').forEach(piece=>{const m=piece.match(/^(\d+)(?=[A-Z(])/);let mult=1;if(m){mult=Number(m[1]);piece=piece.slice(m[0].length);}add(segment(piece),mult,total);});
+            return total;
+          }
+          function gcd(a,b){while(b){const t=a%b;a=b%b?b:0; a=t;}return Math.abs(a);}
+          function balance(raw){
+            const normalized=raw.trim().replace(/⇌|⟶|→|⇒|＝|=/g,'->').replace(/−/g,'-');
+            const sides=normalized.split(/->/);if(sides.length!==2)throw Error('请用 + 分隔同侧物质，并用 →、-> 或 = 分隔反应物和生成物。');
+            const splitSide=x=>x.split('+').map(v=>v.trim().replace(/^\d+(?=[A-Z(])/,'')).filter(Boolean);
+            const left=splitSide(sides[0]),right=splitSide(sides[1]),forms=left.concat(right);
+            if(!left.length||!right.length||forms.length>7)throw Error('请检查反应物和生成物；最多支持 7 种物质。');
+            const parsed=forms.map(parseFormula),elements=[...new Set(parsed.flatMap(f=>Object.keys(f)))];
+            const rows=elements.map(el=>parsed.map((f,i)=>(i<left.length?1:-1)*(f[el]||0)));
+            const n=forms.length,vec=Array(n).fill(1);let best=null,bestSum=Infinity;
+            function valid(){return rows.every(row=>row.reduce((sum,v,i)=>sum+v*vec[i],0)===0);}
+            function dfs(pos,sum){
+              if(sum+n-pos>=bestSum)return;
+              if(pos===n-1){
+                for(let v=1;v<=40;v++){vec[pos]=v;if(valid()){const total=sum+v;if(total<bestSum){bestSum=total;best=vec.slice();}break;}}
+                return;
+              }
+              for(let v=1;v<=18;v++){vec[pos]=v;dfs(pos+1,sum+v);}
+            }
+            dfs(0,0);
+            if(!best)throw Error('未在当前搜索范围内找到配平结果。请检查化学式，复杂反应可尝试拆分。');
+            const div=best.reduce((a,b)=>{while(b){const t=a%b;a=b;b=t;}return a;});const coeff=best.map(v=>v/div);
+            const pretty=f=>f.replace(/([A-Za-z)])(\d+)/g,'$1<sub>$2</sub>').replace(/\.(\d+)/g,'·$1');
+            return {result:left.map((f,i)=>(coeff[i]===1?'':coeff[i])+pretty(f)).join(' + ')+' → '+right.map((f,i)=>(coeff[left.length+i]===1?'':coeff[left.length+i])+pretty(f)).join(' + '),coeff};
+          }
+          function render(){
+            try{const r=balance(input.value);output.innerHTML='<div class="zx-out-row"><span>配平结果</span><strong>'+r.result+'</strong></div><div class="zx-out-row"><span>系数</span><span>'+r.coeff.join(' : ')+'</span></div><div class="zx-out-row"><span>校验</span><span>已搜索整数系数并验证元素守恒</span></div>';}
+            catch(e){output.textContent=e.message||'配平失败，请检查输入。';}
+          }
+          document.getElementById('chemBalanceBtn').addEventListener('click',render);
+          document.getElementById('chemClearBtn').addEventListener('click',()=>{input.value='';output.textContent='已清空';input.focus();});
+          document.querySelectorAll('[data-chem]').forEach(b=>b.addEventListener('click',()=>{input.value=b.getAttribute('data-chem');render();}));
+          input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();render();}});
+        })();
+
         /* ==================================================================
            五、界面路由：一个菜单项 = 一个界面
            ================================================================== */
