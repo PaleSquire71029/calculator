@@ -76,6 +76,36 @@
 .zx-legacy-solver-input{display:none!important}.structured-solver{margin-top:.65rem}.structured-top{display:flex;gap:.65rem;align-items:end;flex-wrap:wrap;margin-bottom:.7rem}.structured-select{display:flex;flex-direction:column;gap:.35rem;flex:1;min-width:135px}.structured-select span,.structured-field span{font-size:.68rem;color:#94A3B8;font-weight:650}.structured-select select{width:100%;min-height:2.65rem;border-radius:.65rem;border:1px solid rgba(255,255,255,.12);background:#11151D;color:#E2E8F0;padding:0 .65rem;font-size:.78rem}.structured-equation{font-family:var(--zx-mono);font-size:.88rem;color:rgb(var(--zx-gold));padding:.65rem .8rem;border-radius:.65rem;background:rgba(var(--zx-gold),.07);margin-bottom:.65rem}.structured-coefficients{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem}.structured-field{display:flex;flex-direction:column;gap:.35rem;min-width:0}.structured-field input{width:100%;min-width:0;height:2.8rem;border-radius:.65rem;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);color:#F8FAFC;padding:0 .7rem;font-family:var(--zx-mono);font-size:1rem}.structured-hint{margin-top:.6rem;font-size:.68rem;line-height:1.5;color:#94A3B8}.structured-examples{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.65rem}.structured-points{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}.structured-point{padding:.65rem;border:1px solid rgba(255,255,255,.08);border-radius:.7rem;background:rgba(255,255,255,.025);display:grid;grid-template-columns:1fr 1fr;gap:.45rem}.structured-point>b{grid-column:1/-1;font-size:.7rem;color:rgb(var(--zx-gold))}.structured-form-title{font-size:.75rem;color:#94A3B8}.html.light .structured-select select{background:#fff;color:#302A20;border-color:rgba(60,50,35,.16)}html.light .structured-field input{background:#fff;color:#302A20;border-color:rgba(60,50,35,.16)}html.light .structured-equation{color:#8E6D35;background:rgba(142,109,53,.08)}@media(max-width:420px){.structured-coefficients{gap:.4rem}.structured-field input{padding:0 .5rem}.structured-points{gap:.4rem}.structured-point{padding:.5rem;gap:.35rem}.structured-select{min-width:120px}}
 
 .structured-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.7rem}.structured-mode-tabs button{min-height:2.4rem;border-radius:.6rem;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);color:#94A3B8;font-size:.7rem;font-weight:650}.structured-mode-tabs button.is-active{background:rgb(var(--zx-gold));color:#08090C;border-color:transparent}html.light .structured-mode-tabs button{color:#64748B}html.light .structured-mode-tabs button.is-active{color:#fff;background:#8E6D35}
+/* Mobile solver workspace rebuild: compact, predictable, task-first layout */
+@media(max-width:768px){
+  .view[data-view="solve"] .view-card{padding:14px!important}
+  .view[data-view="solve"]>.view-card>.view-head{margin-bottom:12px}
+  .solve-mode-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:8px 0 12px}
+  .solve-mode-tab{min-height:42px!important;font-size:14px!important;border-radius:10px!important}
+  .solve-keypad-wrap{padding:10px!important;border-radius:14px!important;margin-bottom:12px;background:rgba(5,8,13,.38)!important}
+  .solve-keypad-title{font-size:11px!important;margin-bottom:8px!important}
+  .solve-keypad{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important}
+  .solve-keypad button{min-height:46px!important;height:46px;border-radius:11px!important;font-size:16px!important}
+  .solve-keypad button.key-action{font-size:13px!important}
+  .solve-keypad button[data-solve-key="NEXT"]{grid-column:span 1!important;font-size:11px!important}
+  .view[data-view="solve"] .solve-subview{margin-top:0!important}
+  .view[data-view="solve"] .solve-subview>.view-card{padding:14px!important}
+  .view[data-view="solve"] .solve-subview .view-head{margin-bottom:12px}
+  .view[data-view="solve"] .solve-subview .view-sub{font-size:12px;line-height:1.55}
+  .view[data-view="solve"] .structured-mode-tabs{gap:6px!important;margin-bottom:12px!important}
+  .view[data-view="solve"] .structured-mode-tabs button{min-height:42px!important;font-size:12px!important;padding:6px!important}
+  .view[data-view="solve"] .structured-field input{height:44px!important;font-size:16px!important}
+  .view[data-view="solve"] .zx-btn{min-height:42px}
+  .view[data-view="solve"] .zx-out{overflow-wrap:anywhere}
+  .view[data-view="solve"] .function-graph svg{max-height:300px}
+}
+@media(max-width:420px){
+  .view[data-view="solve"] .view-card{padding:12px!important}
+  .solve-keypad{gap:6px!important}
+  .solve-keypad button{height:43px;min-height:43px!important}
+  .solve-keypad button[data-solve-key="NEXT"]{font-size:10px!important}
+}
+/* End mobile solver workspace rebuild */
 </style>
 <style id="zx-redesigned-app">
 
@@ -674,12 +704,13 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                 </div>
                 <div class="solve-keypad-wrap"><div class="solve-keypad-title"><b>数学键盘</b><span>手机端不呼出系统输入法</span></div>
                   <div class="solve-keypad">
-                    <button type="button" data-solve-key="7">7</button><button type="button" data-solve-key="8">8</button><button type="button" data-solve-key="9">9</button><button type="button" data-solve-key="DEL" class="key-action">⌫</button><button type="button" data-solve-key="CLEAR" class="key-action">清空</button>
-                    <button type="button" data-solve-key="4">4</button><button type="button" data-solve-key="5">5</button><button type="button" data-solve-key="6">6</button><button type="button" data-solve-key="+">+</button><button type="button" data-solve-key="-">−</button>
-                    <button type="button" data-solve-key="1">1</button><button type="button" data-solve-key="2">2</button><button type="button" data-solve-key="3">3</button><button type="button" data-solve-key="*">×</button><button type="button" data-solve-key="/">÷</button>
-                    <button type="button" data-solve-key="0">0</button><button type="button" data-solve-key=".">.</button><button type="button" data-solve-key="x">x</button><button type="button" data-solve-key="^">xⁿ</button><button type="button" data-solve-key="=">=</button>
-                    <button type="button" data-solve-key="(">(</button><button type="button" data-solve-key=")">)</button><button type="button" data-solve-key=",">,</button><button type="button" data-solve-key="&lt;">&lt;</button><button type="button" data-solve-key="&gt;">&gt;</button>
-                    <button type="button" data-solve-key="≤">≤</button><button type="button" data-solve-key="≥">≥</button><button type="button" data-solve-key="NEXT" class="key-action key-next">切换输入项 ↔</button>
+                    <button type="button" data-solve-key="7">7</button><button type="button" data-solve-key="8">8</button><button type="button" data-solve-key="9">9</button><button type="button" data-solve-key="DEL" class="key-action">⌫</button>
+                    <button type="button" data-solve-key="4">4</button><button type="button" data-solve-key="5">5</button><button type="button" data-solve-key="6">6</button><button type="button" data-solve-key="CLEAR" class="key-action">清空</button>
+                    <button type="button" data-solve-key="1">1</button><button type="button" data-solve-key="2">2</button><button type="button" data-solve-key="3">3</button><button type="button" data-solve-key="+">+</button>
+                    <button type="button" data-solve-key="0">0</button><button type="button" data-solve-key=".">.</button><button type="button" data-solve-key="*">×</button><button type="button" data-solve-key="/">÷</button>
+                    <button type="button" data-solve-key="x">x</button><button type="button" data-solve-key="^">xⁿ</button><button type="button" data-solve-key="(">(</button><button type="button" data-solve-key=")">)</button>
+                    <button type="button" data-solve-key="-">−</button><button type="button" data-solve-key=",">,</button><button type="button" data-solve-key="=">=</button><button type="button" data-solve-key="NEXT" class="key-action">切换输入项</button>
+                    <button type="button" data-solve-key="&lt;">&lt;</button><button type="button" data-solve-key="&gt;">&gt;</button><button type="button" data-solve-key="≤">≤</button><button type="button" data-solve-key="≥">≥</button>
                   </div>
                 </div>
               </div>
