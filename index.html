@@ -2245,7 +2245,8 @@ function zxEvalArithmetic(src) {
         })();
 
 
-(function(){const root=document.getElementById('knowledgeList'),search=document.getElementById('knowledgeSearch'),detail=document.getElementById('knowledgeDetail'),dc=document.getElementById('knowledgeDetailContent');if(!root)return;const data=[];const add '不等式', fit: '函数分析与绘图', units: '单位换算', chemistry: '化学方程式配平', knowledge: '知识库', history: '历史记录' };
+/* 知识库内容已迁移至 knowledge.html；此处只保留独立页面入口。 */
+        const VIEW_TITLES = { basic: '基础计算', equation: '方程求解', inequality: '不等式', fit: '函数分析与绘图', units: '单位换算', chemistry: '化学方程式配平', knowledge: '知识库', history: '历史记录' };
         let currentView = 'basic';
         let solveMode = 'equation';
         let solveActiveInput = null;
