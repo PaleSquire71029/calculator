@@ -240,6 +240,9 @@
  [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-search{flex:1 1 150px;min-width:0}
 }
 
+/* Knowledge base styles */
+.knowledge-mark{display:flex!important;align-items:center;justify-content:center;width:64px;height:64px;flex:0 0 64px;border:1px solid #796744;border-radius:18px;background:#211f1a;color:#e4c17d}
+.knowledge-searchbar{display:flex;align-items:center;gap:8px;margin:18px 0;padding:8px;border:1px solid #343b48;border-radius:14px;background:#10141b}.knowledge-searchbar input{flex:1;min-width:0;background:transparent;border:0!important;box-shadow:none!important}.knowledge-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}.knowledge-filters button{padding:8px 12px;border:1px solid #353d4a;border-radius:10px;background:#1a202a;color:#d7dce5}.knowledge-filters button.is-active{background:#3a3324;border-color:#b99a5e;color:#f2d69a}.knowledge-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.knowledge-item{display:flex;flex-direction:column;gap:7px;text-align:left;padding:14px;border:1px solid #343b48;border-radius:13px;background:#171c25;color:#e7eaf0}.knowledge-item small{color:#d7b879}.knowledge-item span{font-size:12px;color:#a6afbd;line-height:1.55}.knowledge-detail{margin-top:14px;padding:16px;border:1px solid #424958;border-radius:14px;background:#151a22;line-height:1.8}.knowledge-detail h2{font-size:22px;color:#f1d69b;margin:16px 0}.knowledge-detail p{white-space:pre-line;color:#d5dae3}.knowledge-formula{padding:12px;margin-top:10px;background:#262319;border:1px solid #4a4434;border-radius:10px;color:#f4d795;overflow-wrap:anywhere}@media(max-width:640px){.knowledge-list{grid-template-columns:1fr}.knowledge-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <style id="zx-redesigned-app">
 
@@ -740,6 +743,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                 <button type="button" class="zx-menu-item" data-go="units"><i class="fa-solid fa-ruler-combined"></i><span>单位换算</span></button>
                 <button type="button" class="zx-menu-item" data-go="chemistry">⚗️<span>化学方程式配平</span></button>
             </div>
+            <div class="zx-menu-group"><div class="zx-menu-title">学习</div><button type="button" class="zx-menu-item" data-go="knowledge"><i class="fa-solid fa-book-open-reader"></i><span>知识库</span></button></div>
             <div class="zx-menu-group">
                 <div class="zx-menu-title">记录</div>
                 <button type="button" class="zx-menu-item" data-go="history">
@@ -1029,48 +1033,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                       </div>
                     </div>
                     <div class="zx-label mt-4">常见方程式</div>
-                    <div id="chemExamples" class="flex flex-wrap gap-2">
-                      <button type="button" class="zx-chip" data-chem="H2 + O2 -> H2O">氢气燃烧</button>
-                      <button type="button" class="zx-chip" data-chem="Fe + O2 -> Fe2O3">铁的氧化</button>
-                      <button type="button" class="zx-chip" data-chem="Al + HCl -> AlCl3 + H2">金属与酸</button>
-                      <button type="button" class="zx-chip" data-chem="NaOH + H2SO4 -> Na2SO4 + H2O">酸碱中和</button>
-                      <button type="button" class="zx-chip" data-chem="CaCO3 -> CaO + CO2">碳酸盐分解</button>
-                      <button type="button" class="zx-chip" data-chem="KMnO4 -> K2MnO4 + MnO2 + O2">高锰酸钾分解</button>
-                      <button type="button" class="zx-chip" data-chem="CH4 + O2 -> CO2 + H2O">甲烷燃烧</button>
-                      <button type="button" class="zx-chip" data-chem="C2H5OH + O2 -> CO2 + H2O">乙醇燃烧</button>
-                      <button type="button" class="zx-chip" data-chem="Fe2O3 + CO -> Fe + CO2">氧化还原</button>
-                      <button type="button" class="zx-chip" data-chem="BaCl2 + Na2SO4 -> BaSO4 + NaCl">复分解反应</button>
-                      <button type="button" class="zx-chip" data-chem="NH3 + O2 -> NO + H2O">氨的催化氧化</button>
-                      <button type="button" class="zx-chip" data-chem="Cu + HNO3 -> Cu(NO3)2 + NO + H2O">铜与稀硝酸</button>
-                      <button type="button" class="zx-chip" data-chem="Zn + HCl -> ZnCl2 + H2">锌与盐酸</button>
-                      <button type="button" class="zx-chip" data-chem="Na + H2O -> NaOH + H2">钠与水</button>
-                      <button type="button" class="zx-chip" data-chem="Ca(OH)2 + CO2 -> CaCO3 + H2O">石灰水检验二氧化碳</button>
-                      <button type="button" class="zx-chip" data-chem="Na2CO3 + HCl -> NaCl + H2O + CO2">碳酸盐与酸</button>
-                      <button type="button" class="zx-chip" data-chem="AgNO3 + NaCl -> AgCl + NaNO3">沉淀反应</button>
-                      <button type="button" class="zx-chip" data-chem="CuSO4 + NaOH -> Cu(OH)2 + Na2SO4">生成氢氧化铜</button>
-                      <button type="button" class="zx-chip" data-chem="P + O2 -> P2O5">磷燃烧</button>
-                      <button type="button" class="zx-chip" data-chem="KClO3 -> KCl + O2">氯酸钾分解</button>
-                      <button type="button" class="zx-chip" data-chem="H2O2 -> H2O + O2">过氧化氢分解</button>
-                      <button type="button" class="zx-chip" data-chem="Fe + CuSO4 -> FeSO4 + Cu">金属置换</button>
-                      <button type="button" class="zx-chip" data-chem="C + O2 -> CO2">碳完全燃烧</button>
-                      <button type="button" class="zx-chip" data-chem="C + O2 -> CO">碳不完全燃烧</button>
-                      <button type="button" class="zx-chip" data-chem="C2H6 + O2 -> CO2 + H2O">乙烷燃烧</button>
-                      <button type="button" class="zx-chip" data-chem="C3H8 + O2 -> CO2 + H2O">丙烷燃烧</button>
-                      <button type="button" class="zx-chip" data-chem="C6H12O6 + O2 -> CO2 + H2O">葡萄糖氧化</button>
-                      <button type="button" class="zx-chip" data-chem="NaHCO3 -> Na2CO3 + H2O + CO2">碳酸氢钠受热分解</button>
-                      <button type="button" class="zx-chip" data-chem="CuO + H2 -> Cu + H2O">氢气还原氧化铜</button>
-                      <button type="button" class="zx-chip" data-chem="FeS2 + O2 -> Fe2O3 + SO2">硫铁矿焙烧</button>
-                      <button type="button" class="zx-chip" data-chem="MnO2 + HCl -> MnCl2 + Cl2 + H2O">二氧化锰与浓盐酸</button>
-                      <button type="button" class="zx-chip" data-chem="KOH + H3PO4 -> K3PO4 + H2O">磷酸中和</button>
-                      <button type="button" class="zx-chip" data-chem="Al + O2 -> Al2O3">铝燃烧</button>
-                      <button type="button" class="zx-chip" data-chem="Mg + N2 -> Mg3N2">镁与氮气</button>
-                      <button type="button" class="zx-chip" data-chem="Na2O2 + CO2 -> Na2CO3 + O2">过氧化钠吸收二氧化碳</button>
-                      <button type="button" class="zx-chip" data-chem="NH4Cl + Ca(OH)2 -> CaCl2 + NH3 + H2O">铵盐与碱</button>
-                      <button type="button" class="zx-chip" data-chem="Cu + H2SO4 -> CuSO4 + SO2 + H2O">铜与浓硫酸</button>
-                      <button type="button" class="zx-chip" data-chem="Cl2 + NaOH -> NaCl + NaClO + H2O">氯气与冷碱</button>
-                      <button type="button" class="zx-chip" data-chem="Cl2 + NaOH -> NaCl + NaClO3 + H2O">氯气与热碱</button>
-                      <button type="button" class="zx-chip" data-chem="Na2S2O3 + I2 -> NaI + Na2S4O6">硫代硫酸钠与碘</button>
-                    </div>              </div>
+                    <div id="chemExamples" class="flex flex-wrap gap-2"><button type="button" class="zx-chip" data-chem="H2 + O2 -> H2O">氢气燃烧</button><button type="button" class="zx-chip" data-chem="Fe + O2 -> Fe3O4">铁在氧气中燃烧</button><button type="button" class="zx-chip" data-chem="NaOH + HCl -> NaCl + H2O">酸碱中和</button><button type="button" class="zx-chip" data-chem="CaCO3 + HCl -> CaCl2 + CO2 + H2O">碳酸钙与盐酸</button><button type="button" class="zx-chip" data-chem="BaCl2 + Na2SO4 -> BaSO4 + NaCl">沉淀反应</button></div>              </div>
                     <div class="zx-label mt-4">配平结果</div>
                     <div id="chemOutput" class="zx-out" aria-live="polite"><div class="zx-out-row"><span>等待输入</span><span>支持 →、-&gt; 或 =</span></div></div>
                     <div class="zx-label mt-4">使用说明</div>
@@ -1082,6 +1045,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                 </div>
             </section>
 
+<section class="view" data-view="knowledge"><div class="glass-panel view-card"><div class="view-head"><div class="view-head-mark knowledge-mark"><svg viewBox="0 0 64 64" width="42" height="42" fill="none"><path d="M8 13Q21 9 32 17Q43 9 56 13V49Q43 45 32 53Q21 45 8 49Z" stroke="currentColor" stroke-width="3"/><path d="M32 17V53M15 24h12M15 32h12M38 24h12M38 32h12" stroke="currentColor" stroke-width="2.5"/></svg></div><div><div class="view-title">知识库</div><div class="view-sub">高中数学、化学重点知识与常见化学方程式。搜索后点开单条阅读。</div></div></div><div class="knowledge-searchbar"><i class="fa-solid fa-magnifying-glass"></i><input id="knowledgeSearch" class="zx-field" placeholder="搜索知识点、公式、元素或反应物"><button class="zx-btn" id="knowledgeClear" type="button">清除</button></div><div class="knowledge-filters"><button data-kfilter="all" class="is-active">全部</button><button data-kfilter="math">高中数学</button><button data-kfilter="chem">高中化学</button><button data-kfilter="equation">常见化学方程式</button></div><div id="knowledgeList" class="knowledge-list"></div><article id="knowledgeDetail" class="knowledge-detail" hidden><button class="zx-btn" id="knowledgeBack" type="button">← 返回搜索结果</button><div id="knowledgeDetailContent"></div></article></div></section>
             <section class="view" data-view="history">
                 <div class="glass-panel view-card">
                     <div class="view-head">
@@ -2262,16 +2226,82 @@ function zxEvalArithmetic(src) {
             const equation=left.map((f,i)=>(coeff[i]===1n?'':coeff[i].toString())+pretty(f)).join(' + ')+' → '+right.map((f,i)=>(coeff[left.length+i]===1n?'':coeff[left.length+i].toString())+pretty(f)).join(' + ');
             return {equation,coeff:coeff.map(String),elements};
           }
-          function render(){try{const r=balance(input.value);output.innerHTML='<div class="zx-out-row"><span>配平结果</span><strong>'+r.equation+'</strong></div><div class="zx-out-row"><span>系数比</span><span>'+r.coeff.join(' : ')+'</span></div><div class="zx-out-row"><span>守恒校验</span><span>元素原子数'+(r.elements.includes('__charge')?'及总电荷':'')+'均相等</span></div>';}catch(e){output.textContent=e.message||'配平失败，请检查输入。';}}
+          function render(){try{const r=balance(input.value);const raw=input.value.trim();const ions=[[/^NaOH\s*\+\s*HCl/i,'H⁺ + OH⁻ → H₂O'],[/^BaCl2\s*\+\s*Na2SO4/i,'Ba²⁺ + SO₄²⁻ → BaSO₄↓'],[/^AgNO3\s*\+\s*NaCl/i,'Ag⁺ + Cl⁻ → AgCl↓'],[/^CaCO3\s*\+\s*HCl/i,'CaCO₃ + 2H⁺ → Ca²⁺ + CO₂↑ + H₂O'],[/^Na2CO3\s*\+\s*HCl/i,'CO₃²⁻ + 2H⁺ → CO₂↑ + H₂O'],[/^CuSO4\s*\+\s*NaOH/i,'Cu²⁺ + 2OH⁻ → Cu(OH)₂↓'],[/^Zn\s*\+\s*HCl/i,'Zn + 2H⁺ → Zn²⁺ + H₂↑'],[/^Al\s*\+\s*HCl/i,'2Al + 6H⁺ → 2Al³⁺ + 3H₂↑'],[/^Fe\s*\+\s*CuSO4/i,'Fe + Cu²⁺ → Fe²⁺ + Cu']];const ion=(ions.find(x=>x[0].test(raw))||[])[1]||'该反应暂无内置离子方程式模板；请在知识库核对。';output.innerHTML='<div class="zx-out-row"><span>配平结果</span><strong>'+r.equation+'</strong></div><div class="zx-out-row"><span>系数比</span><span>'+r.coeff.join(' : ')+'</span></div><div class="zx-out-row"><span>守恒校验</span><span>元素原子数'+(r.elements.includes('__charge')?'及总电荷':'')+'均相等</span></div><div class="zx-out-row"><span>对应离子方程式</span><strong>'+ion+'</strong></div>';}catch(e){output.textContent=e.message||'配平失败，请检查输入。';}}
           document.getElementById('chemBalanceBtn').addEventListener('click',render);
           document.querySelectorAll('[data-chem]').forEach(b=>b.addEventListener('click',()=>{input.value=b.getAttribute('data-chem');render();}));
           input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();render();}});
         })();
 
+
+(function(){const root=document.getElementById('knowledgeList'),search=document.getElementById('knowledgeSearch'),detail=document.getElementById('knowledgeDetail'),dc=document.getElementById('knowledgeDetailContent');if(!root)return;const data=[];const add=(c,t,s,f)=>data.push({c,t,s,f:f||''});const M='math',C='chem',E='equation';
+[
+['集合与运算','∈表示属于；∩取公共元素，∪取全部元素。','A∩B；A∪B；补集∁UA'],
+['充分必要条件','p⇒q时p是q的充分条件、q是p的必要条件；双向成立为充要条件。','p⇒q；p⇔q'],
+['不等式性质','同加同减方向不变；乘除负数时不等号反向。','a>b,c<0 ⇒ ac<bc'],
+['二次函数','对称轴为−b/(2a)，顶点横坐标为−b/(2a)，开口由a符号决定。','y=ax²+bx+c；Δ=b²−4ac'],
+['一元二次方程','Δ>0两个不等实根，Δ=0重根，Δ<0无实数根。','x=(-b±√Δ)/(2a)'],
+['函数定义域','分母不为0；偶次根式被开方数≥0；对数真数>0且底数>0、≠1。','logₐx：a>0，a≠1，x>0'],
+['函数单调性','任取x₁<x₂，若f(x₁)≤f(x₂)，则函数单调递增。','x₁<x₂ ⇒ f(x₁)≤f(x₂)'],
+['奇偶函数','定义域关于原点对称；奇函数f(−x)=−f(x)，偶函数f(−x)=f(x)。','f(−x)=−f(x) / f(−x)=f(x)'],
+['指数与对数','同底数幂乘法指数相加；积的对数拆成和。','aᵐaⁿ=aᵐ⁺ⁿ；logₐ(MN)=logₐM+logₐN'],
+['三角函数基本关系','同角三角函数满足平方关系与商关系。','sin²x+cos²x=1；tanx=sinx/cosx'],
+['正弦定理','三角形中边与其对角正弦成比例。','a/sinA=b/sinB=c/sinC=2R'],
+['余弦定理','已知两边及夹角求第三边，或由三边求角。','c²=a²+b²−2ab cosC'],
+['等差数列','相邻两项差为常数d。','aₙ=a₁+(n−1)d；Sₙ=n(a₁+aₙ)/2'],
+['等比数列','相邻两项比为常数q，q=1时求和需单独处理。','aₙ=a₁qⁿ⁻¹'],
+['向量数量积','数量积可用于求夹角、判断垂直。','a·b=|a||b|cosθ'],
+['直线与圆','点斜式写直线；圆标准方程由圆心和半径确定。','y−y₁=k(x−x₁)；(x−a)²+(y−b)²=r²'],
+['导数与单调性','导数恒正的区间函数递增，恒负则递减；极值需判断符号变化。','(xⁿ)′=nxⁿ⁻¹'],
+['导数求切线','切线斜率等于切点处导数。','y−f(x₀)=f′(x₀)(x−x₀)'],
+['概率与排列组合','古典概型概率=有利结果数/总结果数；排列考虑顺序，组合不考虑顺序。','P(A)=m/n；Aₙᵐ=n!/(n−m)!'],
+['物质的量','连接粒子数、质量与物质的量。','n=m/M=N/Nₐ'],
+['气体摩尔体积','22.4 L·mol⁻¹需结合标准状况使用。','n=V/Vₘ'],
+['物质的量浓度','溶质物质的量除以溶液体积，体积单位用L。','c=n/V；c₁V₁=c₂V₂'],
+['氧化还原反应','升价失电子被氧化，降价得电子被还原；电子得失总数相等。','氧化剂得电子；还原剂失电子'],
+['离子方程式','强电解质拆成离子；沉淀、气体、水、弱电解质一般保留化学式，删旁观离子并检查电荷守恒。','原子守恒 + 电荷守恒'],
+['离子共存','检查是否生成沉淀、气体、弱电解质或发生氧化还原反应。','Ag⁺与Cl⁻不能大量共存'],
+['化学平衡','正逆反应速率相等，各组分浓度保持不变；平衡是动态的。','平衡常数表达式由化学计量数作指数'],
+['勒夏特列原理','平衡向减弱外界改变的方向移动；催化剂通常不改变平衡组成。','结合浓度、压强、温度判断'],
+['化学反应速率','浓度变化量与时间之比表示平均反应速率。','v=Δc/Δt'],
+['弱电解质电离','弱酸弱碱部分电离；稀释通常促进电离。','CH₃COOH ⇌ H⁺ + CH₃COO⁻'],
+['盐类水解','弱酸根或弱碱阳离子与水反应，可改变溶液酸碱性。','CH₃COO⁻ + H₂O ⇌ CH₃COOH + OH⁻'],
+['沉淀溶解平衡','离子积大于Ksp时有沉淀生成趋势。','离子积>Ksp'],
+['原电池与电解池','原电池负极氧化、正极还原；电解池阴极还原、阳极氧化。','负极/阳极氧化；正极/阴极还原'],
+['元素周期律','同周期半径总体减小、非金属性增强；同主族向下半径总体增大、金属性增强。','结构决定性质'],
+['化学键与官能团','离子键、共价键为化学键；羟基、羧基、醛基是常见官能团。','—OH；—COOH；—CHO'],
+['烷烃燃烧','完全燃烧生成二氧化碳和水，通常先配碳氢再配氧。','CₓHᵧ+(x+y/4)O₂→xCO₂+(y/2)H₂O'],
+['实验室制气与安全','按反应物状态、条件和气体性质选择装置，先检查气密性并妥善处理尾气。','发生装置 + 收集装置 + 尾气处理']
+].forEach(x=>add(x[0].includes('函数')||['集合与运算','充分必要条件','不等式性质','一元二次方程','指数与对数','三角函数基本关系','正弦定理','余弦定理','等差数列','等比数列','向量数量积','直线与圆','导数与单调性','导数求切线','概率与排列组合'].includes(x[0])?M:C,x[0],x[1],x[2]));
+const eq=[
+['氢气燃烧','2H₂ + O₂ → 2H₂O','无常见离子方程式'],
+['铁在氧气中燃烧','3Fe + 2O₂ → Fe₃O₄','无常见离子方程式'],
+['铝与盐酸','2Al + 6HCl → 2AlCl₃ + 3H₂↑','2Al + 6H⁺ → 2Al³⁺ + 3H₂↑'],
+['锌与稀硫酸','Zn + H₂SO₄ → ZnSO₄ + H₂↑','Zn + 2H⁺ → Zn²⁺ + H₂↑'],
+['酸碱中和','NaOH + HCl → NaCl + H₂O','H⁺ + OH⁻ → H₂O'],
+['硫酸与氢氧化钡','H₂SO₄ + Ba(OH)₂ → BaSO₄↓ + 2H₂O','Ba²⁺ + SO₄²⁻ + 2H⁺ + 2OH⁻ → BaSO₄↓ + 2H₂O'],
+['氯化钡与硫酸钠','BaCl₂ + Na₂SO₄ → BaSO₄↓ + 2NaCl','Ba²⁺ + SO₄²⁻ → BaSO₄↓'],
+['硝酸银与氯化钠','AgNO₃ + NaCl → AgCl↓ + NaNO₃','Ag⁺ + Cl⁻ → AgCl↓'],
+['碳酸钙与盐酸','CaCO₃ + 2HCl → CaCl₂ + CO₂↑ + H₂O','CaCO₃ + 2H⁺ → Ca²⁺ + CO₂↑ + H₂O'],
+['碳酸钠与盐酸','Na₂CO₃ + 2HCl → 2NaCl + CO₂↑ + H₂O','CO₃²⁻ + 2H⁺ → CO₂↑ + H₂O'],
+['氢氧化铜沉淀','CuSO₄ + 2NaOH → Cu(OH)₂↓ + Na₂SO₄','Cu²⁺ + 2OH⁻ → Cu(OH)₂↓'],
+['铁与硫酸铜','Fe + CuSO₄ → FeSO₄ + Cu','Fe + Cu²⁺ → Fe²⁺ + Cu'],
+['高锰酸钾分解','2KMnO₄ → K₂MnO₄ + MnO₂ + O₂↑','无常见离子方程式'],
+['过氧化氢分解','2H₂O₂ → 2H₂O + O₂↑','无常见离子方程式'],
+['甲烷燃烧','CH₄ + 2O₂ → CO₂ + 2H₂O','无常见离子方程式'],
+['乙醇燃烧','C₂H₅OH + 3O₂ → 2CO₂ + 3H₂O','无常见离子方程式'],
+['氨催化氧化','4NH₃ + 5O₂ → 4NO + 6H₂O','无常见离子方程式'],
+['二氧化碳通入石灰水','Ca(OH)₂ + CO₂ → CaCO₃↓ + H₂O','Ca²⁺ + 2OH⁻ + CO₂ → CaCO₃↓ + H₂O'],
+['铜与稀硝酸','3Cu + 8HNO₃(稀) → 3Cu(NO₃)₂ + 2NO↑ + 4H₂O','3Cu + 8H⁺ + 2NO₃⁻ → 3Cu²⁺ + 2NO↑ + 4H₂O'],
+['氯化铁与氢氧化钠','FeCl₃ + 3NaOH → Fe(OH)₃↓ + 3NaCl','Fe³⁺ + 3OH⁻ → Fe(OH)₃↓'],
+['氯化铵与氢氧化钠','NH₄Cl + NaOH → NH₃↑ + NaCl + H₂O','NH₄⁺ + OH⁻ → NH₃↑ + H₂O']
+];eq.forEach(x=>add(E,x[0],x[1]+'；离子方程式：'+x[2],x[2]));
+let filter='all';function render(){const q=search.value.trim().toLowerCase(),arr=data.filter(x=>(filter==='all'||x.c===filter)&&(x.t+' '+x.s+' '+x.f).toLowerCase().includes(q));root.innerHTML='';if(!arr.length){root.textContent='没有找到匹配知识点。';return;}arr.forEach(x=>{const b=document.createElement('button');b.className='knowledge-item';b.innerHTML='<small>'+(x.c===M?'高中数学':x.c===C?'高中化学':'常见化学方程式')+'</small><strong>'+x.t+'</strong><span>'+x.s+'</span>';b.addEventListener('click',()=>{root.hidden=true;document.querySelector('.knowledge-filters').hidden=true;document.querySelector('.knowledge-searchbar').hidden=true;detail.hidden=false;dc.innerHTML='<small>'+(x.c===M?'高中数学':x.c===C?'高中化学':'常见化学方程式')+'</small><h2>'+x.t+'</h2><p>'+x.s+'</p><div class="knowledge-formula">'+x.f+'</div>';});root.appendChild(b);});}
+function back(){detail.hidden=true;root.hidden=false;document.querySelector('.knowledge-filters').hidden=false;document.querySelector('.knowledge-searchbar').hidden=false;}document.getElementById('knowledgeBack').addEventListener('click',back);document.querySelectorAll('[data-kfilter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.kfilter;document.querySelectorAll('[data-kfilter]').forEach(t=>t.classList.toggle('is-active',t===b));back();render();}));search.addEventListener('input',render);document.getElementById('knowledgeClear').addEventListener('click',()=>{search.value='';render();});render();})();
+
         /* ==================================================================
            五、界面路由：一个菜单项 = 一个界面
            ================================================================== */
-        const VIEW_TITLES = { basic: '基础计算', equation: '方程求解', inequality: '不等式', fit: '函数分析与绘图', units: '单位换算', chemistry: '化学方程式配平', history: '历史记录' };
+        const VIEW_TITLES = { basic: '基础计算', equation: '方程求解', inequality: '不等式', fit: '函数分析与绘图', units: '单位换算', chemistry: '化学方程式配平', knowledge: '知识库', history: '历史记录' };
         let currentView = 'basic';
         let solveMode = 'equation';
         let solveActiveInput = null;
