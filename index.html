@@ -666,6 +666,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
             <div class="zx-menu-group">
                 <div class="zx-menu-title">工具</div>
                 <button type="button" class="zx-menu-item" data-go="units"><i class="fa-solid fa-ruler-combined"></i><span>单位换算</span></button>
+                <button type="button" class="zx-menu-item" data-go="chemistry"><i class="fa-solid fa-flask"></i><span>化学方程式配平</span></button>
             </div>
             <div class="zx-menu-group">
                 <div class="zx-menu-title">记录</div>
@@ -928,6 +929,45 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
             </section>
 
             <!-- ========== 界面 6：历史记录 ========== -->
+            <section class="view" data-view="chemistry">
+                <div class="glass-panel view-card">
+                    <div class="view-head">
+                        <div class="view-head-mark"><i class="fa-solid fa-flask"></i></div>
+                        <div><div class="view-title">化学方程式配平</div>
+                        <div class="view-sub">输入反应物和生成物，自动求最简整数系数。支持常见初高中无机反应、有机物燃烧、括号与结晶水。</div></div>
+                    </div>
+                    <div class="zx-label">输入化学方程式（不需要写系数）</div>
+                    <input id="chemInput" type="text" class="zx-field" autocomplete="off" spellcheck="false" placeholder="例如：Fe + O2 -> Fe2O3" aria-label="待配平化学方程式">
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <button type="button" class="zx-btn is-go" id="chemBalanceBtn"><i class="fa-solid fa-scale-balanced"></i> 配平</button>
+                        <button type="button" class="zx-btn" id="chemClearBtn">清空</button>
+                    </div>
+                    <div class="zx-label mt-4">常见方程式</div>
+                    <div id="chemExamples" class="flex flex-wrap gap-2">
+                      <button type="button" class="zx-chip" data-chem="H2 + O2 -> H2O">氢气燃烧</button>
+                      <button type="button" class="zx-chip" data-chem="Fe + O2 -> Fe2O3">铁的氧化</button>
+                      <button type="button" class="zx-chip" data-chem="Al + HCl -> AlCl3 + H2">金属与酸</button>
+                      <button type="button" class="zx-chip" data-chem="NaOH + H2SO4 -> Na2SO4 + H2O">酸碱中和</button>
+                      <button type="button" class="zx-chip" data-chem="CaCO3 -> CaO + CO2">碳酸盐分解</button>
+                      <button type="button" class="zx-chip" data-chem="KMnO4 -> K2MnO4 + MnO2 + O2">高锰酸钾分解</button>
+                      <button type="button" class="zx-chip" data-chem="CH4 + O2 -> CO2 + H2O">甲烷燃烧</button>
+                      <button type="button" class="zx-chip" data-chem="C2H5OH + O2 -> CO2 + H2O">乙醇燃烧</button>
+                      <button type="button" class="zx-chip" data-chem="Fe2O3 + CO -> Fe + CO2">氧化还原</button>
+                      <button type="button" class="zx-chip" data-chem="BaCl2 + Na2SO4 -> BaSO4 + NaCl">复分解反应</button>
+                      <button type="button" class="zx-chip" data-chem="NH3 + O2 -> NO + H2O">氨的催化氧化</button>
+                      <button type="button" class="zx-chip" data-chem="Cu + HNO3 -> Cu(NO3)2 + NO + H2O">氧化性酸反应</button>
+                    </div>
+                    <div class="zx-label mt-4">配平结果</div>
+                    <div id="chemOutput" class="zx-out" aria-live="polite"><div class="zx-out-row"><span>等待输入</span><span>支持 →、-&gt; 或 =</span></div></div>
+                    <div class="zx-label mt-4">使用说明</div>
+                    <div class="zx-out">
+                      <div class="zx-out-row"><span>写法</span><span>H2O、Ca(OH)2、CuSO4·5H2O</span></div>
+                      <div class="zx-out-row"><span>配平规则</span><span>系数为最简正整数；不改动化学式下标</span></div>
+                      <div class="zx-out-row"><span>范围</span><span>常见高中氧化还原方程式可尝试；离子方程式、复杂氧化还原反应可能需要补充条件或人工检查</span></div>
+                    </div>
+                </div>
+            </section>
+
             <section class="view" data-view="history">
                 <div class="glass-panel view-card">
                     <div class="view-head">
@@ -1982,7 +2022,7 @@ function zxEvalArithmetic(src) {
         /* ==================================================================
            五、界面路由：一个菜单项 = 一个界面
            ================================================================== */
-        const VIEW_TITLES = { basic: '基础计算', equation: '方程求解', inequality: '不等式', fit: '函数分析与绘图', units: '单位换算', history: '历史记录' };
+        const VIEW_TITLES = { basic: '基础计算', equation: '方程求解', inequality: '不等式', fit: '函数分析与绘图', units: '单位换算', chemistry: '化学方程式配平', history: '历史记录' };
         let currentView = 'basic';
         let solveMode = 'equation';
         let solveActiveInput = null;
