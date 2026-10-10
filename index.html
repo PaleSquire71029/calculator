@@ -231,6 +231,15 @@
 @media(min-width:769px){[data-view="chemistry"] #chemKeyboard:not([hidden]){width:100%;max-width:100%;box-sizing:border-box}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(10,minmax(0,1fr));gap:8px}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:48px}}
 @media(min-width:769px) and (max-width:1100px){[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:42px}}
 
+
+/* Native keyboard action stays visible inside the fixed chemistry keypad */
+.zx-chem-ime-inline{display:none!important}
+@media(max-width:768px){
+ .zx-chem-ime-inline{display:inline-flex!important;min-height:40px;white-space:nowrap}
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-tools{display:flex;flex-wrap:wrap;align-items:center}
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-search{flex:1 1 150px;min-width:0}
+}
+
 </style>
 <style id="zx-redesigned-app">
 
@@ -1009,7 +1018,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                       <button type="button" class="zx-btn zx-chem-ime" id="chemImeBtn"><i class="fa-solid fa-keyboard" aria-hidden="true"></i> 系统输入法</button>
                     </div>
                     <div id="chemKeyboard" class="zx-chem-keyboard" aria-label="化学方程式专用键盘" hidden>
-                      <div class="zx-chem-tools"><input id="chemElementSearch" class="zx-field zx-chem-search" type="search" placeholder="查找元素：名称、符号或原子序数" aria-label="查找化学元素"><button type="button" class="zx-btn" id="chemKeyboardClose"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i> 收起键盘</button></div>
+                      <div class="zx-chem-tools"><button type="button" class="zx-btn zx-chem-ime zx-chem-ime-inline" id="chemImeBtnInline"><i class="fa-solid fa-keyboard" aria-hidden="true"></i> 系统输入法</button><input id="chemElementSearch" class="zx-field zx-chem-search" type="search" placeholder="查找元素：名称、符号或原子序数" aria-label="查找化学元素"><button type="button" class="zx-btn" id="chemKeyboardClose"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i> 收起键盘</button></div>
                       <div class="zx-chem-tabs" role="tablist" aria-label="化学键盘分类"><button type="button" data-chemtab="elements" aria-selected="true">全部元素</button><button type="button" data-chemtab="symbols" aria-selected="false">方程式符号</button></div>
                       <div id="chemElementPanel"><div id="chemElementGrid" class="zx-chem-symbols"></div></div>
                       <div id="chemSymbolPanel" hidden>
@@ -2152,20 +2161,18 @@ function zxEvalArithmetic(src) {
           });
 
           const keyboard=document.getElementById('chemKeyboard'),toggle=document.getElementById('chemKeyboardToggle');
-          async function enterChemFullscreen(){
-            if(!window.matchMedia('(max-width: 768px)').matches)return;
-            document.body.classList.add('zx-chem-fullscreen-active');
-            try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen({navigationUI:'hide'});}catch(e){}
-            try{if(screen.orientation?.lock)await screen.orientation.lock('landscape');}catch(e){}
-          }
-          function leaveChemFullscreen(){
-            document.body.classList.remove('zx-chem-fullscreen-active');
-            try{screen.orientation?.unlock?.();}catch(e){}
-            try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen();}catch(e){}
-          }
-          document.getElementById('chemKeyboardClose')?.addEventListener('click',leaveChemFullscreen);
-          document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)document.body.classList.remove('zx-chem-fullscreen-active');});
+          function leaveChemFullscreen(){document.body.classList.remove('zx-chem-fullscreen-active');}
           window.addEventListener('orientationchange',()=>{if(keyboard&&!keyboard.hidden)setTimeout(()=>window.scrollTo(0,0),80);});
+          const imeInline=document.getElementById('chemImeBtnInline');
+          function showNativeChemInput(){
+            if(keyboard)keyboard.hidden=true;
+            const t=document.getElementById('chemKeyboardToggle');t?.setAttribute('aria-expanded','false');
+            if(t)t.innerHTML='<i class="fa-solid fa-keyboard"></i> 打开化学键盘';
+            input.setAttribute('inputmode','text');input.focus({preventScroll:true});
+            if(ime)ime.innerHTML='<i class="fa-solid fa-keyboard"></i> 使用化学键盘';
+            if(imeInline)imeInline.innerHTML='<i class="fa-solid fa-keyboard"></i> 使用化学键盘';
+          }
+          imeInline?.addEventListener('click',showNativeChemInput);
           const search=document.getElementById('chemElementSearch'),elementGrid=document.getElementById('chemElementGrid');
           const elementData=[
           ["H","氢",1],["He","氦",2],["Li","锂",3],["Be","铍",4],["B","硼",5],["C","碳",6],["N","氮",7],["O","氧",8],["F","氟",9],["Ne","氖",10],
@@ -2183,7 +2190,7 @@ function zxEvalArithmetic(src) {
           function renderElements(q=''){if(!elementGrid)return;const query=q.trim().toLowerCase();elementGrid.innerHTML='';elementData.filter((e,i)=>!query||e.join(' ').toLowerCase().includes(query)).forEach(e=>{const b=document.createElement('button');b.type='button';b.innerHTML=e[0]+'<small>'+e[1]+' · '+e[2]+'</small>';b.addEventListener('click',()=>insert(e[0]));elementGrid.appendChild(b);});if(!elementGrid.children.length)elementGrid.textContent='没有找到匹配元素';}
           renderElements();
           if(search)search.addEventListener('input',()=>renderElements(search.value));
-          if(toggle)toggle.addEventListener('click',async()=>{const opening=keyboard.hidden;if(opening){await enterChemFullscreen();input.setAttribute('inputmode','none');if(ime)ime.innerHTML='<i class="fa-solid fa-keyboard"></i> 系统输入法';}keyboard.hidden=!opening;toggle.setAttribute('aria-expanded',String(opening));toggle.innerHTML=opening?'<i class="fa-solid fa-keyboard"></i> 收起化学键盘':'<i class="fa-solid fa-keyboard"></i> 打开化学键盘';if(opening){renderElements(search?.value||'');}});
+          if(toggle)toggle.addEventListener('click',async()=>{const opening=keyboard.hidden;if(opening){input.setAttribute('inputmode','none');if(ime)ime.innerHTML='<i class="fa-solid fa-keyboard"></i> 系统输入法';}keyboard.hidden=!opening;toggle.setAttribute('aria-expanded',String(opening));toggle.innerHTML=opening?'<i class="fa-solid fa-keyboard"></i> 收起化学键盘':'<i class="fa-solid fa-keyboard"></i> 打开化学键盘';if(opening){renderElements(search?.value||'');}});
           document.getElementById('chemKeyboardClose')?.addEventListener('click',()=>{keyboard.hidden=true;toggle?.setAttribute('aria-expanded','false');if(toggle)toggle.innerHTML='<i class="fa-solid fa-keyboard"></i> 打开化学键盘';});
           document.querySelectorAll('[data-chemtab]').forEach(b=>b.addEventListener('click',()=>{const el=b.dataset.chemtab==='elements';document.getElementById('chemElementPanel').hidden=!el;document.getElementById('chemSymbolPanel').hidden=el;document.querySelectorAll('[data-chemtab]').forEach(t=>t.setAttribute('aria-selected',String(t===b)));}));
           function gcd(a,b){a=a<0n?-a:a;b=b<0n?-b:b;while(b){const t=a%b;a=b;b=t;}return a||1n;}
