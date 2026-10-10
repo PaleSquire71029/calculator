@@ -3008,7 +3008,7 @@ function back(){detail.hidden=true;root.hidden=false;document.querySelector('.kn
             const f=zxCompileFunctionExpression(source);
             if(!f.ok){host.innerHTML='<div class="function-graph-empty">请先输入有效的函数表达式。</div>';return;}
             let xMin=-10,xMax=10;const rangeRaw=String(rangeText||'').trim();
-            if(rangeRaw){const parts=rangeRaw.split(/[，,\\s]+/).filter(Boolean).map(Number);if(parts.length!==2||!parts.every(Number.isFinite)||parts[0]>=parts[1]||parts[1]-parts[0]>1e7){host.innerHTML='<div class="function-graph-empty">绘图区间格式不正确，请输入两个递增的有限数字，例如 -5,5。</div>';return;}xMin=parts[0];xMax=parts[1];}
+            if(rangeRaw){const parts=rangeRaw.split(/[，,\s]+/).filter(Boolean).map(Number);if(parts.length!==2||!parts.every(Number.isFinite)||parts[0]>=parts[1]||parts[1]-parts[0]>1e7){host.innerHTML='<div class="function-graph-empty">绘图区间格式不正确，请输入两个递增的有限数字，例如 -5,5。</div>';return;}xMin=parts[0];xMax=parts[1];}
             const W=640,H=280,L=58,R=14,T=16,B=32,N=1000,plotW=W-L-R,plotH=H-T-B;
             const raw=[];
             for(let i=0;i<=N;i++){
