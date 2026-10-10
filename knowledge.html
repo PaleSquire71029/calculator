@@ -24,13 +24,13 @@
 <div class="layout" id="pageLayout">
 <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 <aside class="sidebar" id="sidebar"><div class="side-head"><span>知识导航 / INDEX</span><button class="side-close" id="sidebarClose" type="button" aria-label="关闭目录" title="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
-<button class="navbtn active" data-subject="全部"><span class="navicon">${iconSvg("home")}</span>全部知识</button>
-<button class="navbtn" data-subject="数学"><span class="navicon">${iconSvg("math")}</span>数学知识</button>
+<button class="navbtn active" data-subject="全部"><span class="navicon" data-icon="home"></span>全部知识</button>
+<button class="navbtn" data-subject="数学"><span class="navicon" data-icon="math"></span>数学知识</button>
 <div class="navsub"><button class="navbtn" data-chapter="初中数学">初中数学</button><button class="navbtn" data-chapter="函数与代数">函数与代数</button><button class="navbtn" data-chapter="几何与向量">几何与向量</button><button class="navbtn" data-chapter="数列与概率">数列与概率</button></div>
-<button class="navbtn" data-subject="化学"><span class="navicon">${iconSvg("chem")}</span>化学知识</button>
+<button class="navbtn" data-subject="化学"><span class="navicon" data-icon="chem"></span>化学知识</button>
 <div class="navsub"><button class="navbtn" data-chapter="初中化学">初中化学</button><button class="navbtn" data-chapter="物质与反应">物质与反应</button><button class="navbtn" data-chapter="反应原理">反应原理</button><button class="navbtn" data-chapter="有机与结构">有机与结构</button><button class="navbtn" data-chapter="实验与计算">实验与计算</button></div>
-<button class="navbtn" data-chapter="化学方程式"><span class="navicon">${iconSvg("reaction")}</span>方程式速查</button>
-<button class="navbtn" data-chapter="教材章节"><span class="navicon">${iconSvg("book")}</span>教材章节目录</button>
+<button class="navbtn" data-chapter="化学方程式"><span class="navicon" data-icon="reaction"></span>方程式速查</button>
+<button class="navbtn" data-chapter="教材章节"><span class="navicon" data-icon="book"></span>教材章节目录</button>
 <div class="side-note">学习建议：先看概念，再理解推导过程，最后做例题。遇到易错点时，尝试解释“为什么不能这样做”。</div>
 </aside>
 <main class="main">
@@ -223,7 +223,7 @@ function fillChapterFilter(){const el=$("chapterFilter"),old=el.value;el.innerHT
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function card(k){const color=k.subject==="化学"?"chem":k.level==="初中"?"middle":"";return '<article class="knowledge"><div class="khead"><div class="tags"><span class="tag '+color+'">'+esc(k.subject)+'</span><span class="tag">'+esc(k.level)+'</span><span class="tag">'+esc(k.chapter)+'</span></div><h2>'+esc(k.title)+'</h2><p class="summary">'+esc(k.summary)+'</p></div><div class="kbody"><div class="sectionlabel">核心公式 / 方程式</div><div class="formula">'+esc(k.formula)+'</div><div class="sectionlabel">原理解析</div><p>'+esc(k.explain)+'</p><div class="sectionlabel">例题 / 应用</div><div class="example">'+esc(k.example)+'</div><div class="sectionlabel">易错点与检查</div><ul>'+k.mistakes.map(m=>'<li>'+esc(m)+'</li>').join("")+'</ul><div class="tags">'+k.tags.map(t=>'<span class="tag">'+esc(t)+'</span>').join("")+'</div></div></article>'}
 function iconSvg(name){const paths={home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',math:'<path d="M7 4h10M7 20h10M15 4 9 20"/><path d="M5 9h5M14 15h5"/>',chem:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M8 15h8"/>',reaction:'<path d="M4 7h15l-3-3M20 17H5l3 3"/>',book:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 1 4 17.5z"/><path d="M4 5.5v12M8 7h8M8 11h8M8 15h5"/>'};return '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.book)+'</svg>'}
-const navIconMarkup={home:iconSvg("home"),math:iconSvg("math"),chem:iconSvg("chem"),reaction:iconSvg("reaction"),book:iconSvg("book")};document.querySelectorAll(".navicon").forEach((el,i)=>{const key=["home","math","chem","reaction","book"][i];if(el.textContent.trim().startsWith("SVG_"))el.innerHTML=navIconMarkup[key]});
+const navIconMarkup={home:iconSvg("home"),math:iconSvg("math"),chem:iconSvg("chem"),reaction:iconSvg("reaction"),book:iconSvg("book")};document.querySelectorAll(".navicon[data-icon]").forEach(el=>{el.innerHTML=navIconMarkup[el.dataset.icon]||navIconMarkup.book});
 function closeSidebar(){const side=$("sidebar"),layout=$("pageLayout"),backdrop=$("sidebarBackdrop");side.classList.remove("open");backdrop.classList.remove("open");$("menuToggle").setAttribute("aria-expanded","false");$("menuToggle").setAttribute("aria-label","打开目录");if(innerWidth>700)layout.classList.add("sidebar-collapsed");document.body.style.overflow=""}
 function openSidebar(){const side=$("sidebar"),layout=$("pageLayout"),backdrop=$("sidebarBackdrop");if(innerWidth<=700){side.classList.add("open");backdrop.classList.add("open");document.body.style.overflow="hidden"}else{layout.classList.remove("sidebar-collapsed")} $("menuToggle").setAttribute("aria-expanded","true");$("menuToggle").setAttribute("aria-label","关闭目录")}
 function toggleSidebar(){const open=innerWidth<=700?$("sidebar").classList.contains("open"):!$("pageLayout").classList.contains("sidebar-collapsed");if(open)closeSidebar();else openSidebar()}
