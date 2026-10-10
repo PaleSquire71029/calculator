@@ -12,93 +12,7 @@
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
 
     <script src="https://cdn.tailwindcss.com">
-(function(){
-const host=document.getElementById('knowledgeDirectory');if(!host)return;
-const B=[
-['数学','必修第一册',[
-['集合与常用逻辑用语','集合表示、交并补、充分必要条件、量词。','易错：混淆充分条件与必要条件；注意全称与存在量词的否定。','集合 充分必要条件'],
-['一元二次函数、方程和不等式','不等式性质、基本不等式、二次函数与方程不等式。','易错：乘除负数时不等号反向；基本不等式需检查取等条件。','不等式 二次函数 一元二次方程 基本不等式'],
-['函数的概念与性质','定义域、表示法、单调性、奇偶性、最值与零点。','易错：先检查定义域；单调性定义法需作差；奇偶函数定义域须关于原点对称。','函数定义域 函数单调性 奇偶函数 函数零点'],
-['指数函数与对数函数','指数幂、指数函数、对数运算与对数函数。','易错：对数真数大于0，底数大于0且不等于1。','指数函数 对数函数 指数与对数 对数运算'],
-['三角函数','任意角、弧度制、三角函数、诱导公式、图象与性质。','易错：角度和弧度混用；周期、平移方向、象限符号要分别判断。','三角函数 三角函数图象 诱导公式']
-]],
-['数学','必修第二册',[
-['平面向量及其应用','向量运算、坐标表示、数量积、正弦定理、余弦定理。','易错：数量积不是向量；注意夹角余弦与边角对应。','平面向量 向量数量积 正弦定理 余弦定理'],
-['复数','复数的代数形式、四则运算、模与几何意义。','易错：i²=-1；区分虚部b与虚部bi。','复数 复数模'],
-['立体几何初步','空间点线面关系、平行垂直、表面积和体积。','易错：不能只凭图形直观证明位置关系，要引用判定定理。','立体几何 空间几何平行垂直'],
-['统计','随机抽样、样本数字特征、用样本估计总体。','易错：样本代表性、方差计算与抽样方式要结合题意。','抽样方法 统计相关性'],
-['概率','随机事件、古典概型、频率与概率。','易错：先确认样本点等可能；频率不是一次试验的精确概率。','频率与概率 条件概率 独立事件']
-]],
-['数学','选择性必修第一册',[
-['空间向量与立体几何','空间向量运算、坐标表示、线面位置关系与空间角。','易错：直线夹角通常取锐角或直角；注意方向向量与法向量。','空间向量求角 空间几何平行垂直'],
-['直线和圆的方程','斜率、直线方程、距离公式、圆方程及位置关系。','易错：竖直线斜率不存在；配方时注意圆心坐标符号。','直线斜率 直线与圆'],
-['圆锥曲线的方程','椭圆、双曲线、抛物线及直线与圆锥曲线位置关系。','易错：焦点方向、离心率、渐近线和准线要对应标准方程。','圆锥曲线识别 椭圆基本关系 双曲线基本关系 抛物线']
-]],
-['数学','选择性必修第二册',[
-['数列','等差、等比数列，通项、递推关系与求和。','易错：通项和前n项和区分；公比为1时等比求和需单独处理。','等差数列 等比数列 数学归纳法'],
-['一元函数的导数及其应用','求导法则、单调性、极值、最值、切线与实际应用。','易错：f′(x₀)=0不一定是极值；切线斜率是导数值。','导数与单调性 导数与极值 导数四则运算 切线方程']
-]],
-['数学','选择性必修第三册',[
-['计数原理','分类加法、分步乘法、排列组合、二项式定理。','易错：先判断是否计顺序；防止重复计数和漏计。','排列与组合 二项式定理'],
-['随机变量及其分布','条件概率、独立事件、分布列、数学期望与方差。','易错：独立不等于互斥；分布列概率之和必须为1。','条件概率 独立事件 随机变量期望'],
-['成对数据的统计分析','散点图、相关关系、相关系数与线性回归。','易错：相关不代表因果；结论应结合散点分布。','统计相关性']
-]],
-['化学','必修第一册',[
-['物质及其变化','物质分类、离子反应、氧化还原反应。','易错：弱电解质、沉淀、气体、水通常不拆；检查电荷与原子守恒。','物质分类 离子方程式 氧化还原反应判断 离子共存'],
-['海水中的重要元素——钠和氯','钠及其化合物、氯及其化合物、物质的量和溶液配制。','易错：Na₂CO₃与NaHCO₃性质不同；浓度计算体积用L。','钠及其化合物 氯及其化合物 物质的量 物质的量浓度'],
-['铁 金属材料','铁及其化合物、合金与金属材料。','易错：铁与氯气通常生成Fe³⁺；与稀酸常生成Fe²⁺。','铁及其化合物 金属活动性顺序'],
-['物质结构 元素周期律','原子结构、元素周期表、周期律与化学键。','易错：先由电子排布判断周期族，再讨论性质递变。','原子结构与周期表 元素周期律 化学键']
-]],
-['化学','必修第二册',[
-['原子结构与元素性质','原子结构、元素周期律及性质联系。','易错：周期趋势是规律，不可忽略特殊性。','原子结构与周期表 元素周期律'],
-['化学反应与能量','化学能与热能、电能、反应速率与限度。','易错：催化剂改变速率但不改变平衡常数；速率与平衡要分开分析。','反应热 化学反应速率 原电池与电解池'],
-['有机化合物','甲烷、乙烯、苯、乙醇、乙酸、营养物质与高分子。','易错：区分取代、加成、氧化、酯化；写明必要条件。','有机物命名与结构 烷烃与取代反应 烯烃与加成反应 乙醇性质 乙酸性质 酯化反应'],
-['化学与可持续发展','资源利用、化工生产、环境保护与绿色化学。','易错：结合原料、反应条件、产物、能耗和污染治理综合判断。','化学基本实验操作 常见气体制备']
-]],
-['化学','选择性必修1 化学反应原理',[
-['化学反应的热效应','反应热、热化学方程式、燃烧热、盖斯定律。','易错：方程式反向则ΔH变号；系数倍乘则ΔH同倍变化。','反应热 盖斯定律'],
-['化学反应速率与化学平衡','速率影响因素、平衡常数、平衡移动、反应方向与调控。','易错：同温度K不随浓度改变；催化剂不改变平衡组成。','化学反应速率 化学平衡 勒夏特列原理 化学平衡常数'],
-['水溶液中的离子反应与平衡','电离平衡、pH、盐类水解、沉淀溶解平衡。','易错：混合酸碱先中和再算pH；比较离子积与Ksp。','弱电解质电离 电离平衡与pH 水的离子积 盐类水解 沉淀溶解平衡'],
-['化学反应与电能','原电池、电解池、金属腐蚀与防护。','易错：阳极氧化、阴极还原；正负极不能与阳阴极简单等同。','电化学电极判断 电解质溶液电解 原电池与电解池']
-]],
-['化学','选择性必修2 物质结构与性质',[
-['原子结构与性质','能层能级、电子排布、原子轨道与元素性质。','易错：先判断价电子结构，避免把书写顺序与能量顺序混淆。','原子结构与周期表 元素周期律'],
-['分子结构与性质','共价键、分子空间结构、杂化、极性与分子间作用力。','易错：键有极性不代表分子一定有极性，需考虑空间结构。','化学键与分子间作用力'],
-['晶体结构与性质','晶体类型、晶胞、粒子计数、配位数与物理性质。','易错：晶胞粒子按顶点、棱、面、体所占份额计算。','化学键与分子间作用力']
-]],
-['化学','选择性必修3 有机化学基础',[
-['有机化合物的结构特点与研究方法','分类、同分异构、分离提纯和结构测定。','易错：同分异构体分子式相同但结构不同。','有机物命名与结构'],
-['烃','烷烃、烯烃、炔烃、芳香烃的结构与反应。','易错：根据官能团和不饱和键判断反应类型及条件。','烷烃与取代反应 烯烃与加成反应'],
-['烃的衍生物','卤代烃、醇、酚、醛、羧酸、酯等官能团性质。','易错：官能团决定典型反应，注意反应条件与产物。','乙醇性质 乙酸性质 酯化反应'],
-['生物大分子与合成','糖类、油脂、氨基酸、蛋白质与有机合成路线。','易错：逐步核对官能团转化、反应条件和原子守恒。','高分子与聚合 有机物命名与结构']
-]]
-];
-const subj=document.createElement('select');subj.setAttribute('aria-label','学科筛选');subj.innerHTML='<option value="全部">全部学科</option><option value="数学">高中数学</option><option value="化学">高中化学</option>';
-const book=document.createElement('select');book.setAttribute('aria-label','教材册别筛选');
-const q=document.createElement('input');q.placeholder='搜索章节名称';q.setAttribute('aria-label','搜索章节');
-const tools=document.createElement('div');tools.className='knowledge-dir-tools';tools.append(subj,book,q);
-const groups=document.createElement('div');groups.className='knowledge-dir-groups';
-const detail=document.createElement('div');detail.className='knowledge-dir-detail';detail.textContent='选择章节，可查看本章范围、重点与易错点，并跳转检索相关知识。';
-host.innerHTML='<div class="knowledge-dir-head">教材章节目录</div><div class="knowledge-dir-note">按教材册别快速翻找 · 点击章节查看重点与易错点。以人教版新教材主干为参考，不同版本和印次的章节名称可能不同。</div>';
-host.append(tools,groups,detail);
-let active='';
-function render(){
- const available=B.filter(b=>(subj.value==='全部'||b[0]===subj.value)&&(!q.value.trim()||(b[0]+b[1]+b[2].map(c=>c[0]).join(' ')).toLowerCase().includes(q.value.trim().toLowerCase())));
- const old=book.value;book.innerHTML='<option value="全部">全部册别</option>'+available.map(b=>'<option value="'+b[0]+'|'+b[1]+'">'+b[0]+' · '+b[1]+'</option>').join('');
- if(available.some(b=>b[0]+'|'+b[1]===old))book.value=old;else book.value='全部';
- groups.innerHTML='';let n=0;
- available.filter(b=>book.value==='全部'||book.value===b[0]+'|'+b[1]).forEach(b=>{
-  const sec=document.createElement('section');sec.className='knowledge-dir-book';const h=document.createElement('h4');h.textContent=b[0]+' / '+b[1];sec.append(h);
-  const list=document.createElement('div');list.className='knowledge-dir-chapters';
-  b[2].forEach((c,i)=>{if(q.value.trim()&&!c.join(' ').toLowerCase().includes(q.value.trim().toLowerCase())&&!(b[0]+b[1]).toLowerCase().includes(q.value.trim().toLowerCase()))return;n++;
-   const btn=document.createElement('button');btn.type='button';btn.className='knowledge-dir-chapter'+(active===b[1]+'|'+c[0]?' is-active':'');btn.textContent=(i+1)+'. '+c[0];
-   btn.addEventListener('click',()=>{active=b[1]+'|'+c[0];groups.querySelectorAll('button').forEach(x=>x.classList.toggle('is-active',x===btn));detail.innerHTML='';const title=document.createElement('h4');title.textContent=b[0]+' · '+b[1]+' · '+c[0];detail.append(title);const p=document.createElement('p');p.innerHTML='<strong>本章范围：</strong>'+c[1];detail.append(p);const p2=document.createElement('p');p2.innerHTML='<strong>重点与易错点：</strong>'+c[2];detail.append(p2);const row=document.createElement('div');row.className='knowledge-dir-actions';const go=document.createElement('button');go.type='button';go.className='zx-btn';go.textContent='检索本章相关知识点';go.addEventListener('click',()=>{const inp=document.getElementById('knowledgeSearch');inp.value=c[3];inp.dispatchEvent(new Event('input',{bubbles:true}));document.getElementById('knowledgeList').scrollIntoView({behavior:'smooth',block:'start'});});row.append(go);detail.append(row);});list.append(btn);
-  });if(list.children.length){sec.append(list);groups.append(sec);}
- });
- if(!n)groups.innerHTML='<div class="knowledge-dir-empty">没有匹配章节，试试“函数”“导数”“离子反应”等词。</div>';
-}
-subj.addEventListener('change',render);book.addEventListener('change',render);q.addEventListener('input',render);render();
-})();
+
 </script>
 
     <!-- 字体与图标字体全部内嵌在本文件里（见下面的 zx-embedded-fonts）：
@@ -3660,6 +3574,93 @@ function zxFnAdvance(f,xValue,rangeText){
 
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
         else boot();
-    </script>
+    (function(){
+const host=document.getElementById('knowledgeDirectory');if(!host)return;
+const B=[
+['数学','必修第一册',[
+['集合与常用逻辑用语','集合表示、交并补、充分必要条件、量词。','易错：混淆充分条件与必要条件；注意全称与存在量词的否定。','集合 充分必要条件'],
+['一元二次函数、方程和不等式','不等式性质、基本不等式、二次函数与方程不等式。','易错：乘除负数时不等号反向；基本不等式需检查取等条件。','不等式 二次函数 一元二次方程 基本不等式'],
+['函数的概念与性质','定义域、表示法、单调性、奇偶性、最值与零点。','易错：先检查定义域；单调性定义法需作差；奇偶函数定义域须关于原点对称。','函数定义域 函数单调性 奇偶函数 函数零点'],
+['指数函数与对数函数','指数幂、指数函数、对数运算与对数函数。','易错：对数真数大于0，底数大于0且不等于1。','指数函数 对数函数 指数与对数 对数运算'],
+['三角函数','任意角、弧度制、三角函数、诱导公式、图象与性质。','易错：角度和弧度混用；周期、平移方向、象限符号要分别判断。','三角函数 三角函数图象 诱导公式']
+]],
+['数学','必修第二册',[
+['平面向量及其应用','向量运算、坐标表示、数量积、正弦定理、余弦定理。','易错：数量积不是向量；注意夹角余弦与边角对应。','平面向量 向量数量积 正弦定理 余弦定理'],
+['复数','复数的代数形式、四则运算、模与几何意义。','易错：i²=-1；区分虚部b与虚部bi。','复数 复数模'],
+['立体几何初步','空间点线面关系、平行垂直、表面积和体积。','易错：不能只凭图形直观证明位置关系，要引用判定定理。','立体几何 空间几何平行垂直'],
+['统计','随机抽样、样本数字特征、用样本估计总体。','易错：样本代表性、方差计算与抽样方式要结合题意。','抽样方法 统计相关性'],
+['概率','随机事件、古典概型、频率与概率。','易错：先确认样本点等可能；频率不是一次试验的精确概率。','频率与概率 条件概率 独立事件']
+]],
+['数学','选择性必修第一册',[
+['空间向量与立体几何','空间向量运算、坐标表示、线面位置关系与空间角。','易错：直线夹角通常取锐角或直角；注意方向向量与法向量。','空间向量求角 空间几何平行垂直'],
+['直线和圆的方程','斜率、直线方程、距离公式、圆方程及位置关系。','易错：竖直线斜率不存在；配方时注意圆心坐标符号。','直线斜率 直线与圆'],
+['圆锥曲线的方程','椭圆、双曲线、抛物线及直线与圆锥曲线位置关系。','易错：焦点方向、离心率、渐近线和准线要对应标准方程。','圆锥曲线识别 椭圆基本关系 双曲线基本关系 抛物线']
+]],
+['数学','选择性必修第二册',[
+['数列','等差、等比数列，通项、递推关系与求和。','易错：通项和前n项和区分；公比为1时等比求和需单独处理。','等差数列 等比数列 数学归纳法'],
+['一元函数的导数及其应用','求导法则、单调性、极值、最值、切线与实际应用。','易错：f′(x₀)=0不一定是极值；切线斜率是导数值。','导数与单调性 导数与极值 导数四则运算 切线方程']
+]],
+['数学','选择性必修第三册',[
+['计数原理','分类加法、分步乘法、排列组合、二项式定理。','易错：先判断是否计顺序；防止重复计数和漏计。','排列与组合 二项式定理'],
+['随机变量及其分布','条件概率、独立事件、分布列、数学期望与方差。','易错：独立不等于互斥；分布列概率之和必须为1。','条件概率 独立事件 随机变量期望'],
+['成对数据的统计分析','散点图、相关关系、相关系数与线性回归。','易错：相关不代表因果；结论应结合散点分布。','统计相关性']
+]],
+['化学','必修第一册',[
+['物质及其变化','物质分类、离子反应、氧化还原反应。','易错：弱电解质、沉淀、气体、水通常不拆；检查电荷与原子守恒。','物质分类 离子方程式 氧化还原反应判断 离子共存'],
+['海水中的重要元素——钠和氯','钠及其化合物、氯及其化合物、物质的量和溶液配制。','易错：Na₂CO₃与NaHCO₃性质不同；浓度计算体积用L。','钠及其化合物 氯及其化合物 物质的量 物质的量浓度'],
+['铁 金属材料','铁及其化合物、合金与金属材料。','易错：铁与氯气通常生成Fe³⁺；与稀酸常生成Fe²⁺。','铁及其化合物 金属活动性顺序'],
+['物质结构 元素周期律','原子结构、元素周期表、周期律与化学键。','易错：先由电子排布判断周期族，再讨论性质递变。','原子结构与周期表 元素周期律 化学键']
+]],
+['化学','必修第二册',[
+['原子结构与元素性质','原子结构、元素周期律及性质联系。','易错：周期趋势是规律，不可忽略特殊性。','原子结构与周期表 元素周期律'],
+['化学反应与能量','化学能与热能、电能、反应速率与限度。','易错：催化剂改变速率但不改变平衡常数；速率与平衡要分开分析。','反应热 化学反应速率 原电池与电解池'],
+['有机化合物','甲烷、乙烯、苯、乙醇、乙酸、营养物质与高分子。','易错：区分取代、加成、氧化、酯化；写明必要条件。','有机物命名与结构 烷烃与取代反应 烯烃与加成反应 乙醇性质 乙酸性质 酯化反应'],
+['化学与可持续发展','资源利用、化工生产、环境保护与绿色化学。','易错：结合原料、反应条件、产物、能耗和污染治理综合判断。','化学基本实验操作 常见气体制备']
+]],
+['化学','选择性必修1 化学反应原理',[
+['化学反应的热效应','反应热、热化学方程式、燃烧热、盖斯定律。','易错：方程式反向则ΔH变号；系数倍乘则ΔH同倍变化。','反应热 盖斯定律'],
+['化学反应速率与化学平衡','速率影响因素、平衡常数、平衡移动、反应方向与调控。','易错：同温度K不随浓度改变；催化剂不改变平衡组成。','化学反应速率 化学平衡 勒夏特列原理 化学平衡常数'],
+['水溶液中的离子反应与平衡','电离平衡、pH、盐类水解、沉淀溶解平衡。','易错：混合酸碱先中和再算pH；比较离子积与Ksp。','弱电解质电离 电离平衡与pH 水的离子积 盐类水解 沉淀溶解平衡'],
+['化学反应与电能','原电池、电解池、金属腐蚀与防护。','易错：阳极氧化、阴极还原；正负极不能与阳阴极简单等同。','电化学电极判断 电解质溶液电解 原电池与电解池']
+]],
+['化学','选择性必修2 物质结构与性质',[
+['原子结构与性质','能层能级、电子排布、原子轨道与元素性质。','易错：先判断价电子结构，避免把书写顺序与能量顺序混淆。','原子结构与周期表 元素周期律'],
+['分子结构与性质','共价键、分子空间结构、杂化、极性与分子间作用力。','易错：键有极性不代表分子一定有极性，需考虑空间结构。','化学键与分子间作用力'],
+['晶体结构与性质','晶体类型、晶胞、粒子计数、配位数与物理性质。','易错：晶胞粒子按顶点、棱、面、体所占份额计算。','化学键与分子间作用力']
+]],
+['化学','选择性必修3 有机化学基础',[
+['有机化合物的结构特点与研究方法','分类、同分异构、分离提纯和结构测定。','易错：同分异构体分子式相同但结构不同。','有机物命名与结构'],
+['烃','烷烃、烯烃、炔烃、芳香烃的结构与反应。','易错：根据官能团和不饱和键判断反应类型及条件。','烷烃与取代反应 烯烃与加成反应'],
+['烃的衍生物','卤代烃、醇、酚、醛、羧酸、酯等官能团性质。','易错：官能团决定典型反应，注意反应条件与产物。','乙醇性质 乙酸性质 酯化反应'],
+['生物大分子与合成','糖类、油脂、氨基酸、蛋白质与有机合成路线。','易错：逐步核对官能团转化、反应条件和原子守恒。','高分子与聚合 有机物命名与结构']
+]]
+];
+const subj=document.createElement('select');subj.setAttribute('aria-label','学科筛选');subj.innerHTML='<option value="全部">全部学科</option><option value="数学">高中数学</option><option value="化学">高中化学</option>';
+const book=document.createElement('select');book.setAttribute('aria-label','教材册别筛选');
+const q=document.createElement('input');q.placeholder='搜索章节名称';q.setAttribute('aria-label','搜索章节');
+const tools=document.createElement('div');tools.className='knowledge-dir-tools';tools.append(subj,book,q);
+const groups=document.createElement('div');groups.className='knowledge-dir-groups';
+const detail=document.createElement('div');detail.className='knowledge-dir-detail';detail.textContent='选择章节，可查看本章范围、重点与易错点，并跳转检索相关知识。';
+host.innerHTML='<div class="knowledge-dir-head">教材章节目录</div><div class="knowledge-dir-note">按教材册别快速翻找 · 点击章节查看重点与易错点。以人教版新教材主干为参考，不同版本和印次的章节名称可能不同。</div>';
+host.append(tools,groups,detail);
+let active='';
+function render(){
+ const available=B.filter(b=>(subj.value==='全部'||b[0]===subj.value)&&(!q.value.trim()||(b[0]+b[1]+b[2].map(c=>c[0]).join(' ')).toLowerCase().includes(q.value.trim().toLowerCase())));
+ const old=book.value;book.innerHTML='<option value="全部">全部册别</option>'+available.map(b=>'<option value="'+b[0]+'|'+b[1]+'">'+b[0]+' · '+b[1]+'</option>').join('');
+ if(available.some(b=>b[0]+'|'+b[1]===old))book.value=old;else book.value='全部';
+ groups.innerHTML='';let n=0;
+ available.filter(b=>book.value==='全部'||book.value===b[0]+'|'+b[1]).forEach(b=>{
+  const sec=document.createElement('section');sec.className='knowledge-dir-book';const h=document.createElement('h4');h.textContent=b[0]+' / '+b[1];sec.append(h);
+  const list=document.createElement('div');list.className='knowledge-dir-chapters';
+  b[2].forEach((c,i)=>{if(q.value.trim()&&!c.join(' ').toLowerCase().includes(q.value.trim().toLowerCase())&&!(b[0]+b[1]).toLowerCase().includes(q.value.trim().toLowerCase()))return;n++;
+   const btn=document.createElement('button');btn.type='button';btn.className='knowledge-dir-chapter'+(active===b[1]+'|'+c[0]?' is-active':'');btn.textContent=(i+1)+'. '+c[0];
+   btn.addEventListener('click',()=>{active=b[1]+'|'+c[0];groups.querySelectorAll('button').forEach(x=>x.classList.toggle('is-active',x===btn));detail.innerHTML='';const title=document.createElement('h4');title.textContent=b[0]+' · '+b[1]+' · '+c[0];detail.append(title);const p=document.createElement('p');p.innerHTML='<strong>本章范围：</strong>'+c[1];detail.append(p);const p2=document.createElement('p');p2.innerHTML='<strong>重点与易错点：</strong>'+c[2];detail.append(p2);const row=document.createElement('div');row.className='knowledge-dir-actions';const go=document.createElement('button');go.type='button';go.className='zx-btn';go.textContent='检索本章相关知识点';go.addEventListener('click',()=>{const inp=document.getElementById('knowledgeSearch');inp.value=c[3];inp.dispatchEvent(new Event('input',{bubbles:true}));document.getElementById('knowledgeList').scrollIntoView({behavior:'smooth',block:'start'});});row.append(go);detail.append(row);});list.append(btn);
+  });if(list.children.length){sec.append(list);groups.append(sec);}
+ });
+ if(!n)groups.innerHTML='<div class="knowledge-dir-empty">没有匹配章节，试试“函数”“导数”“离子反应”等词。</div>';
+}
+subj.addEventListener('change',render);book.addEventListener('change',render);q.addEventListener('input',render);render();
+})();
+</script>
 </body>
 </html>
