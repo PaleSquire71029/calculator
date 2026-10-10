@@ -2349,6 +2349,21 @@ function zxEvalArithmetic(src) {
 ['离子方程式书写步骤','先写正确化学方程式，再拆强电解质可溶物，删去旁观离子，最后检查原子与电荷守恒。','弱电解质、沉淀、气体、氧化物和水通常不拆。']
 ].forEach(x=>add(x[0].includes('函数')||['复合函数','反函数','幂函数','指数函数','对数函数','对数运算','三角函数图象','诱导公式','和差角公式','二倍角公式','解三角形面积','平面向量坐标','向量平行与垂直','复数','复数模','空间几何平行垂直','空间向量求角','直线斜率','圆锥曲线识别','椭圆基本关系','双曲线基本关系','抛物线','数学归纳法','排列与组合','二项式定理','条件概率','独立事件','随机变量期望','统计相关性','基本不等式','一元二次不等式','绝对值不等式','函数零点','导数四则运算','导数与极值','定积分与面积','抽样方法','频率与概率'].includes(x[0])?M:C,x[0],x[1],x[2]));
 
+data.push({c:M,t:"复合函数求定义域",s:"先保证内层函数有意义，再要求内层函数的值属于外层函数定义域。",f:"例：y=√(ln x)，需x>0且ln x≥0，所以x≥1。",d:"易错：只检查ln x有意义而忘记根式条件；多个条件取交集。"});
+data.push({c:M,t:"函数单调性定义法",s:"任取定义域内x₁<x₂，计算f(x₂)−f(x₁)，化简后判断符号。",f:"差值恒大于0则严格递增，恒小于0则严格递减。",d:"易错：定义法必须写出任意取值、作差、变形和符号判断，不能只写结论。"});
+data.push({c:M,t:"函数奇偶性判断",s:"先检查定义域关于原点对称，再计算f(−x)，与f(x)或−f(x)比较。",f:"若定义域不关于原点对称，则函数既非奇函数也非偶函数。",d:"易错：不能只代入公式；0在奇函数定义域内时必有f(0)=0。"});
+data.push({c:M,t:"零点存在定理",s:"若f在[a,b]连续且f(a)f(b)<0，则(a,b)内至少有一个零点。",f:"连续性和端点异号缺一不可。",d:"易错：只保证至少一个，不保证唯一；不连续时不能直接使用。"});
+data.push({c:M,t:"基本不等式求最值",s:"a,b>0时，a+b≥2√ab，等号当且仅当a=b。",f:"求最值前检查正数条件、定和或定积条件，以及等号能否取到。",d:"易错：忽略等号条件会得到取不到的最值；还要检查变量范围。"});
+data.push({c:M,t:"排列与组合",s:"排列计顺序，组合不计顺序。",f:"Aₙᵐ=n!/(n−m)!；Cₙᵐ=n!/[m!(n−m)!]。",d:"易错：排座、编号、选岗位通常计顺序；选人组成小组通常不计顺序。"});
+data.push({c:M,t:"导数与极值",s:"先求导并判断导数在临界点两侧的符号；由正变负常对应极大值，由负变正常对应极小值。",f:"f′(x₀)=0只是可能的极值点，还需看符号是否改变。",d:"易错：导数为0不一定有极值；单调区间还要结合定义域。"});
+data.push({c:M,t:"切线方程",s:"曲线y=f(x)在x=x₀处的斜率为f′(x₀)，切点为(x₀,f(x₀))。",f:"y−f(x₀)=f′(x₀)(x−x₀)。",d:"易错：切线斜率不是f(x₀)；先求函数值，再代入切线公式。"});
+data.push({c:C,t:"离子方程式拆分规则",s:"可溶强电解质通常拆成离子；沉淀、气体、水、弱电解质和氧化物通常保留化学式。",f:"HCl+NaOH→NaCl+H₂O；净离子式H⁺+OH⁻→H₂O。",d:"易错：不能把所有盐都拆；写完检查原子守恒、电荷守恒及反应条件。"});
+data.push({c:C,t:"氧化还原反应判断",s:"化合价升高是氧化、失电子；化合价降低是还原、得电子；电子得失总数相等。",f:"氧化剂得电子并被还原，还原剂失电子并被氧化。",d:"易错：氧化剂自身被还原，还原剂自身被氧化，不要把名称和过程混淆。"});
+data.push({c:C,t:"化学计算常用流程",s:"先写并配平方程式，再把已知量换算为物质的量，按计量数关系求解，最后换回所求单位。",f:"n=m/M；n=cV（V用L）；n=N/Nₐ。",d:"易错：先判断限量试剂；气体摩尔体积要满足适用条件；检查单位和有效数字。"});
+data.push({c:C,t:"实验现象与结论",s:"现象是直接观察到的颜色、沉淀、气泡等；结论是根据现象推断的物质或反应。",f:"检验离子需选择有特征现象且干扰较少的试剂。",d:"易错：不能把“产生白色沉淀”直接等同于某一种离子；要排除干扰。"});
+data.push({c:C,t:"气体制备与收集",s:"根据反应物状态和条件选发生装置；根据气体溶解性、密度和反应性选收集方法。",f:"装置通常包括发生、净化/干燥、收集和尾气处理。",d:"易错：先检查气密性；净化通常先除杂再干燥；易溶于水或与水反应的气体不宜排水收集。"});
+data.push({c:C,t:"电化学电极判断",s:"阳极发生氧化，阴极发生还原；原电池负极氧化、正极还原。",f:"先判断装置类型，再判断电极反应，并检查元素与电荷守恒。",d:"易错：阳极不总是正极，阴极不总是负极；电极材料和电解质都会影响反应。"});
+data.push({c:C,t:"浓硫酸与稀硫酸",s:"稀硫酸主要体现酸的通性；浓硫酸还具有吸水性、脱水性和强氧化性。",f:"Cu+2H₂SO₄(浓)→CuSO₄+SO₂↑+2H₂O（加热）。",d:"易错：铜与稀硫酸通常不反应；铜与浓硫酸反应通常不生成氢气。"});
 const eq=[
 ['氢气燃烧','2H₂ + O₂ → 2H₂O','无常见离子方程式'],
 ['铁在氧气中燃烧','3Fe + 2O₂ → Fe₃O₄','无常见离子方程式'],
@@ -2372,7 +2387,7 @@ const eq=[
 ['氯化铁与氢氧化钠','FeCl₃ + 3NaOH → Fe(OH)₃↓ + 3NaCl','Fe³⁺ + 3OH⁻ → Fe(OH)₃↓'],
 ['氯化铵与氢氧化钠','NH₄Cl + NaOH → NH₃↑ + NaCl + H₂O','NH₄⁺ + OH⁻ → NH₃↑ + H₂O']
 ];eq.forEach(x=>add(E,x[0],x[1]+'；离子方程式：'+x[2],x[2]));
-let filter='all';function render(){const q=search.value.trim().toLowerCase(),arr=data.filter(x=>(filter==='all'||x.c===filter)&&(x.t+' '+x.s+' '+x.f).toLowerCase().includes(q));root.innerHTML='';if(!arr.length){root.textContent='没有找到匹配知识点。';return;}arr.forEach(x=>{const b=document.createElement('button');b.className='knowledge-item';b.innerHTML='<small>'+(x.c===M?'高中数学':x.c===C?'高中化学':'常见化学方程式')+'</small><strong>'+x.t+'</strong><span>'+x.s+'</span>';b.addEventListener('click',()=>{root.hidden=true;document.querySelector('.knowledge-filters').hidden=true;document.querySelector('.knowledge-searchbar').hidden=true;detail.hidden=false;dc.innerHTML='<small>'+(x.c===M?'高中数学':x.c===C?'高中化学':'常见化学方程式')+'</small><h2>'+x.t+'</h2><p>'+x.s+'</p><div class="knowledge-formula">'+x.f+'</div>';});root.appendChild(b);});}
+let filter='all';function render(){const q=search.value.trim().toLowerCase(),arr=data.filter(x=>(filter==='all'||x.c===filter)&&(x.t+' '+x.s+' '+x.f).toLowerCase().includes(q));root.innerHTML='';if(!arr.length){root.textContent='没有找到匹配知识点。';return;}arr.forEach(x=>{const b=document.createElement('button');b.className='knowledge-item';b.innerHTML='<small>'+(x.c===M?'高中数学':x.c===C?'高中化学':'常见化学方程式')+'</small><strong>'+x.t+'</strong><span>'+x.s+'</span>';b.addEventListener('click',()=>{root.hidden=true;document.querySelector('.knowledge-filters').hidden=true;document.querySelector('.knowledge-searchbar').hidden=true;detail.hidden=false;dc.innerHTML='<small>'+(x.c===M?'高中数学':x.c===C?'高中化学':'常见化学方程式')+'</small><h2>'+x.t+'</h2><h3>核心解析</h3><p>'+x.s+'</p><div class="knowledge-formula">'+x.f+'</div>'+(x.d?'<h3>易错点</h3><p>'+x.d+'</p>':'<h3>书写检查</h3><p>核对适用条件、反应条件、原子守恒和电荷守恒；离子方程式只保留实际参与反应的离子。</p>');});root.appendChild(b);});}
 function back(){detail.hidden=true;root.hidden=false;document.querySelector('.knowledge-filters').hidden=false;document.querySelector('.knowledge-searchbar').hidden=false;}document.getElementById('knowledgeBack').addEventListener('click',back);document.querySelectorAll('[data-kfilter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.kfilter;document.querySelectorAll('[data-kfilter]').forEach(t=>t.classList.toggle('is-active',t===b));back();render();}));search.addEventListener('input',render);document.getElementById('knowledgeClear').addEventListener('click',()=>{search.value='';render();});render();})();
 
         /* ==================================================================
