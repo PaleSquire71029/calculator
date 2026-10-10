@@ -2046,7 +2046,7 @@ function zxEvalArithmetic(src) {
             pad.id='zxMobileMathPad';pad.className='zx-mobile-mathpad';pad.setAttribute('aria-label','数学输入键盘');
             pad.innerHTML='<div class="zx-mobile-mathpad-head"><span id="zxMathPadLabel">数学输入</span><button type="button" data-value="DONE">收起</button></div>'+
                 '<div class="zx-mathpad-tabs"><button type="button" data-pad-tab="numbers" class="is-active">数字</button><button type="button" data-pad-tab="operators">运算</button><button type="button" data-pad-tab="symbols">数学符号</button></div>'+
-                '<div class="zx-mobile-mathpad-grid" data-pad-panel="numbers">'+[['7','7'],['8','8'],['9','9'],['DEL','⌫'],['4','4'],['5','5'],['6','6'],['CLEAR','清空'],['1','1'],['2','2'],['3','3'],['NEXT','下一项'],['0','0'],['.','.'],['DONE','完成']].map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>'+
+                '<div class="zx-mobile-mathpad-grid" data-pad-panel="numbers">'+[['7','7'],['8','8'],['9','9'],['DEL','⌫'],['4','4'],['5','5'],['6','6'],['CLEAR','清空'],['1','1'],['2','2'],['3','3'],['NEXT','下一项'],['0','0'],['.','.'],['NEG','±'],['DONE','完成']].map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>'+
                 '<div class="zx-mobile-mathpad-grid" data-pad-panel="operators" hidden>'+[['+','+'],['-','−'],['*','×'],['/','÷'],['^','xⁿ'],['%','%'],['(', '('],[')',')'],[',',','],['=','=']].map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>'+
                 '<div class="zx-mobile-mathpad-grid" data-pad-panel="symbols" hidden>'+[['x','x'],['pi','π'],['<','<'],['>','>'],['≤','≤'],['≥','≥'],['NEXT','下一项'],['DONE','完成']].map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>';
             document.body.appendChild(pad);
@@ -2083,6 +2083,7 @@ function zxEvalArithmetic(src) {
                 let start=typeof active.selectionStart==='number'?active.selectionStart:active.value.length;
                 let end=typeof active.selectionEnd==='number'?active.selectionEnd:active.value.length;
                 if(action==='CLEAR'){active.value='';start=end=0;}
+                else if(action==='NEG'){const value=active.value;const minus='-';if(value.startsWith(minus)){active.value=value.slice(1);start=Math.max(0,start-1);end=Math.max(0,end-1);}else{active.value=minus+value;start++;end++;}}
                 else if(action==='DEL'){if(start===end&&start>0)start--;active.value=active.value.slice(0,start)+active.value.slice(end);end=start;}
                 else{
                     const values={'−':'-','×':'*','÷':'/' ,'π':'pi'};
