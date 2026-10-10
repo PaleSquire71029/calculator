@@ -909,27 +909,36 @@ function zxPolyEval(p, x) {
     for (let i = p.length - 1; i >= 0; i--) v = v * x + p[i];
     return v;
 }
-/* 实根：支持一次、二次、三次；更高次数返回 null */
+/* 实根：一次至三次使用解析式；四至六次用导数分段与二分法，兼顾偶重根。 */
 function zxRealRoots(p) {
-    p = zxPolyTrim(p);
-    const deg = p.length - 1;
-    if (deg <= 0) return [];
-    if (deg === 1) return [-p[0] / p[1]];
-    if (deg === 2) {
-        const a=p[2],b=p[1],c=p[0],D=b*b-4*a*c;
-        if(D < -1e-12)return [];if(Math.abs(D)<=1e-12)return [-b/(2*a)];
-        const q=Math.sqrt(D),r1=(-b-q)/(2*a),r2=(-b+q)/(2*a);return r1<=r2?[r1,r2]:[r2,r1];
-    }
+    p=zxPolyTrim(p);const deg=p.length-1;
+    if(deg<=0)return [];
+    if(deg===1)return [-p[0]/p[1]];
+    if(deg===2){const a=p[2],b=p[1],c=p[0],D=b*b-4*a*c;if(D < -1e-12)return [];if(Math.abs(D)<=1e-12)return [-b/(2*a)];const q=Math.sqrt(D),r1=(-b-q)/(2*a),r2=(-b+q)/(2*a);return r1<=r2?[r1,r2]:[r2,r1];}
     if(deg===3){
         const a=p[3],A=p[2]/a,B=p[1]/a,C=p[0]/a,pp=B-A*A/3,qq=2*A*A*A/27-A*B/3+C,disc=qq*qq/4+pp*pp*pp/27,shift=A/3;
         const cb=function(v){return v<0?-Math.pow(-v,1/3):Math.pow(v,1/3);};let roots=[];
         if(disc>1e-12){const q=Math.sqrt(disc);roots=[cb(-qq/2+q)+cb(-qq/2-q)-shift];}
         else if(disc>=-1e-12){const u=cb(-qq/2);roots=[2*u-shift,-u-shift];}
         else{const radius=2*Math.sqrt(-pp/3),arg=Math.max(-1,Math.min(1,(3*qq/(2*pp))*Math.sqrt(-3/pp))),theta=Math.acos(arg)/3;roots=[radius*Math.cos(theta)-shift,radius*Math.cos(theta-2*Math.PI/3)-shift,radius*Math.cos(theta-4*Math.PI/3)-shift];}
-        roots=roots.filter(Number.isFinite).sort(function(x,y){return x-y;});const out=[];
-        roots.forEach(function(v){if(!out.length||Math.abs(v-out[out.length-1])>1e-7)out.push(v);});return out;
+        const out=[];roots.filter(Number.isFinite).sort(function(x,y){return x-y;}).forEach(function(v){if(!out.length||Math.abs(v-out[out.length-1])>1e-7)out.push(v);});return out;
     }
-    return null;
+    if(deg>6)return null;
+    const lead=p[deg];if(!Number.isFinite(lead)||Math.abs(lead)<1e-18)return null;
+    const bound=Math.min(1e8,1+Math.max.apply(null,p.slice(0,deg).map(function(v){return Math.abs(v/lead);})));
+    const derivative=p.slice(1).map(function(v,i){return v*(i+1);}),critical=zxRealRoots(derivative);
+    if(critical===null)return null;
+    const cuts=[-bound].concat(critical.filter(function(x){return x>-bound&&x<bound;}),[bound]).sort(function(a,b){return a-b;});
+    const evalP=function(x){return zxPolyEval(p,x);};
+    const scaleAt=function(x){let sum=0,pow=1;for(let i=0;i<p.length;i++){sum+=Math.abs(p[i])*pow;pow*=Math.abs(x);}return Math.max(1,sum);};
+    const roots=[];
+    function addRoot(x){if(Number.isFinite(x)&&!roots.some(function(q){return Math.abs(q-x)<1e-7*Math.max(1,Math.abs(x));}))roots.push(x);}
+    critical.forEach(function(x){const y=evalP(x);if(Number.isFinite(y)&&Math.abs(y)<=1e-9*scaleAt(x))addRoot(x);});
+    for(let i=0;i<cuts.length-1;i++){let lo=cuts[i],hi=cuts[i+1],fl=evalP(lo),fh=evalP(hi);if(!Number.isFinite(fl)||!Number.isFinite(fh)||fl===0||fh===0||fl*fh>0)continue;
+        for(let k=0;k<100;k++){const mid=(lo+hi)/2,fm=evalP(mid);if(!Number.isFinite(fm))break;if(Math.abs(fm)<=1e-13*scaleAt(mid)||hi-lo<=1e-12*Math.max(1,Math.abs(mid))){lo=hi=mid;break;}if(fl*fm<=0){hi=mid;fh=fm;}else{lo=mid;fl=fm;}}
+        addRoot((lo+hi)/2);
+    }
+    return roots.sort(function(a,b){return a-b;});
 }
 
 /* ==================================================================
@@ -1033,29 +1042,14 @@ function zxParseTerm(tk, st) {
     }
 }
 function zxParsePower(tk, st) {
-    let base = zxParsePrimary(tk, st);
-    if (!base) return null;
-    if (tk[st.i] && tk[st.i].k === '^') {
+    let base=zxParsePrimary(tk,st);if(!base)return null;
+    if(tk[st.i]&&tk[st.i].k==='^'){
         st.i++;
-        const ex = tk[st.i];
-        if (!ex || ex.k !== 'num' || ex.v < 0 || Math.abs(ex.v - Math.round(ex.v)) > 1e-9) {
-            st.err = '指数需要是非负整数';
-            return null;
-        }
-        /* 底数是纯数字时指数可以很大（只是算个数，不产生多项式）；
-           底数含 x 时收紧到 6 次，避免 (x+1)^50 之类把多项式撑爆 */
-        const maxExp = zxRIsConst(base) ? 64 : 6;
-        if (ex.v > maxExp) {
-            st.err = zxRIsConst(base)
-                ? '指数最大支持 64'
-                : ('含 x 的乘方最多 6 次（当前 ' + ex.v + ' 次）');
-            return null;
-        }
-        st.i++;
-        base = zxRPow(base, ex.v);
+        function readExponent(){const ex=tk[st.i];if(!ex||ex.k!=='num'||ex.v<0||Math.abs(ex.v-Math.round(ex.v))>1e-9){st.err='指数需要是非负整数';return null;}st.i++;let value=ex.v;if(tk[st.i]&&tk[st.i].k==='^'){st.i++;const rhs=readExponent();if(rhs===null)return null;value=Math.pow(value,rhs);}if(!Number.isFinite(value)||value>64){st.err='指数计算结果必须是不超过 64 的非负整数';return null;}return value;}
+        const exponent=readExponent();if(exponent===null)return null;if(Math.abs(exponent-Math.round(exponent))>1e-9){st.err='指数计算结果必须是整数';return null;}
+        const maxExp=zxRIsConst(base)?64:6;if(exponent>maxExp){st.err=zxRIsConst(base)?'指数最大支持 64':('含 x 的乘方最多 6 次（当前 '+exponent+' 次）');return null;}base=zxRPow(base,exponent);
     }
-    /* 百分比是后缀运算符：50% → 0.5，可以连写 */
-    while (tk[st.i] && tk[st.i].k === '%') { st.i++; base = zxRScaled(base, 0.01); }
+    while(tk[st.i]&&tk[st.i].k==='%'){st.i++;base=zxRScaled(base,0.01);}
     return base;
 }
 function zxParseUnary(tk, st) {
@@ -1167,7 +1161,7 @@ function zxSolveEquation(src) {
     if (deg > 3) return { ok: false, error: '整理后是 ' + deg + ' 次方程，目前最高支持三次' };
 
     const poles = (den.length > 1) ? zxRealRoots(den) : [];
-    if (poles === null) return { ok: false, error: '分母次数超过 3，无法可靠排除分母零点' };
+    if (poles === null) return { ok: false, error: '分母次数超过 6，当前无法可靠排除分母零点' };
     const nearPole = function (x) {
         for (let i = 0; i < poles.length; i++) if (Math.abs(x - poles[i]) < 1e-7) return true;
         return false;
@@ -1371,7 +1365,7 @@ function zxSolveInequality(src) {
     let poles = [];
     if (d.length > 1) {
         poles = zxRealRoots(d);
-        if (poles === null) return { ok: false, error: '分母次数超过 3，无法可靠排除分母零点' };
+        if (poles === null) return { ok: false, error: '分母次数超过 6，当前无法可靠排除分母零点' };
     }
     if (zxPolyIsZero(n)) {
         if (strict) return { ok: true, text: '移项后恒为 0；严格不等式不成立 —— 解集：无解（空集）' };
@@ -2301,9 +2295,12 @@ function zxEvalArithmetic(src) {
         }
         function initPointFields(rootId){
             const root=$(rootId);
+            const savedValues=Object.create(null);
+            function restoreValues(){root.querySelectorAll('[data-math-field]').forEach(function(el){const key=el.getAttribute('data-math-field');if(Object.prototype.hasOwnProperty.call(savedValues,key))el.value=savedValues[key];});}
             function count(){return fitKind==='linear'?2:fitKind==='quad'?3:fitKind==='cubic'?4:fitKind==='inverse'?1:4;}
             function coeffNames(){return fitKind==='linear'?['a','b']:fitKind==='quad'?['a','b','c']:fitKind==='cubic'?['a','b','c','d']:['k'];}
             function render(){
+                root.querySelectorAll('[data-math-field]').forEach(function(el){savedValues[el.getAttribute('data-math-field')]=el.value;});
                 const n=count();
                 const taskButtons='<div class="structured-mode-tabs function-task-tabs" role="tablist" aria-label="函数任务"><button type="button" data-fit-task="expression" class="'+(fitTaskMode==='expression'?'is-active':'')+'">解析式分析</button><button type="button" data-fit-task="points" class="'+(fitTaskMode==='points'?'is-active':'')+'">由条件求解析式</button><button type="button" data-fit-task="coefficients" class="'+(fitTaskMode==='coefficients'?'is-active':'')+'">系数与性质</button></div>';
                 const modeButtons='<div class="structured-mode-tabs"><button type="button" data-fit-input-mode="points" class="'+(fitInputMode==='points'?'is-active':'')+'">由坐标求解析式</button><button type="button" data-fit-input-mode="coefficients" class="'+(fitInputMode==='coefficients'?'is-active':'')+'">标准式系数输入</button></div>';
@@ -2314,7 +2311,8 @@ function zxEvalArithmetic(src) {
                     '<div class="function-expr-examples"><button type="button" data-expr-example="(x-2)^2+3">二次函数</button><button type="button" data-expr-example="(x-1)*(x+2)">因式分解式</button><button type="button" data-expr-example="1/(x-2)">分式函数</button><button type="button" data-expr-example="sqrt(x+3)">根式函数</button><button type="button" data-expr-example="sin(x)">三角函数</button><button type="button" data-expr-example="ln(x)">对数函数</button></div>'+
                     '<div class="function-value-row"><label class="structured-field"><span>求函数值 x =</span><input type="text" data-math-field="exprX" inputmode="none" autocomplete="off" placeholder="选填" aria-label="函数值的自变量"></label><span class="function-value-note">留空则分析表达式并绘图</span></div>'+
                     '<div class="structured-hint">支持 + − × ÷、乘方、括号、隐式乘法（如 2x）、π、e，以及 sin、cos、tan、sqrt、abs、ln、log、exp 等常用函数。三角函数默认使用弧度。</div><div id="fitGraph" class="function-graph" aria-label="函数图像"></div></div>';
-                    root.querySelectorAll('[data-expr-example]').forEach(function(btn){btn.addEventListener('click',function(){const el=root.querySelector('[data-math-field="expr"]');if(el)el.value=btn.getAttribute('data-expr-example');});});
+                    restoreValues();
+                    root.querySelectorAll('[data-expr-example]').forEach(function(btn){btn.addEventListener('click',function(){const el=root.querySelector('[data-math-field="expr"]');if(el){el.value=btn.getAttribute('data-expr-example');const solveBtn=$('fitBtn');if(solveBtn)solveBtn.click();zxRenderFunctionGraph(el.value);}});});
                     root.querySelectorAll('[data-fit-task]').forEach(function(btn){btn.addEventListener('click',function(){fitTaskMode=btn.getAttribute('data-fit-task');if(fitTaskMode==='coefficients')fitInputMode='coefficients';else if(fitTaskMode==='points')fitInputMode='points';render();});});
                     const fitBtnEl=$('fitBtn');if(fitBtnEl)fitBtnEl.innerHTML='<i class="fa-solid fa-chart-line"></i>分析函数';
                     if(typeof initSolveKeypad==='function')initSolveKeypad();
@@ -2330,6 +2328,7 @@ function zxEvalArithmetic(src) {
                         '<div class="structured-hint">'+(fitKind==='auto'?'自动模式最多填写 4 个点：1 个点求反比例，2 个点求一次，3 个点求二次，4 个点求三次；空白点会忽略。':'每个坐标的 x、y 分开填写；切换函数类型会调整所需点数。')+'</div>';
                 }
                 root.innerHTML=taskButtons+'<div class="function-point-workbench">'+modeButtons+'<div class="structured-top"><div class="structured-form-title">'+title+(fitInputMode==='coefficients'?'：分别输入系数':'：输入坐标')+'</div></div>'+body+'</div>';
+                restoreValues();
                 const fitBtnEl=$('fitBtn');if(fitBtnEl)fitBtnEl.innerHTML=fitInputMode==='coefficients'?'<i class="fa-solid fa-chart-line"></i>分析函数':'<i class="fa-solid fa-chart-line"></i>求解析式';
                 root.querySelectorAll('[data-fit-task]').forEach(function(btn){btn.addEventListener('click',function(){fitTaskMode=btn.getAttribute('data-fit-task');fitInputMode=fitTaskMode==='coefficients'?'coefficients':'points';if(fitInputMode==='coefficients'&&fitKind==='auto')fitKind='quad';document.querySelectorAll('#fitTypes [data-fit]').forEach(function(b){b.classList.toggle('is-active',b.getAttribute('data-fit')===fitKind);});render();});});
                 root.querySelectorAll('[data-fit-input-mode]').forEach(function(btn){btn.addEventListener('click',function(){fitInputMode=btn.getAttribute('data-fit-input-mode');fitTaskMode=fitInputMode==='coefficients'?'coefficients':'points';if(fitInputMode==='coefficients'&&fitKind==='auto')fitKind='quad';document.querySelectorAll('#fitTypes [data-fit]').forEach(function(b){b.classList.toggle('is-active',b.getAttribute('data-fit')===fitKind);});render();});});
@@ -2448,7 +2447,11 @@ function zxEvalArithmetic(src) {
             let yMin=quantile(.03),yMax=quantile(.97);
             if(!Number.isFinite(yMin)||!Number.isFinite(yMax)||yMax-yMin<1e-9){yMin=quantile(.1)-1;yMax=quantile(.9)+1;}
             if(yMax-yMin<1e-9){yMin-=1;yMax+=1;}
-            // 分位数缩放会裁掉 x²、(x-1)² 等函数的顶点；存在数值零点时，确保 y=0 落在视窗内。
+            // 把位于稳健区间附近的局部极值纳入缩放，避免 (x-2)^2+3 一类函数的顶点被分位数裁掉。
+            const robustSpan=Math.max(1e-9,yMax-yMin),extrema=[];
+            for(let i=1;i<raw.length-1;i++){const p0=raw[i-1],p1=raw[i],p2=raw[i+1];if(!Number.isFinite(p0.y)||!Number.isFinite(p1.y)||!Number.isFinite(p2.y))continue;const localMin=p1.y<=p0.y&&p1.y<=p2.y,localMax=p1.y>=p0.y&&p1.y>=p2.y;if((localMin||localMax)&&p1.y>=yMin-robustSpan*.15&&p1.y<=yMax+robustSpan*.15)extrema.push(p1.y);}
+            if(extrema.length){yMin=Math.min(yMin,Math.min.apply(null,extrema));yMax=Math.max(yMax,Math.max.apply(null,extrema));}
+            // 有零点时确保 y=0 位于视窗内。
             let hasRoot=false;
             for(let i=0;i<raw.length;i++){
                 const y=raw[i].y;
@@ -2533,6 +2536,7 @@ function zxEvalArithmetic(src) {
             if (fitSolver) fitSolver.solve(true);
             const fitBtn=$('fitBtn'),fitClear=$('fitClearBtn');
             if(fitBtn)fitBtn.addEventListener('click',function(){if(fitTaskMode==='expression'){const raw=ui.getRaw();if(raw)zxRenderFunctionGraph(raw);}});
+            const fitRoot=$('fitStructured');if(fitRoot)fitRoot.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('[data-fit-task],[data-fit-input-mode]'))fitSolver.solve(true);});
             if(fitClear)fitClear.addEventListener('click',function(){const g=$('fitGraph');if(g)g.innerHTML='';});
 
             const types = $('fitTypes');
@@ -2620,11 +2624,13 @@ function zxEvalArithmetic(src) {
             fillUnitSelects();
 
             function current() {
-                const raw = String(valEl.value || '').trim();
+                const raw = String(valEl.value == null ? '' : valEl.value).trim();
                 if (!raw) return { error: '请输入数值' };
-                const normalized = raw.replace(/[,，\s]/g, '');
-                if (!normalized || !/^[+-]?(?:(?:\d+(?:\.\d*)?)|(?:\.\d+))(?:e[+-]?\d+)?$/i.test(normalized)) return { error: '请输入有效数字' };
-                const v = Number(normalized);
+                const normalizedInput=raw.replace(/，/g,',');
+                const numberPattern=/^[+-]?(?:(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i;
+                if (!numberPattern.test(normalizedInput)) return { error: '请输入有效数字；千位分隔符请每三位使用一个逗号' };
+                const normalized=normalizedInput.replace(/,/g,'');
+                const v=Number(normalized);
                 if (v === 0 && /[1-9]/.test(normalized)) return { error: '数值过小，超出当前数值精度范围' };
                 const from = fromEl.value, to = toEl.value;
                 const a = unitDef(curUnitCat, from), b = unitDef(curUnitCat, to);
@@ -2632,9 +2638,7 @@ function zxEvalArithmetic(src) {
                 const base = a.toBase(v);
                 const res = b.fromBase(base);
                 if (!Number.isFinite(base) || !Number.isFinite(res)) return { error: '数值超出当前单位的可处理范围' };
-                for (let i = 0; i < ZX_UNITS[curUnitCat].units.length; i++) {
-                    if (!Number.isFinite(ZX_UNITS[curUnitCat].units[i].fromBase(base))) return { error: '数值过大或过小，无法稳定显示全部单位换算结果' };
-                }
+                if (res === 0 && v !== 0) return { error: '换算结果过小，超出当前数值精度范围' };
                 const gv = zxDec(v, 10), gr = zxDec(res, 10);
                 const fr = zxFracSmall(res, 64);
                 return {
