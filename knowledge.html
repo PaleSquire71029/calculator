@@ -213,7 +213,7 @@ const deepExpansion=[
 {subject:"数学",level:"高中",chapter:"数列与概率",title:"期望与方差",summary:"期望表示随机变量的平均水平，方差衡量随机变量围绕期望的离散程度。",formula:"E(X)=Σxᵢpᵢ；D(X)=E(X²)−[E(X)]²",explain:"先列出随机变量所有可能取值及其概率，检查概率和为 1，再计算期望与二次矩。方差不可能为负。",example:"若 X 只取 0、1，且 P(X=1)=p，则 E(X)=p，D(X)=p(1−p)。",mistakes:["期望不是一定能取到的实际值。","方差公式中不能漏掉期望的平方。"],tags:["随机变量","期望方差"]}
 ];
 
-const mergedRaw=baseK.concat(legacyKnowledge,syllabusExpansion,deepExpansion);
+const mergedRaw=legacyKnowledge.concat(baseK,syllabusExpansion,deepExpansion);
 const seenKnowledge=new Set();
 const allK=mergedRaw.filter(k=>{const key=k.subject+"|"+k.title;if(seenKnowledge.has(key))return false;seenKnowledge.add(key);return true;});
 const $=id=>document.getElementById(id);
