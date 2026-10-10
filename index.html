@@ -2881,7 +2881,7 @@ function back(){detail.hidden=true;root.hidden=false;document.querySelector('.kn
                     root.innerHTML=taskButtons+'<div class="function-expression-panel"><div class="structured-form-title">输入函数表达式</div>'+
                     '<label class="structured-field function-expression-field"><span>f(x) =</span><input type="text" data-math-field="expr" autocomplete="off" spellcheck="false" placeholder="例如：(x-2)^2+3" aria-label="函数表达式"></label>'+
                     '<div class="function-expr-examples"><button type="button" data-expr-example="(x-2)^2+3">二次函数</button><button type="button" data-expr-example="(x-1)*(x+2)">因式分解式</button><button type="button" data-expr-example="1/(x-2)">分式函数</button><button type="button" data-expr-example="sqrt(x+3)">根式函数</button><button type="button" data-expr-example="sin(x)">三角函数</button><button type="button" data-expr-example="ln(x)">对数函数</button></div>'+
-                    '<div class="function-value-row"><label class="structured-field"><span>求函数值 x =</span><input type="text" data-math-field="exprX" autocomplete="off" placeholder="选填" aria-label="函数值的自变量"></label><label class="structured-field"><span>定积分区间 [a,b]</span><input type="text" data-math-field="exprRange" autocomplete="off" placeholder="选填，如 0,1" aria-label="定积分区间"></label><span class="function-value-note">留空则分析表达式并绘图</span></div>'+
+                    '<div class="function-value-row"><label class="structured-field"><span>求函数值 x =</span><input type="text" data-math-field="exprX" autocomplete="off" placeholder="选填" aria-label="函数值的自变量"></label><label class="structured-field"><span>定积分区间 [a,b]</span><input type="text" data-math-field="exprRange" autocomplete="off" placeholder="选填，如 0,1" aria-label="定积分区间"></label><label class="structured-field"><span>绘图区间 x∈[a,b]</span><input type="text" data-math-field="graphRange" autocomplete="off" placeholder="默认 -10,10，如 -5,5" aria-label="函数图像横坐标区间"></label><span class="function-value-note">留空则分析表达式并绘图</span></div>'+
                     '<div class="structured-hint">支持 + − × ÷、乘方、括号、隐式乘法（如 2x）、π、e，以及 sin、cos、tan、sqrt、abs、ln、log、exp 等常用函数。三角函数默认使用弧度。分析结果会额外给出符号导数 f′(x)、驻点、切线 / 法线方程；填写定积分区间后还会给出定积分数值与区间平均值。</div><div id="fitGraph" class="function-graph" aria-label="函数图像"></div></div>';
                     restoreValues();
                     root.querySelectorAll('[data-expr-example]').forEach(function(btn){btn.addEventListener('click',function(){const el=root.querySelector('[data-math-field="expr"]');if(el){el.value=btn.getAttribute('data-expr-example');const solveBtn=$('fitBtn');if(solveBtn)solveBtn.click();}});});
@@ -2926,8 +2926,8 @@ function back(){detail.hidden=true;root.hidden=false;document.querySelector('.kn
             }
             function clear(){root.querySelectorAll('[data-math-field]').forEach(function(el){el.value='';});const g=$('fitGraph');if(g)g.innerHTML='';}
             function getExpressionX(){const el=root.querySelector('[data-math-field="exprX"]');if(!el||el.value.trim()==='')return null;const n=Number(el.value);return Number.isFinite(n)?n:NaN;}
-            function getExpressionRange(){const el=root.querySelector('[data-math-field="exprRange"]');return el?el.value.trim():'';}
-            render();return {getRaw:getRaw,getCoeffs:getCoeffs,getExpressionX:getExpressionX,getExpressionRange:getExpressionRange,clear:clear,setExample:setExample,setCoeffs:setCoeffs,render:render};
+            function getExpressionRange(){const el=root.querySelector('[data-math-field="exprRange"]');return el?el.value.trim():'';} function getGraphRange(){const el=root.querySelector('[data-math-field="graphRange"]');return el?el.value.trim():'';}
+            render();return {getRaw:getRaw,getCoeffs:getCoeffs,getExpressionX:getExpressionX,getExpressionRange:getExpressionRange,getGraphRange:getGraphRange,clear:clear,setExample:setExample,setCoeffs:setCoeffs,render:render};
         }
 
         function initEquation() {
@@ -3003,11 +3003,13 @@ function back(){detail.hidden=true;root.hidden=false;document.querySelector('.kn
             lines.push('注意：数值搜索可能遗漏偶重零点、狭窄区间内的变化和区间外性质；精确定义域、值域、单调区间应结合代数推导。');
             return {ok:true,text:lines.join('\n'),compiled:f};
         }
-        function zxRenderFunctionGraph(source){
+        function zxRenderFunctionGraph(source,rangeText){
             const host=$('fitGraph');if(!host)return;
             const f=zxCompileFunctionExpression(source);
             if(!f.ok){host.innerHTML='<div class="function-graph-empty">请先输入有效的函数表达式。</div>';return;}
-            const W=640,H=280,L=58,R=14,T=16,B=32,xMin=-10,xMax=10,N=1000,plotW=W-L-R,plotH=H-T-B;
+            let xMin=-10,xMax=10;const rangeRaw=String(rangeText||'').trim();
+            if(rangeRaw){const parts=rangeRaw.split(/[，,\\s]+/).filter(Boolean).map(Number);if(parts.length!==2||!parts.every(Number.isFinite)||parts[0]>=parts[1]||parts[1]-parts[0]>1e7){host.innerHTML='<div class="function-graph-empty">绘图区间格式不正确，请输入两个递增的有限数字，例如 -5,5。</div>';return;}xMin=parts[0];xMax=parts[1];}
+            const W=640,H=280,L=58,R=14,T=16,B=32,N=1000,plotW=W-L-R,plotH=H-T-B;
             const raw=[];
             for(let i=0;i<=N;i++){
                 const x=xMin+(xMax-xMin)*i/N;let y=NaN;
@@ -3074,7 +3076,7 @@ function back(){detail.hidden=true;root.hidden=false;document.querySelector('.kn
                 prev=p;
             });
             if(!d){host.innerHTML='<div class="function-graph-empty">函数值超出当前绘图窗口，请尝试其他显示区间。</div>';return;}
-            host.innerHTML='<div class="function-graph-head"><span>函数图像</span><small>显示区间：−10 ≤ x ≤ 10 · 数值采样图</small></div><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="函数图像，纵轴按当前区间内采样值自动缩放"><defs><clipPath id="zxGraphClip"><rect x="'+L+'" y="'+T+'" width="'+plotW+'" height="'+plotH+'"/></clipPath></defs>'+grid+'<path d="'+d+'" clip-path="url(#zxGraphClip)" fill="none" stroke="#91a0ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="function-graph-note">图像为数值采样结果；不连续点附近可能留白，不能单凭图像判定精确渐近线或定义域。</div>';
+            host.innerHTML='<div class="function-graph-head"><span>函数图像</span><small>显示区间：'+zxFmtNum(xMin,4)+' ≤ x ≤ '+zxFmtNum(xMax,4)+' · 数值采样图</small></div><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="函数图像，纵轴按当前区间内采样值自动缩放"><defs><clipPath id="zxGraphClip"><rect x="'+L+'" y="'+T+'" width="'+plotW+'" height="'+plotH+'"/></clipPath></defs>'+grid+'<path d="'+d+'" clip-path="url(#zxGraphClip)" fill="none" stroke="#91a0ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="function-graph-note">图像为数值采样结果；不连续点附近可能留白，不能单凭图像判定精确渐近线或定义域。</div>';
         }
         function zxAnalyzeFunctionCoefficients(kind,c) {
             if(Object.keys(c||{}).some(function(k){return !Number.isFinite(c[k]);}))return {ok:false,error:'系数必须是有效数字'};
@@ -3281,7 +3283,7 @@ function zxFnAdvance(f,xValue,rangeText){
             fitStructuredApi = ui;
             const fitSolver = makeSolver({
                 kind: 'fit', input: 'fitInput', out: 'fitOut', btn: 'fitBtn', clear: 'fitClearBtn', inserts: 'fitTypes',
-                enterRoot: 'fitStructured', after: function (raw) { if (fitTaskMode === 'expression' && raw) zxRenderFunctionGraph(raw); },
+                enterRoot: 'fitStructured', after: function (raw) { if (fitTaskMode === 'expression' && raw) zxRenderFunctionGraph(raw,ui.getGraphRange()); },
                 run: function (s) { return fitTaskMode==='expression' ? zxAnalyzeFunctionExpression(s,ui.getExpressionX(),ui.getExpressionRange()) : (fitInputMode==='coefficients' ? zxAnalyzeFunctionCoefficients(fitKind,ui.getCoeffs()) : zxFitFunction(s, fitKind)); }, getRaw: ui.getRaw, onClear: ui.clear,
                 setRawFromExample: ui.setExample,
                 emptyHint: '请输入函数表达式，或填写坐标 / 系数',
