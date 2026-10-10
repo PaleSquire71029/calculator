@@ -158,6 +158,16 @@
   .zx-mobile-mathpad-grid button{min-height:34px!important}
 }
 
+
+/* Unified input keypad order and solver integration */
+@media(max-width:768px){
+  .zx-mobile-mathpad-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .zx-mobile-mathpad-grid[data-pad-panel="numbers"] button[data-value="NEXT"]{font-size:12px}
+  .zx-mobile-mathpad-grid[data-pad-panel="numbers"] button[data-value="DONE"]{background:#8be5b9;border-color:#8be5b9;color:#101712;font-weight:700}
+  .view.solve-subview .solve-keypad-wrap{display:none!important}
+  .view.is-active input[data-math-field],.view.is-active input[data-custom-expression]{cursor:pointer}
+}
+
 </style>
 <style id="zx-redesigned-app">
 
@@ -2036,7 +2046,7 @@ function zxEvalArithmetic(src) {
             pad.id='zxMobileMathPad';pad.className='zx-mobile-mathpad';pad.setAttribute('aria-label','数学输入键盘');
             pad.innerHTML='<div class="zx-mobile-mathpad-head"><span id="zxMathPadLabel">数学输入</span><button type="button" data-value="DONE">收起</button></div>'+
                 '<div class="zx-mathpad-tabs"><button type="button" data-pad-tab="numbers" class="is-active">数字</button><button type="button" data-pad-tab="operators">运算</button><button type="button" data-pad-tab="symbols">数学符号</button></div>'+
-                '<div class="zx-mobile-mathpad-grid" data-pad-panel="numbers">'+[['7','7'],['8','8'],['9','9'],['DEL','⌫'],['4','4'],['5','5'],['6','6'],['CLEAR','清空'],['1','1'],['2','2'],['3','3'],['NEXT','下一项'],['0','0'],['.','.']].map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>'+
+                '<div class="zx-mobile-mathpad-grid" data-pad-panel="numbers">'+[['7','7'],['8','8'],['9','9'],['DEL','⌫'],['4','4'],['5','5'],['6','6'],['CLEAR','清空'],['1','1'],['2','2'],['3','3'],['NEXT','下一项'],['0','0'],['.','.'],['DONE','完成']].map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>'+
                 '<div class="zx-mobile-mathpad-grid" data-pad-panel="operators" hidden>'+[['+','+'],['-','−'],['*','×'],['/','÷'],['^','xⁿ'],['%','%'],['(', '('],[')',')'],[',',','],['=','=']].map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>'+
                 '<div class="zx-mobile-mathpad-grid" data-pad-panel="symbols" hidden>'+[['x','x'],['pi','π'],['<','<'],['>','>'],['≤','≤'],['≥','≥'],['NEXT','下一项'],['DONE','完成']].map(function(k){return '<button type="button" data-value="'+k[0]+'">'+k[1]+'</button>';}).join('')+'</div>';
             document.body.appendChild(pad);
@@ -2056,12 +2066,12 @@ function zxEvalArithmetic(src) {
             function hide(){pad.classList.remove('is-visible');document.body.classList.remove('zx-mathpad-open');}
             document.addEventListener('focusin',function(e){
                 const el=e.target;
-                if(!el.matches||!el.matches(selector)||el.closest('.solve-subview'))return;
+                if(!el.matches||!el.matches(selector))return;
                 if(mobile.matches){e.preventDefault();show(el);}
             });
             document.addEventListener('click',function(e){
                 const el=e.target.closest&&e.target.closest(selector);
-                if(el&&mobile.matches&&!el.closest('.solve-subview')){active=el;show(el);return;}
+                if(el&&mobile.matches){active=el;show(el);return;}
                 const tab=e.target.closest&&e.target.closest('#zxMobileMathPad [data-pad-tab]');
                 if(tab){const name=tab.getAttribute('data-pad-tab');pad.querySelectorAll('[data-pad-tab]').forEach(function(b){b.classList.toggle('is-active',b===tab);});pad.querySelectorAll('[data-pad-panel]').forEach(function(panel){panel.hidden=panel.getAttribute('data-pad-panel')!==name;});return;}
                 const key=e.target.closest&&e.target.closest('#zxMobileMathPad [data-value]');
