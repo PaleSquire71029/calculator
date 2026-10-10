@@ -39,16 +39,76 @@
 @media(max-width:980px){.layout{grid-template-columns:220px minmax(0,1fr);gap:17px}.chapter-list{grid-template-columns:repeat(2,minmax(0,1fr))}.brand{min-width:170px}}
 @media(max-width:700px){.sidebar-backdrop.open{display:block;position:fixed;inset:58px 0 0;z-index:29;background:#02060bd1;backdrop-filter:none}.topbar{gap:10px;padding:10px 12px}.brand{min-width:0;gap:8px}.brand small{display:none}.brand b{font-size:13px}.logo{width:35px;height:35px}.keyhint,.top-actions .desktop{display:none}.searchbox input{height:42px;font-size:13px;padding-left:39px}.searchbox svg{left:12px;width:17px}.mobile-menu{display:inline-flex}.layout{display:block;padding:14px 12px}.sidebar{display:none;position:fixed;z-index:30;left:10px;top:64px;bottom:10px;width:min(290px,85vw);max-height:none;box-shadow:0 22px 80px #000a}.sidebar.open{display:block}.hero{border-radius:18px;padding:23px 19px}.hero:after{font-size:150px;right:-10px;top:-25px}.hero h1{font-size:30px}.hero p{font-size:13px}.filters{margin-top:14px}.filters select{flex:1;min-width:130px}.filters input{width:100%}.section-title{align-items:start;flex-direction:column}.chapter-list{grid-template-columns:1fr}.knowledge h2{font-size:17px}.khead{padding:15px 15px 8px}.kbody{padding:0 15px 15px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+
+/* Final responsive polish */
+.brand b,.hero h1,.section-title h2,.reader-content .khead h2{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong",serif}
+.logo{width:42px;height:42px;flex:0 0 42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#b7eee2,#5ca99f);color:#10222b;box-shadow:0 7px 20px #6dc7b433}
+.logo svg{width:31px;height:31px}
+.hero{padding:19px 24px;border-radius:16px;box-shadow:none}
+.hero:after{font-size:150px;top:-43px}
+.hero h1{font-size:clamp(23px,3vw,31px);margin:5px 0 7px}
+.hero p{font-size:13px;line-height:1.65}
+.stats{margin-top:12px;gap:7px}.stat{padding:5px 9px;font-size:11px}
+.layout{gap:20px;padding-top:20px}
+.sidebar-collapsed{grid-template-columns:minmax(0,1fr)}.sidebar-collapsed .sidebar{display:none}
+.side-chapters{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.side-chapters-title{display:flex;align-items:center;gap:8px;padding:4px 10px 10px;color:var(--accent);font-size:12px;font-weight:800}
+#sidebarChapterList{display:flex;flex-direction:column;gap:7px}
+#sidebarChapterList .chapter{padding:9px 10px;border-radius:10px;background:#111d2a}
+#sidebarChapterList .chapter-head{display:flex;align-items:center;gap:8px}
+#sidebarChapterList .chapter-icon svg{width:18px;height:18px;display:block}
+#sidebarChapterList .chapter strong{font-size:12px;line-height:1.4}
+#sidebarChapterList .chapter small{font-size:10px}
+#sidebarChapterList .chapter-topics{margin-top:5px}
+#sidebarChapterList .chapter-topic{border-top:1px solid #26364a;padding:6px 0}
+#sidebarChapterList .chapter-topic summary{font-size:11px;line-height:1.5;cursor:pointer;overflow-wrap:anywhere}
+#sidebarChapterList .chapter-topic summary span{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:7px}
+#sidebarChapterList .chapter-topic p{font-size:11px;line-height:1.55;color:var(--muted);margin:5px 0}
+#sidebarChapterList .chapter-topic button{font-size:11px;padding:4px 0}
+.knowledge-row{padding:9px 3px;gap:9px}
+.knowledge-row h2{font-size:14px;line-height:1.4;margin:0 0 3px}
+.knowledge-row p{-webkit-line-clamp:1;font-size:11px;line-height:1.5}
+.knowledge-row .tags{margin:0 0 3px;gap:4px}
+.knowledge-row .tag{font-size:9px;padding:1px 6px}
+.open-page{padding:6px 9px;font-size:11px;border-radius:8px}
+.resultline{margin:9px 2px}
+.reader-page{max-width:920px;margin:0 auto;width:100%}
+.reader-content{border:0;border-radius:0;background:transparent;box-shadow:none;padding:8px 0 28px}
+.reader-content .khead{padding:0 0 18px;border-bottom:1px solid var(--line)}
+.reader-content .khead h2{font-size:clamp(27px,4vw,39px);letter-spacing:-.025em;margin:10px 0}
+.reader-content .summary{font-size:15px;line-height:1.85;color:#bdcddd}
+.reader-content .kbody{padding:0}
+.reader-content .sectionlabel{font-size:12px;margin-top:25px}
+.reader-content .formula{font-size:15px;padding:16px;border-radius:10px}
+.reader-content .kbody p,.reader-content .kbody ul,.reader-content .example{font-size:15px;line-height:1.95}
+.reader-content .example{padding:10px 14px}
+.shell.reading .hero,.shell.reading .filters,.shell.reading .resultline,.shell.reading #cards,.shell.reading .footer{display:none!important}
+.shell.reading .layout{display:block;max-width:1000px;padding-top:8px}
+.shell.reading .sidebar,.shell.reading .sidebar-backdrop{display:none!important}
+.shell.reading .topbar{position:relative;padding-block:10px;gap:10px}
+.shell.reading .searchbox,.shell.reading .top-actions{display:none}
+.shell.reading .brand{min-width:0}
+.shell.reading .reader-page{display:block!important}
+@media(max-width:900px){.brand{min-width:0}.brand small{display:none}.topbar{gap:9px}.layout{padding:14px 15px}.sidebar{top:8px;max-height:calc(100dvh - 16px)}}
+@media(max-width:700px){
+.topbar{padding:9px 11px;gap:8px}.brand{gap:7px}.logo{width:35px;height:35px;flex-basis:35px}.logo svg{width:27px;height:27px}.brand b{font-size:14px}.brand small{display:none}
+.searchbox input{height:42px;padding-left:36px;padding-right:9px;border-radius:11px;font-size:13px}.searchbox svg{left:10px;width:16px;height:16px}.keyhint{display:none}.top-actions{gap:4px}.top-actions .btn{padding:7px 8px;font-size:11px}.top-actions .desktop{display:none}
+.layout{display:block;padding:13px 13px 24px}.hero{padding:17px;border-radius:14px}.hero h1{font-size:25px}.hero p{font-size:12px}.stats .stat{font-size:10px}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:12px 0}.filters select{width:100%;min-width:0;padding:8px;font-size:12px}.filters select:first-child{grid-column:span 2}
+.knowledge-row{grid-template-columns:minmax(0,1fr) auto;padding:10px 0;gap:6px}.knowledge-row h2{font-size:13px}.knowledge-row p{font-size:11px}.open-page{font-size:10px;padding:6px 7px;max-width:76px;white-space:normal}
+.reader-content .khead h2{font-size:27px}.reader-content .summary{font-size:14px}.reader-content .formula{font-size:13px;padding:12px;line-height:1.8}.reader-content .kbody p,.reader-content .kbody ul,.reader-content .example{font-size:14px;line-height:1.85}
+.shell.reading .topbar{padding:9px 11px}.shell.reading .brand b{font-size:14px}
+}
 </style>
 </head>
 <body><div class="shell">
 <header class="topbar">
 <button class="btn mobile-menu" id="menuToggle" aria-label="打开目录" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-<a class="brand" href="./knowledge.html" aria-label="知行知识库首页"><span class="logo">知</span><span><b>知行知识库</b><small>KNOWLEDGE · LEARN WITH REASON</small></span></a>
+<a class="brand" href="./knowledge.html" aria-label="知行知识库首页"><span class="logo" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M6 11c7-3 13-2 18 2v27c-5-4-11-5-18-2z" fill="#e9fff8"/><path d="M42 11c-7-3-13-2-18 2v27c5-4 11-5 18-2z" fill="#bfece1"/><path d="M24 13v27M11 17c3-.5 6 0 9 2M11 23c3-.5 6 0 9 2M37 17c-3-.5-6 0-9 2M37 23c-3-.5-6 0-9 2" stroke="#315e5b" stroke-width="1.4"/></svg></span><span><b>知行知识库</b><small>KNOWLEDGE · LEARN WITH REASON</small></span></a>
 <div class="searchbox"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="search" type="search" autocomplete="off" placeholder="搜索知识点、公式、元素、方程式……" aria-label="搜索知识库"><span class="keyhint">/</span></div>
 <div class="top-actions"><a class="btn desktop" href="./index.html">返回计算器 ↗</a><button class="btn" id="clearSearch" title="清空搜索">清空</button></div>
 </header>
-<div class="layout" id="pageLayout">
+<div class="layout sidebar-collapsed" id="pageLayout">
 <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 <aside class="sidebar" id="sidebar"><div class="side-head"><span>知识导航 / INDEX</span><button class="side-close" id="sidebarClose" type="button" aria-label="关闭目录" title="关闭目录"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
 <button class="navbtn active" data-subject="全部"><span class="navicon" data-icon="home"></span>全部知识</button>
@@ -57,7 +117,7 @@
 <button class="navbtn" data-subject="化学"><span class="navicon" data-icon="chem"></span>化学知识</button>
 <div class="navsub"><button class="navbtn" data-chapter="初中化学">初中化学</button><button class="navbtn" data-chapter="物质与反应">物质与反应</button><button class="navbtn" data-chapter="反应原理">反应原理</button><button class="navbtn" data-chapter="有机与结构">有机与结构</button><button class="navbtn" data-chapter="实验与计算">实验与计算</button></div>
 <button class="navbtn" data-chapter="化学方程式"><span class="navicon" data-icon="reaction"></span>方程式速查</button>
-<button class="navbtn" data-chapter="教材章节"><span class="navicon" data-icon="book"></span>教材章节目录</button>
+<div class="side-chapters"><div class="side-chapters-title"><span class="navicon" data-icon="book"></span>教材章节检索</div><div class="chapter-list" id="sidebarChapterList"></div></div>
 <div class="side-note">学习建议：先看概念，再理解推导过程，最后做例题。遇到易错点时，尝试解释“为什么不能这样做”。</div>
 </aside>
 <main class="main">
@@ -65,7 +125,7 @@
 <div class="filters"><select id="subjectFilter" aria-label="学科"><option value="全部">全部学科</option><option value="数学">数学</option><option value="化学">化学</option></select><select id="chapterFilter" aria-label="知识分类"><option value="全部">全部分类</option></select><select id="levelFilter" aria-label="学段"><option value="全部">全部学段</option><option value="初中">初中</option><option value="高中">高中</option></select></div>
 <div class="resultline"><span id="resultCount">正在整理知识点…</span><span>点击目录筛选 · 搜索支持公式与化学式</span></div>
 <section class="knowledge-index" id="cards" aria-live="polite"></section><article class="reader-page hidden" id="reader" aria-live="polite"></article>
-<section id="chaptersSection"><div class="section-title"><div><h2>教材章节目录</h2><p>以常见教材主干内容组织，版本章节名可能略有差异。</p></div><span class="tag">快速定位</span></div><div class="chapter-list" id="chapterList"></div></section>
+
 <div class="footer">知行知识库 · 以理解为先，以严谨为准<br>内容用于学习复习；教材版本、考试要求与实验规范请以学校使用教材为准。</div>
 </main></div></div>
 <script>
@@ -298,10 +358,10 @@ const searchText=new Map(allK.map(k=>[k,[k.title,k.summary,k.formula,k.explain,k
 let currentResults=[],visibleLimit=60;
 function drawResults(){const visible=currentResults.slice(0,visibleLimit);$("cards").innerHTML=visible.length?visible.map((k,i)=>indexRow(k,i)).join(""):'<div class="empty">没有找到匹配的知识页面。<br>试试更短的关键词，或直接点击教材目录中的“检索本章知识”。</div>'+(currentResults.length>visibleLimit?'<div class="load-more-wrap"><button class="btn primary" id="loadMore" type="button">继续显示 '+Math.min(60,currentResults.length-visibleLimit)+' 个知识页面</button></div>':'');$("resultCount").textContent='找到 '+currentResults.length+' 个知识页面'+($("search").value.trim()?' · 搜索：'+$("search").value.trim():'')+' · 已显示 '+visible.length;$("countStat").textContent=allK.length}
 function render(){const q=$("search").value.trim().toLocaleLowerCase(),sub=$("subjectFilter").value,cat=$("chapterFilter").value,level=$("levelFilter").value;const terms=q.split(/[\s，,、;；]+/).filter(Boolean);currentResults=allK.filter(k=>(sub==="全部"||k.subject===sub)&&(cat==="全部"||k.chapter===cat)&&(level==="全部"||k.level===level)&&(!terms.length||terms.some(t=>searchText.get(k).includes(t))));visibleLimit=60;$("reader").classList.add("hidden");$("cards").classList.remove("hidden");drawResults()}
-function openKnowledge(index){const k=currentResults[index];if(!k)return;$("reader").innerHTML='<button class="btn reader-back" id="readerBack" type="button">← 返回知识目录</button>'+card(k);$("cards").classList.add("hidden");$("reader").classList.remove("hidden");$("readerBack").addEventListener("click",()=>{$("reader").classList.add("hidden");$("cards").classList.remove("hidden")});window.scrollTo({top:0,behavior:"smooth"})}
+function openKnowledge(index){const k=currentResults[index];if(!k)return;$("reader").innerHTML='<button class="btn reader-back" id="readerBack" type="button">← 返回知识目录</button>'+card(k);$("cards").classList.add("hidden");$("reader").classList.remove("hidden");document.querySelector(".shell").classList.add("reading");$("readerBack").addEventListener("click",()=>{document.querySelector(".shell").classList.remove("reading");$("reader").classList.add("hidden");$("cards").classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"})});window.scrollTo({top:0,behavior:"instant"})}
 function setSubject(s){$("subjectFilter").value=s;activeSubject=s;document.querySelectorAll("[data-subject]").forEach(b=>b.classList.toggle("active",b.dataset.subject===s));render()}
 function setChapter(c){if(c==="教材章节"){$("chaptersSection").scrollIntoView({behavior:"smooth"});return}if(c==="化学方程式"){$("chapterFilter").value="化学方程式";$("subjectFilter").value="化学";$("levelFilter").value="全部"}else if(c==="初中数学"||c==="初中化学"){$("chapterFilter").value=c;$("subjectFilter").value=c.endsWith("数学")?"数学":"化学";$("levelFilter").value="初中"}else if(["函数与代数","几何与向量","数列与概率"].includes(c)){$("chapterFilter").value="全部";$("subjectFilter").value="数学";$("levelFilter").value="全部";$("search").value=c==="函数与代数"?"函数":c==="几何与向量"?"向量":"数列"}else if(["物质与反应","反应原理","有机与结构","实验与计算"].includes(c)){$("chapterFilter").value="全部";$("subjectFilter").value="化学";$("levelFilter").value="全部";$("search").value=c==="物质与反应"?"物质":c==="反应原理"?"平衡":c==="有机与结构"?"有机":"实验"}else{$("chapterFilter").value=c;$("subjectFilter").value="全部"}render();document.querySelectorAll("[data-chapter]").forEach(b=>b.classList.toggle("active",b.dataset.chapter===c));if(innerWidth<701)closeSidebar()}
-function renderChapters(){$("chapterList").innerHTML=detailedChapters.map(book=>'<article class="chapter"><div class="chapter-head"><span class="chapter-icon">'+(book[0]==="数学"?iconSvg("math"):iconSvg("chem"))+'</span><div><strong>'+esc(book[0]+" · "+book[1])+'</strong><small>'+book[2].length+' 个章节主题</small></div></div><div class="chapter-topics">'+book[2].map((c,i)=>'<details class="chapter-topic"><summary><span>'+String(i+1).padStart(2,"0")+'</span>'+esc(c[0])+'</summary><p><b>本章范围：</b>'+esc(c[1])+'</p><p><b>重点与易错：</b>'+esc(c[2])+'</p><button type="button" data-chapter-query="'+esc(c[3])+'" data-chapter-title="'+esc(c[0])+'" data-chapter-subject="'+esc(book[0])+'">检索本章知识 ↗</button></details>').join("")+'</div></article>').join("");$("chapterList").querySelectorAll("[data-chapter-query]").forEach(b=>b.addEventListener("click",()=>{$("subjectFilter").value=b.dataset.chapterSubject;$("chapterFilter").value="全部";$("levelFilter").value="全部";$("search").value=b.dataset.chapterQuery+" "+b.dataset.chapterTitle;render();$("cards").scrollIntoView({behavior:"smooth",block:"start"});if(innerWidth<701)closeSidebar();}));}
+function renderChapters(){$("sidebarChapterList").innerHTML=detailedChapters.map(book=>'<article class="chapter"><div class="chapter-head"><span class="chapter-icon">'+(book[0]==="数学"?iconSvg("math"):iconSvg("chem"))+'</span><div><strong>'+esc(book[0]+" · "+book[1])+'</strong><small>'+book[2].length+' 个章节主题</small></div></div><div class="chapter-topics">'+book[2].map((c,i)=>'<details class="chapter-topic"><summary><span>'+String(i+1).padStart(2,"0")+'</span>'+esc(c[0])+'</summary><p><b>本章范围：</b>'+esc(c[1])+'</p><p><b>重点与易错：</b>'+esc(c[2])+'</p><button type="button" data-chapter-query="'+esc(c[3])+'" data-chapter-title="'+esc(c[0])+'" data-chapter-subject="'+esc(book[0])+'">检索本章知识 ↗</button></details>').join("")+'</div></article>').join("");$("sidebarChapterList").querySelectorAll("[data-chapter-query]").forEach(b=>b.addEventListener("click",()=>{$("subjectFilter").value=b.dataset.chapterSubject;$("chapterFilter").value="全部";$("levelFilter").value="全部";$("search").value=b.dataset.chapterQuery+" "+b.dataset.chapterTitle;render();$("cards").scrollIntoView({behavior:"smooth",block:"start"});if(innerWidth<701)closeSidebar();}));}
 document.querySelectorAll("[data-subject]").forEach(b=>b.addEventListener("click",()=>{setSubject(b.dataset.subject);if(innerWidth<701)closeSidebar()}));
 $("cards").addEventListener("click",e=>{const open=e.target.closest("[data-open-index]");if(open){openKnowledge(Number(open.dataset.openIndex));return}if(e.target.id==="loadMore"){visibleLimit+=60;drawResults()}});
 
