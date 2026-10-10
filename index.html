@@ -198,6 +198,14 @@
 .zx-chem-keyrow button{font-family:inherit}
 @media(max-width:600px){.zx-chem-symbols{grid-template-columns:repeat(5,minmax(0,1fr))}.zx-chem-tools .zx-btn{min-height:40px}}
 
+
+/* Prevent global display rules from overriding the keyboard's hidden tabs */
+#chemKeyboard[hidden],#chemElementPanel[hidden],#chemSymbolPanel[hidden]{display:none!important}
+.zx-chem-symbol-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+.zx-chem-symbol-grid button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px}
+.zx-chem-symbol-grid button small{font-size:10px;line-height:1.2;color:#aab3c2}
+@media(min-width:769px){.zx-chem-symbol-grid{grid-template-columns:repeat(8,minmax(0,1fr))}}
+
 </style>
 <style id="zx-redesigned-app">
 
@@ -980,27 +988,10 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                       <div class="zx-chem-tabs" role="tablist" aria-label="化学键盘分类"><button type="button" data-chemtab="elements" aria-selected="true">全部元素</button><button type="button" data-chemtab="symbols" aria-selected="false">方程式符号</button></div>
                       <div id="chemElementPanel"><div id="chemElementGrid" class="zx-chem-symbols"></div></div>
                       <div id="chemSymbolPanel" hidden>
-                      <div class="zx-chem-keyrow">
-                        <button type="button" data-chemkey="H">H</button><button type="button" data-chemkey="O">O</button><button type="button" data-chemkey="C">C</button><button type="button" data-chemkey="N">N</button><button type="button" data-chemkey="S">S</button><button type="button" data-chemkey="Cl">Cl</button><button type="button" data-chemkey="Na">Na</button><button type="button" data-chemkey="Fe">Fe</button>
-                      </div>
-                      <div class="zx-chem-keyrow">
-                        <button type="button" data-chemkey="K">K</button><button type="button" data-chemkey="Ca">Ca</button><button type="button" data-chemkey="Mg">Mg</button><button type="button" data-chemkey="Al">Al</button><button type="button" data-chemkey="Cu">Cu</button><button type="button" data-chemkey="Zn">Zn</button><button type="button" data-chemkey="Mn">Mn</button><button type="button" data-chemkey="Ag">Ag</button>
-                      </div>
-                      <div class="zx-chem-keyrow">
-                        <button type="button" data-chemkey="0">₀</button><button type="button" data-chemkey="1">₁</button><button type="button" data-chemkey="2">₂</button><button type="button" data-chemkey="3">₃</button><button type="button" data-chemkey="4">₄</button><button type="button" data-chemkey="5">₅</button><button type="button" data-chemkey="6">₆</button><button type="button" data-chemkey="7">₇</button><button type="button" data-chemkey="8">₈</button><button type="button" data-chemkey="9">₉</button>
-                      </div>
-                      <div class="zx-chem-keyrow">
-                        <button type="button" data-chemkey="(">(</button><button type="button" data-chemkey=")">)</button><button type="button" data-chemkey="+">＋</button><button type="button" data-chemkey=" -> ">→</button><button type="button" data-chemkey="⇌">⇌</button><button type="button" data-chemkey="·">·</button><button type="button" data-chemkey="^">电荷 ^</button><button type="button" data-chemkey="DEL">⌫</button>
-                      </div>
-                      <div class="zx-chem-keyrow">
-                        <button type="button" data-chemkey="e-">e⁻</button><button type="button" data-chemkey="H^+">H⁺</button><button type="button" data-chemkey="OH^-">OH⁻</button><button type="button" data-chemkey="(aq)">(aq)</button><button type="button" data-chemkey="(s)">(s)</button><button type="button" data-chemkey="(g)">(g)</button><button type="button" data-chemkey="(l)">(l)</button><button type="button" data-chemkey="CLEAR">清空</button>
-                      </div>
-                      <div class="zx-chem-keyrow">
-                        <button type="button" data-chemkey="(">(</button><button type="button" data-chemkey=")">)</button><button type="button" data-chemkey="+">＋</button><button type="button" data-chemkey=" -> ">→</button><button type="button" data-chemkey="⇌">⇌</button><button type="button" data-chemkey="·">·</button><button type="button" data-chemkey="^">^ 电荷</button><button type="button" data-chemkey="DEL">⌫</button>
-                      </div>
-                      <div class="zx-chem-keyrow">
-                        <button type="button" data-chemkey="^+">⁺</button><button type="button" data-chemkey="^-">⁻</button><button type="button" data-chemkey="^2+">²⁺</button><button type="button" data-chemkey="^2-">²⁻</button><button type="button" data-chemkey="e-">e⁻</button><button type="button" data-chemkey="(aq)">(aq)</button><button type="button" data-chemkey="(s)">(s)</button><button type="button" data-chemkey="CLEAR">清空</button>
-                      </div>
+                        <div class="zx-chem-symbols zx-chem-symbol-grid">
+                          <button type="button" data-chemkey="0">₀<small>下标</small></button><button type="button" data-chemkey="1">₁<small>下标</small></button><button type="button" data-chemkey="2">₂<small>下标</small></button><button type="button" data-chemkey="3">₃<small>下标</small></button><button type="button" data-chemkey="4">₄<small>下标</small></button><button type="button" data-chemkey="5">₅<small>下标</small></button><button type="button" data-chemkey="6">₆<small>下标</small></button><button type="button" data-chemkey="7">₇<small>下标</small></button><button type="button" data-chemkey="8">₈<small>下标</small></button><button type="button" data-chemkey="9">₉<small>下标</small></button>
+                          <button type="button" data-chemkey="(">(<small>括号</small></button><button type="button" data-chemkey=")">)<small>括号</small></button><button type="button" data-chemkey="+">＋<small>反应物</small></button><button type="button" data-chemkey=" -> ">→<small>反应箭头</small></button><button type="button" data-chemkey="⇌">⇌<small>可逆</small></button><button type="button" data-chemkey="·">·<small>结晶水</small></button><button type="button" data-chemkey="^">^<small>电荷标记</small></button><button type="button" data-chemkey="^+">⁺<small>正电荷</small></button><button type="button" data-chemkey="^-">⁻<small>负电荷</small></button><button type="button" data-chemkey="^2+">²⁺<small>二价正</small></button><button type="button" data-chemkey="^2-">²⁻<small>二价负</small></button><button type="button" data-chemkey="e-">e⁻<small>电子</small></button><button type="button" data-chemkey="H^+">H⁺<small>氢离子</small></button><button type="button" data-chemkey="OH^-">OH⁻<small>氢氧根</small></button><button type="button" data-chemkey="(aq)">(aq)<small>溶液</small></button><button type="button" data-chemkey="(s)">(s)<small>固体</small></button><button type="button" data-chemkey="(g)">(g)<small>气体</small></button><button type="button" data-chemkey="(l)">(l)<small>液体</small></button><button type="button" data-chemkey="DEL">⌫<small>删除</small></button><button type="button" data-chemkey="CLEAR">清空<small>输入框</small></button>
+                        </div>
                       </div>
                     </div>
                     <div class="zx-label mt-4">常见方程式</div>
