@@ -269,6 +269,38 @@ body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,
  .hero .stat{font-size:10px;padding:5px 8px}
 }
 
+
+/* Interaction and light-surface cleanup */
+.knowledge-row{cursor:pointer;background:#e9edf2!important;color:#26394e!important}
+.knowledge-row,.knowledge-row *{ -webkit-tap-highlight-color:transparent }
+.knowledge-row:active{box-shadow:inset 3px 3px 7px #cbd2dc,inset -3px -3px 7px #fff;transform:none}
+.navbtn,.side-close,.chapter,.chapter-topic,.side-note,.navsub{background:#e9edf2!important;color:#34495e!important;border-color:#d4dce6!important}
+.navbtn{box-shadow:var(--neo-soft)!important}
+.navbtn.active,.navbtn:active{box-shadow:var(--neo-in)!important;color:#176d66!important}
+.navsub{box-shadow:none!important}
+.side-note{box-shadow:var(--neo-soft)!important;border-radius:12px;padding:10px!important}
+#sidebarChapterList .chapter{background:#e9edf2!important;box-shadow:var(--neo-soft)!important}
+#sidebarChapterList .chapter-topic{background:transparent!important}
+#sidebarChapterList .chapter-topic summary,#sidebarChapterList .chapter-topic p{color:#52677d!important}
+#sidebarChapterList .chapter-topic button{color:#176d66!important;background:transparent!important}
+.sidebar-backdrop.open{z-index:29}
+.sidebar.open{z-index:30}
+.shell.reading .mobile-menu{display:inline-flex!important;visibility:visible!important;pointer-events:auto!important}
+.shell.reading .sidebar-backdrop.open{display:block!important;position:fixed;inset:0;z-index:29;background:#d9e0e9c9!important}
+.shell.reading .sidebar.open{display:block!important;position:fixed;z-index:30;left:10px;top:10px;bottom:10px;width:min(310px,86vw);max-height:none;overflow-y:auto;background:#e9edf2!important}
+.shell.reading .sidebar .navbtn,.shell.reading .sidebar .chapter,.shell.reading .sidebar .side-note{background:#e9edf2!important;color:#34495e!important}
+.shell.reading .topbar{z-index:40}
+.shell.reading .layout{overflow:visible}
+.shell.reading .reader-page{overflow:visible;touch-action:pan-y}
+.shell.reading .reader-content{overflow:visible;touch-action:pan-y}
+html,body{min-height:100%;overflow-x:hidden}
+@media(max-width:700px){
+ .knowledge-row{touch-action:manipulation}
+ .shell.reading .topbar{z-index:40}
+ .shell.reading .sidebar-backdrop.open{inset:0}
+ .shell.reading .sidebar.open{top:8px;bottom:8px}
+}
+
 </style>
 </head>
 <body><div class="shell">
@@ -528,12 +560,12 @@ const searchText=new Map(allK.map(k=>[k,[k.title,k.summary,k.formula,k.explain,k
 let currentResults=[],visibleLimit=60;
 function drawResults(){const visible=currentResults.slice(0,visibleLimit);$("cards").innerHTML=visible.length?visible.map((k,i)=>indexRow(k,i)).join(""):'<div class="empty">没有找到匹配的知识页面。<br>试试更短的关键词，或直接点击教材目录中的“检索本章知识”。</div>'+(currentResults.length>visibleLimit?'<div class="load-more-wrap"><button class="btn primary" id="loadMore" type="button">继续显示 '+Math.min(60,currentResults.length-visibleLimit)+' 个知识页面</button></div>':'');$("resultCount").textContent='找到 '+currentResults.length+' 个知识页面'+($("search").value.trim()?' · 搜索：'+$("search").value.trim():'')+' · 已显示 '+visible.length;$("countStat").textContent=allK.length}
 function render(){const q=$("search").value.trim().toLocaleLowerCase(),sub=$("subjectFilter").value,cat=$("chapterFilter").value,level=$("levelFilter").value;const terms=q.split(/[\s，,、;；]+/).filter(Boolean);currentResults=allK.filter(k=>(sub==="全部"||k.subject===sub)&&(cat==="全部"||k.chapter===cat)&&(level==="全部"||k.level===level)&&(!terms.length||terms.some(t=>searchText.get(k).includes(t))));visibleLimit=60;$("reader").classList.add("hidden");$("cards").classList.remove("hidden");drawResults()}
-function openKnowledge(index){const k=currentResults[index];if(!k)return;$("reader").innerHTML='<button class="btn reader-back" id="readerBack" type="button">← 返回知识目录</button>'+card(k);$("cards").classList.add("hidden");$("reader").classList.remove("hidden");document.querySelector(".shell").classList.add("reading");$("readerBack").addEventListener("click",()=>{document.querySelector(".shell").classList.remove("reading");$("reader").classList.add("hidden");$("cards").classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"})});window.scrollTo({top:0,behavior:"instant"})}
+function openKnowledge(index){const k=currentResults[index];if(!k)return;document.body.style.overflow="";closeSidebar();$("reader").innerHTML='<button class="btn reader-back" id="readerBack" type="button">← 返回知识目录</button>'+card(k);$("cards").classList.add("hidden");$("reader").classList.remove("hidden");document.querySelector(".shell").classList.add("reading");$("readerBack").addEventListener("click",()=>{document.querySelector(".shell").classList.remove("reading");$("reader").classList.add("hidden");$("cards").classList.remove("hidden");document.body.style.overflow="";window.scrollTo({top:0,behavior:"smooth"})});window.scrollTo({top:0,behavior:"instant"})}
 function setSubject(s){$("subjectFilter").value=s;activeSubject=s;document.querySelectorAll("[data-subject]").forEach(b=>b.classList.toggle("active",b.dataset.subject===s));render()}
 function setChapter(c){if(c==="教材章节"){$("chaptersSection").scrollIntoView({behavior:"smooth"});return}if(c==="化学方程式"){$("chapterFilter").value="化学方程式";$("subjectFilter").value="化学";$("levelFilter").value="全部"}else if(c==="初中数学"||c==="初中化学"){$("chapterFilter").value=c;$("subjectFilter").value=c.endsWith("数学")?"数学":"化学";$("levelFilter").value="初中"}else if(["函数与代数","几何与向量","数列与概率"].includes(c)){$("chapterFilter").value="全部";$("subjectFilter").value="数学";$("levelFilter").value="全部";$("search").value=c==="函数与代数"?"函数":c==="几何与向量"?"向量":"数列"}else if(["物质与反应","反应原理","有机与结构","实验与计算"].includes(c)){$("chapterFilter").value="全部";$("subjectFilter").value="化学";$("levelFilter").value="全部";$("search").value=c==="物质与反应"?"物质":c==="反应原理"?"平衡":c==="有机与结构"?"有机":"实验"}else{$("chapterFilter").value=c;$("subjectFilter").value="全部"}render();document.querySelectorAll("[data-chapter]").forEach(b=>b.classList.toggle("active",b.dataset.chapter===c));if(innerWidth<701)closeSidebar()}
 function renderChapters(){$("sidebarChapterList").innerHTML=detailedChapters.map(book=>'<article class="chapter"><div class="chapter-head"><span class="chapter-icon">'+(book[0]==="数学"?iconSvg("math"):iconSvg("chem"))+'</span><div><strong>'+esc(book[0]+" · "+book[1])+'</strong><small>'+book[2].length+' 个章节主题</small></div></div><div class="chapter-topics">'+book[2].map((c,i)=>'<details class="chapter-topic"><summary><span>'+String(i+1).padStart(2,"0")+'</span>'+esc(c[0])+'</summary><p><b>本章范围：</b>'+esc(c[1])+'</p><p><b>重点与易错：</b>'+esc(c[2])+'</p><button type="button" data-chapter-query="'+esc(c[3])+'" data-chapter-title="'+esc(c[0])+'" data-chapter-subject="'+esc(book[0])+'">检索本章知识 ↗</button></details>').join("")+'</div></article>').join("");$("sidebarChapterList").querySelectorAll("[data-chapter-query]").forEach(b=>b.addEventListener("click",()=>{$("subjectFilter").value=b.dataset.chapterSubject;$("chapterFilter").value="全部";$("levelFilter").value="全部";$("search").value=b.dataset.chapterQuery+" "+b.dataset.chapterTitle;render();$("cards").scrollIntoView({behavior:"smooth",block:"start"});if(innerWidth<701)closeSidebar();}));}
 document.querySelectorAll("[data-subject]").forEach(b=>b.addEventListener("click",()=>{setSubject(b.dataset.subject);if(innerWidth<701)closeSidebar()}));
-$("cards").addEventListener("click",e=>{const open=e.target.closest("[data-open-index]");if(open){openKnowledge(Number(open.dataset.openIndex));return}if(e.target.id==="loadMore"){visibleLimit+=60;drawResults()}});
+$("cards").addEventListener("click",e=>{const row=e.target.closest(".knowledge-row");const open=e.target.closest("[data-open-index]");if(row){const btn=open||row.querySelector("[data-open-index]");if(btn){openKnowledge(Number(btn.dataset.openIndex));return}}if(e.target.id==="loadMore"){visibleLimit+=60;drawResults()}});
 
 document.querySelectorAll("[data-chapter]").forEach(b=>b.addEventListener("click",()=>setChapter(b.dataset.chapter)));
 let searchTimer;["search","subjectFilter","chapterFilter","levelFilter"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",()=>{if(id==="search"){clearTimeout(searchTimer);searchTimer=setTimeout(render,100)}else render()}));
