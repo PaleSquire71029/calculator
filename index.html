@@ -2168,10 +2168,13 @@ function zxEvalArithmetic(src) {
             // 将化学键盘常用的 Unicode 下标/上标统一成标准数字与电荷格式。
             const subMap={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'};
             const supMap={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9'};
-            let formula=original.replace(/[₀-₉]/g,ch=>subMap[ch]).replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g,ch=>supMap[ch]).replace(/[［【\[]/g,'(').replace(/[］】\]]/g,')').replace(/[·⋅]/g,'.').replace(/−/g,'-');
-            // H⁺、OH⁻、SO₄²⁻ 和 ^2- 写法都可识别。
-            formula=formula.replace(/([+-])$/,'^$1');
-            formula=formula.replace(/(\d+)([+-])$/,'^$1$2');
+            let formula=original;
+            // 先识别 Unicode 上标电荷，避免把 SO₄²⁻ 错读成 SO42-。
+            formula=formula.replace(/([⁰¹²³⁴⁵⁶⁷⁸⁹]*)([⁺⁻])$/,(_,digits,sign)=>'^'+(digits?Array.from(digits).map(ch=>supMap[ch]).join(''):'')+(sign==='⁻'?'-':'+'));
+            formula=formula.replace(/[₀-₉]/g,ch=>subMap[ch]).replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g,ch=>supMap[ch]).replace(/[［【\[]/g,'(').replace(/[］】\]]/g,')').replace(/[·⋅]/g,'.').replace(/−/g,'-');
+            // 普通字符形式的 H+、OH-、SO4^2- 也可识别。
+            if(!/\^[0-9]*[+-]$/.test(formula))formula=formula.replace(/([+-])$/,'^$1');
+            formula=formula.replace(/(?<!\^)(\d+)([+-])$/,'^$1$2');
             let charge=0n;
             const cm=formula.match(/\^(?:(\d+))?([+-])$/);if(cm){charge=BigInt(cm[1]||'1')*(cm[2]==='-'?-1n:1n);formula=formula.slice(0,cm.index);}
             if(!formula)throw Error('化学式不能为空');
