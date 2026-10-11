@@ -665,6 +665,18 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
 
 
 /* 化学反应候选：移动端采用纵向卡片，避免双列挤压造成文字逐字换行 */
+/* 修正候选结果容器：外层原本继承通用双列结果行，导致标题被挤成窄列 */
+#chemProductSuggestNote{display:block!important;min-width:0;width:100%;box-sizing:border-box;overflow-wrap:anywhere}
+#chemProductSuggestNote>span:first-child{display:block;margin:0 0 8px;color:#d8c18b;font-size:14px;font-weight:700;line-height:1.5}
+#chemProductSuggestNote>span:nth-child(2){display:block;min-width:0;width:100%;font-size:14px;line-height:1.65;overflow-wrap:anywhere}
+#chemProductSuggestNote .zx-chem-candidate-list{width:100%;min-width:0}
+#chemProductSuggestNote .zx-chem-candidate{width:100%;min-width:0;box-sizing:border-box}
+@media(max-width:768px){
+ #chemProductSuggestNote{padding:14px!important}
+ #chemProductSuggestNote>span:nth-child(2){font-size:14px;line-height:1.7}
+ #chemProductSuggestNote .zx-chem-candidate{padding:12px}
+}
+
 .zx-chem-candidate-list{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:12px}
 .zx-chem-candidate{display:flex;flex-direction:column;align-items:stretch;gap:10px;min-width:0;padding:14px;border:1px solid #303946;border-radius:13px;background:linear-gradient(145deg,rgba(26,34,45,.96),rgba(16,19,24,.98))}
 .zx-chem-candidate-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
