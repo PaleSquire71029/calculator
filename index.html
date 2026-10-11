@@ -2229,7 +2229,10 @@ function zxEvalArithmetic(src) {
                     free.forEach(fc=>{sum=add(sum,mul(a[rr][fc],v[fc]));});
                     v[pivotCols[rr]]=frac(-sum.n,sum.d);
                   }
-                  consider(v);return;
+                  // 所有主变量必须为正；候选解统一转成最简正整数比并做原矩阵回代验证。
+                  if(v.some(x=>x.n<=0n))return;
+                  const candidate=v.slice();
+                  consider(candidate);return;
                 }
                 for(let x=1;x<=limit;x++){values[k]=BigInt(x);search(k+1);}
               }
@@ -2261,6 +2264,9 @@ function zxEvalArithmetic(src) {
             const coeff=solveInteger(matrix,forms.length);
             const verify=matrix.every(row=>row.reduce((sum,v,i)=>sum+v*coeff[i],0n)===0n);
             if(!verify)throw Error('内部守恒校验未通过，请检查输入。');
+            if(coeff.some(v=>v<=0n))throw Error('配平结果出现非正系数，已阻止输出；请检查方程式。');
+            const divisor=coeff.reduce((g,v)=>gcd(g,v),0n)||1n;
+            if(coeff.some(v=>v%divisor!==0n))throw Error('系数约分校验未通过，请重试。');
             const pretty=f=>f.replace(/\.(\d+)/g,'·$1').replace(/([A-Za-z)])(\d+)/g,'$1<sub>$2</sub>').replace(/\^(\d*[+-])/g,'<sup>$1</sup>');
             const equation=left.map((f,i)=>(coeff[i]===1n?'':coeff[i].toString())+pretty(f)).join(' + ')+' → '+right.map((f,i)=>(coeff[left.length+i]===1n?'':coeff[left.length+i].toString())+pretty(f)).join(' + ');
             return {equation,coeff:coeff.map(String),elements};
