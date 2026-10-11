@@ -344,6 +344,53 @@ html,body{min-height:100%;overflow-x:hidden}
  .shell.reading .topbar{z-index:10000}
 }
 
+
+/* Hard override for the drawer and reader: prevent dark legacy surfaces */
+#sidebar.open,#sidebar.open *{
+ color:#34495e;
+}
+#sidebar.open,
+#sidebar.open .side-head,
+#sidebar.open .navbtn,
+#sidebar.open .navsub,
+#sidebar.open .chapter,
+#sidebar.open .chapter-head,
+#sidebar.open .chapter-topics,
+#sidebar.open .chapter-topic,
+#sidebar.open .side-note,
+#sidebar.open button,
+#sidebar.open summary{
+ background-color:#e9edf2!important;
+}
+#sidebar.open .navbtn,#sidebar.open .chapter,#sidebar.open .side-note{
+ border-color:#d4dce6!important;
+}
+#sidebar.open .chapter-topic[open],#sidebar.open details[open],
+#sidebar.open .chapter-topic[open] summary{background-color:#e9edf2!important}
+.reader-content,.reader-content .khead,.reader-content .kbody,
+.reader-content .sectionlabel,.reader-content .formula,
+.reader-content .example,.reader-content .tags,.reader-content li,
+.reader-content p,.reader-content div{
+ background-color:transparent;
+}
+.reader-content .formula{background-color:#e1e7ef!important;color:#234454!important}
+.reader-content .example{background-color:#dfe6ee!important;color:#34495e!important}
+.reader-content .example *{background-color:transparent!important;color:#34495e!important}
+.reader-content .kbody code,.reader-content code{background-color:#d6e0e9!important;color:#244d61!important}
+.reader-content .tags .tag{background-color:#d5e5e2!important;color:#245f59!important}
+@media(max-width:700px){
+ #sidebar.open,.shell.reading #sidebar.open{
+  display:flex!important;flex-direction:column!important;
+  overflow-y:scroll!important;overscroll-behavior-y:contain!important;
+  height:calc(100dvh - 20px)!important;max-height:calc(100dvh - 20px)!important;
+  padding-bottom:30px!important;
+ }
+ #sidebar.open .side-head{flex:0 0 auto}
+ #sidebar.open #sidebarChapterList{flex:0 0 auto;min-height:min-content}
+ #sidebar.open .side-nav,#sidebar.open .side-content{flex:0 0 auto}
+ #sidebar.open *{overscroll-behavior:contain}
+}
+
 </style>
 </head>
 <body><div class="shell">
@@ -614,6 +661,7 @@ document.querySelectorAll("[data-chapter]").forEach(b=>b.addEventListener("click
 let searchTimer;["search","subjectFilter","chapterFilter","levelFilter"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",()=>{if(id==="search"){clearTimeout(searchTimer);searchTimer=setTimeout(render,100)}else render()}));
 $("clearSearch").addEventListener("click",()=>{$("search").value="";render();$("search").focus()});
 $("menuToggle").addEventListener("click",toggleSidebar);$("sidebarClose").addEventListener("click",closeSidebar);$("sidebarBackdrop").addEventListener("click",closeSidebar);
+$("sidebar").addEventListener("touchstart",e=>{if($("sidebar").classList.contains("open"))e.stopPropagation()},{passive:true});$("sidebar").addEventListener("touchmove",e=>{if($("sidebar").classList.contains("open"))e.stopPropagation()},{passive:true});
 document.addEventListener("keydown",e=>{if(e.key==="/"&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();$("search").focus()}if(e.key==="Escape")closeSidebar()});window.addEventListener("resize",()=>{if(innerWidth>700){$("sidebarBackdrop").classList.remove("open");$("sidebar").classList.remove("open");document.body.style.overflow=""}else $("pageLayout").classList.remove("sidebar-collapsed")});
 fillChapterFilter();renderChapters();render();
 </script>
