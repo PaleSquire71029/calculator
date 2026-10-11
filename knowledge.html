@@ -418,6 +418,28 @@ html,body{min-height:100%;overflow-x:hidden}
  }
 }
 
+
+/* Pin the knowledge search header to the viewport; let the drawer title scroll naturally */
+@media(max-width:700px){
+ .topbar{
+   position:fixed!important;top:0!important;left:0!important;right:0!important;
+   width:100%!important;box-sizing:border-box!important;
+   z-index:10000!important;
+ }
+ .shell{padding-top:72px!important}
+ .shell.reading{padding-top:72px!important}
+ #sidebar.open .side-head,
+ .shell.reading #sidebar.open .side-head{
+   position:static!important;top:auto!important;
+   margin:0!important;padding:8px 0 12px!important;
+   z-index:auto!important;
+   background:transparent!important;
+ }
+}
+@media(min-width:701px){
+ .topbar{position:sticky!important;top:0!important}
+}
+
 </style>
 </head>
 <body><div class="shell">
