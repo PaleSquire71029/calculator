@@ -2642,8 +2642,8 @@ function zxEvalArithmetic(src) {
                     preview.textContent=kind==='equation'?'自定义方程：左侧 = 右侧':'自定义不等式：表达式与不等号';
                 }else{
                     box.innerHTML=fields().map(function(f){return structuredField(f[0],f[1],f[2]);}).join('');
-                    preview.textContent=degree==='linear'?'ax + b = 0':degree==='quadratic'?'ax² + bx + c = 0':degree==='vertex'?'a(x − h)² + k = 0':degree==='inverse'?'k / x = 0':'ax³ + bx² + cx + d = 0';
-                    if(kind==='inequality')preview.textContent=preview.textContent.replace('= 0',relation+' 0');
+                    preview.textContent=degree==='linear'?'ax + b = 0':degree==='quadratic'?'ax² + bx + c = 0':degree==='vertex'?'a(x − h)² + k = 0':degree==='inverse'?(kind==='equation'?'函数形式：y = k / x':'函数形式：y = k / x（不等式请用自定义表达式）'):'ax³ + bx² + cx + d = 0';
+                    if(kind==='inequality'&&degree!=='inverse')preview.textContent=preview.textContent.replace('= 0',relation+' 0');
                 }
                 if(typeof initSolveKeypad==='function')initSolveKeypad();
             }
@@ -2656,7 +2656,7 @@ function zxEvalArithmetic(src) {
                 if(degree==='linear')return '('+v.a+')*x+('+v.b+')'+(kind==='equation'?'=0':relation+'0');
                 if(degree==='quadratic')return '('+v.a+')*x^2+('+v.b+')*x+('+v.c+')'+(kind==='equation'?'=0':relation+'0');
                 if(degree==='vertex')return '('+v.a+')*(x-('+v.h+'))^2+('+v.k+')'+(kind==='equation'?'=0':relation+'0');
-                if(degree==='inverse')return '('+v.k+')/x'+(kind==='equation'?'=0':relation+'0');
+                if(degree==='inverse')return 'y=('+v.k+')/x';
                 return '('+v.a+')*x^3+('+v.b+')*x^2+('+v.c+')*x+('+v.d+')'+(kind==='equation'?'=0':relation+'0');
             }
             function setExample(expr){
