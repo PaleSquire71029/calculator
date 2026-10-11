@@ -2199,11 +2199,19 @@ function zxEvalArithmetic(src) {
               [/^cuo\+h2$/,'CuO + H2 → Cu + H2O','氢气还原氧化铜（加热）'],
               [/^fe2o3\+co$/,'Fe2O3 + CO → Fe + CO2','一氧化碳还原氧化铁（加热）']
             ];
-            const hit=rules.find(([re])=>re.test(key));
+            const hits=rules.filter(([re])=>re.test(key));
+            // 同一组反应物可以对应不同产物；保留所有匹配项供用户选择，不擅自覆盖输入。
+            if(/^fe\\+o2$/.test(key)) hits.push([/^fe\\+o2$/,'Fe + O2 → Fe2O3','铁缓慢氧化/其他条件下的氧化产物（需核对条件）']);
+            if(/^c\\+o2$/.test(key)) hits.push([/^c\\+o2$/,'C + O2 → CO','碳在氧气不足时不完全燃烧']);
             note.hidden=false;
-            if(!hit){note.innerHTML='<span>暂未匹配</span><span>当前仅覆盖部分常见反应，无法可靠推断此反应的生成物。请补充反应条件或手动输入产物；不会猜测并自动覆盖内容。</span>';return;}
-            input.value=hit[1];note.innerHTML='<span>候选反应（'+hit[2]+'）</span><span>'+hit[1]+'　<button type="button" id="chemUseSuggested" class="zx-btn is-go">采用并配平</button><br>这是基于常见反应规则的建议，仍需核对反应条件。</span>';
-            document.getElementById('chemUseSuggested').addEventListener('click',render);
+            if(!hits.length){note.innerHTML='<span>暂未匹配</span><span>当前仅覆盖部分常见反应，无法可靠推断此反应的生成物。请补充反应条件或手动输入产物；不会猜测并自动覆盖内容。</span>';return;}
+            note.innerHTML='<span>生成物候选（'+hits.length+' 种）</span><span>请选择符合反应条件的一项；候选仅作提示，不代表所有条件下都成立。<div class="flex flex-col gap-2 mt-2">'+hits.map((hit,index)=>'<div class="zx-out-row"><span>'+String(index+1)+'. '+hit[2]+'</span><span><strong>'+hit[1]+'</strong> <button type="button" class="zx-btn is-go" data-chem-candidate="'+index+'">采用并配平</button></span></div>').join('')+'</div></span>';
+            note.querySelectorAll('[data-chem-candidate]').forEach(btn=>btn.addEventListener('click',()=>{
+              const chosen=hits[Number(btn.getAttribute('data-chem-candidate'))];
+              if(!chosen)return;
+              input.value=chosen[1].replace(/→/g,' -> ');
+              render();
+            }));
           });
           document.getElementById('chemBalanceBtn').addEventListener('click',render);
           document.querySelectorAll('[data-chem]').forEach(b=>b.addEventListener('click',()=>{input.value=b.getAttribute('data-chem');render();}));
