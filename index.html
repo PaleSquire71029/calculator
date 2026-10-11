@@ -2206,17 +2206,40 @@ function zxEvalArithmetic(src) {
             }
             const free=[];for(let c=0;c<n;c++)if(!pivotCols.includes(c))free.push(c);
             if(!free.length)throw Error('该方程没有非零配平解，请检查反应物和生成物。');
-            const bases=free.map(fc=>{const v=Array.from({length:n},zero);v[fc]=one();for(let rr=0;rr<pivotCols.length;rr++)v[pivotCols[rr]]=frac(-a[rr][fc].n,a[rr][fc].d);let den=1n;v.forEach(x=>den=lcm(den,x.d));let ints=v.map(x=>x.n*(den/x.d));let g=ints.reduce((x,y)=>gcd(x,y),0n)||1n;return ints.map(x=>x/g);});
             function norm(v){let g=v.reduce((x,y)=>gcd(x,y),0n)||1n;v=v.map(x=>x/g);if(v.every(x=>x<0n))v=v.map(x=>-x);return v;}
             let best=null,bestSum=null;
-            function consider(v){if(v.some(x=>x<=0n))return;v=norm(v);const sum=v.reduce((x,y)=>x+y,0n);if(bestSum===null||sum<bestSum){best=v;bestSum=sum;}}
-            if(bases.length===1)consider(bases[0]);
-            else {
-              const max=6,coeff=Array(bases.length).fill(0);
-              function combine(k){if(k===bases.length){if(coeff.every(x=>x===0))return;const v=Array(n).fill(0n);bases.forEach((base,i)=>base.forEach((x,j)=>v[j]+=x*BigInt(coeff[i])));consider(v);return;}for(let x=-max;x<=max;x++){coeff[k]=x;combine(k+1);}}
+            function consider(v){
+              if(v.some(x=>x.d!==1n))return;
+              let ints=v.map(x=>x.n);if(ints.some(x=>x<=0n))return;
+              ints=norm(ints);const sum=ints.reduce((x,y)=>x+y,0n);
+              if(bestSum===null||sum<bestSum){best=ints;bestSum=sum;}
+            }
+            // 在有界范围内枚举自由变量，再由行最简方程直接计算主变量；
+            // 比组合基向量更可靠，可避免自由变量相互抵消后漏掉常见最简整数解。
+            if(free.length<=4){
+              const values=Array(free.length).fill(1n),limit=24;
+              function search(k){
+                if(k===free.length){
+                  const v=Array.from({length:n},zero);
+                  free.forEach((fc,i)=>v[fc]=frac(values[i]));
+                  for(let rr=0;rr<pivotCols.length;rr++){
+                    let sum=zero();
+                    free.forEach(fc=>{sum=add(sum,mul(a[rr][fc],v[fc]));});
+                    v[pivotCols[rr]]=frac(-sum.n,sum.d);
+                  }
+                  consider(v);return;
+                }
+                for(let x=1;x<=limit;x++){values[k]=BigInt(x);search(k+1);}
+              }
+              search(0);
+            }else{
+              // 自由变量过多时限制组合量，避免手机端计算卡顿。
+              const bases=free.map(fc=>{const v=Array.from({length:n},zero);v[fc]=one();for(let rr=0;rr<pivotCols.length;rr++)v[pivotCols[rr]]=frac(-a[rr][fc].n,a[rr][fc].d);let den=1n;v.forEach(x=>den=lcm(den,x.d));let ints=v.map(x=>x.n*(den/x.d));let g=ints.reduce((x,y)=>gcd(x,y),0n)||1n;return ints.map(x=>x/g);});
+              const coeff=Array(bases.length).fill(0),max=6;
+              function combine(k){if(k===bases.length){if(coeff.every(x=>x===0))return;const v=Array(n).fill(0n);bases.forEach((base,i)=>base.forEach((x,j)=>v[j]+=x*BigInt(coeff[i])));if(v.every(x=>x>0n))consider(v.map(x=>frac(x)));return;}for(let x=-max;x<=max;x++){coeff[k]=x;combine(k+1);}}
               combine(0);
             }
-            if(!best)throw Error('方程组没有找到所有物质系数均为正的解。请确认反应式及产物是否正确。');
+            if(!best)throw Error('在当前搜索范围内没有找到正整数配平解。请检查化学式，或尝试补充/核对产物。');
             return best;
           }
           function balance(raw){
