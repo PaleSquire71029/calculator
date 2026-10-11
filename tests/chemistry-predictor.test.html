@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>化学反应预测回归测试</title>
 <style>body{font:16px system-ui,sans-serif;max-width:900px;margin:24px auto;padding:0 16px;background:#111827;color:#e5e7eb}h1{font-size:1.5rem}li{padding:10px;margin:6px 0;border-radius:8px;background:#1f2937}.pass{color:#86efac}.fail{color:#fca5a5}small{color:#9ca3af}</style></head><body>
-<h1>化学反应预测引擎 · 回归测试</h1><p>此页检查规则匹配、反应物顺序无关、多候选和未知反应安全提示。</p><div id="summary">测试中…</div><ol id="results"></ol>
+<h1>化学反应预测引擎 · 扩展回归测试</h1><p>覆盖基础反应、条件分支、沉淀、氧化还原、下标兼容及未知反应的安全提示。</p><div id="summary">测试中…</div><p id="rules"></p><ol id="results"></ol>
 <script src="../js/chemistry-predictor.js"></script><script>
 (function(){
  const P=window.ZXChemistryPredictor, cases=[
@@ -12,7 +12,15 @@
   {name:'化学式下标兼容',input:'NaHCO₃ + HCl',count:1,includes:'NaCl'},
   {name:'已有箭头时拒绝预测',input:'H2 + O2 -> H2O',ok:false},
   {name:'未知反应不胡乱生成产物',input:'Au + H2O',ok:false},
-  {name:'碳酸钙受热分解',input:'CaCO3',count:1,includes:'CaO'}
+  {name:'碳酸钙受热分解',input:'CaCO3',count:1,includes:'CaO'},
+  {name:'氯气与冷碱反应',input:'Cl2 + NaOH',count:2,includes:'NaClO'},
+  {name:'钙盐与二氧化碳反应',input:'CO2 + Ca(OH)2',count:2,includes:'CaCO3'},
+  {name:'硝酸铜热分解',input:'Cu(NO3)2',count:1,includes:'NO2'},
+  {name:'卤素置换碘',input:'KI + Cl2',count:1,includes:'I2'},
+  {name:'氨气催化氧化多路径',input:'NH3 + O2',count:2,includes:'NO'},
+  {name:'硫化物与酸反应',input:'FeS + HCl',count:1,includes:'H2S'},
+  {name:'水电解',input:'H2O',count:1,includes:'O2'},
+  {name:'空输入提示',input:'',ok:false}
  ];
  let pass=0; const ol=document.getElementById('results');
  cases.forEach(t=>{
@@ -23,9 +31,12 @@
    detail=r.candidates.length?'候选：'+r.candidates.map(c=>c.equation).join('；'):r.message;
   }catch(e){detail='异常：'+e.message;}
   if(ok)pass++;
-  const li=document.createElement('li');li.innerHTML='<strong class="'+(ok?'pass':'fail')+'">'+(ok?'通过':'失败')+'：'+t.name+'</strong><br><small>'+detail+'</small>';ol.appendChild(li);
+  const li=document.createElement('li'),strong=document.createElement('strong'),small=document.createElement('small');
+  strong.className=ok?'pass':'fail';strong.textContent=(ok?'通过':'失败')+'：'+t.name;
+  small.textContent=detail;li.appendChild(strong);li.appendChild(document.createElement('br'));li.appendChild(small);ol.appendChild(li);
  });
  document.getElementById('summary').textContent='通过 '+pass+' / '+cases.length+' 项。';
  document.getElementById('summary').className=pass===cases.length?'pass':'fail';
+ document.getElementById('rules').textContent='当前内置规则条目：'+P.ruleCount+'（同一反应不同条件可能各算一条）。';
 })();
 </script></body></html>
