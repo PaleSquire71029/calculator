@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>化学反应预测回归测试</title>
 <style>body{font:16px system-ui,sans-serif;max-width:900px;margin:24px auto;padding:0 16px;background:#111827;color:#e5e7eb}h1{font-size:1.5rem}li{padding:10px;margin:6px 0;border-radius:8px;background:#1f2937}.pass{color:#86efac}.fail{color:#fca5a5}small{color:#9ca3af}</style></head><body>
 <h1>化学反应预测引擎 · 扩展回归测试</h1><p>覆盖基础反应、条件分支、沉淀、氧化还原、下标兼容及未知反应的安全提示。</p><div id="summary">测试中…</div><p id="rules"></p><ol id="results"></ol>
-<script src="../js/chemistry-predictor.js"></script><script>
+<script src="../js/chemistry-balancer.js"></script><script src="../js/chemistry-predictor.js"></script><script>
 (function(){
  const P=window.ZXChemistryPredictor, cases=[
   {name:'常见中和反应',input:'NaOH + HCl',count:1,includes:'NaCl'},
@@ -27,8 +27,8 @@
   let r,ok=false,detail='';
   try{
    r=P.predict(t.input);
-   ok=t.ok===false?!r.ok:(r.ok&&r.candidates.length===t.count&&r.candidates.some(c=>c.equation.includes(t.includes)));
-   detail=r.candidates.length?'候选：'+r.candidates.map(c=>c.equation).join('；'):r.message;
+   ok=t.ok===false?!r.ok:(r.ok&&r.candidates.length===t.count&&r.candidates.some(c=>c.equation.includes(t.includes)&&c.conservationVerified===true&&!!c.balancedEquation));
+   detail=r.candidates.length?'候选：'+r.candidates.map(c=>(c.balancedEquation||c.equation)+(c.conservationVerified===true?' ✓守恒校验':c.validationWarning?' ⚠'+c.validationWarning:'')).join('；'):r.message;
   }catch(e){detail='异常：'+e.message;}
   if(ok)pass++;
   const li=document.createElement('li'),strong=document.createElement('strong'),small=document.createElement('small');
