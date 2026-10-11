@@ -209,6 +209,51 @@ body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,
 }
 @media(prefers-reduced-motion:reduce){.knowledge-row,.btn{transition:none!important}}
 
+
+/* Contrast correction: keep neumorphism, make every reading element legible */
+:root{
+ --text:#23364a;
+ --muted:#5e7084;
+ --neo-out:6px 6px 13px #cbd2dc,-6px -6px 13px #ffffff;
+ --neo-in:inset 3px 3px 7px #cbd2dc,inset -3px -3px 7px #ffffff;
+}
+.reader-content,
+.reader-content *{text-shadow:none}
+.reader-content .summary{color:#43596f!important}
+.reader-content .kbody,
+.reader-content .kbody p,
+.reader-content .kbody li,
+.reader-content .kbody ul{color:#34495e!important}
+.reader-content .formula{color:#234454!important;background:#e4e9f0!important;box-shadow:inset 3px 3px 7px #cbd2dc,inset -3px -3px 7px #fff}
+.reader-content .example{
+ background:#e1e7ef!important;
+ color:#34495e!important;
+ box-shadow:4px 4px 9px #cbd2dc,-4px -4px 9px #fff!important;
+}
+.reader-content .example *,
+.reader-content .example p,
+.reader-content .example li,
+.reader-content .example span,
+.reader-content .example div{color:#34495e!important}
+.reader-content .example strong{color:#206c65!important}
+.reader-content .sectionlabel{color:#176d66!important;border-bottom-color:#aab8c7!important}
+.reader-content .khead h2{color:#20354a!important}
+.reader-content .khead .tag{color:#205f59!important;background:#d4e5e2!important}
+.reader-content .kbody code,.reader-content code{color:#244d61!important;background:#d6e0e9!important}
+.knowledge-row h2{color:#26394e!important}
+.knowledge-row p{color:#52677d!important}
+.knowledge-row .tag{color:#245f59!important;background:#d5e5e2!important}
+.open-page{color:#176c65!important}
+.side-chapters-title,#sidebarChapterList .chapter-topic summary span{color:#176d66!important}
+#sidebarChapterList .chapter strong{color:#2b4055!important}
+#sidebarChapterList .chapter-topic p{color:#52677d!important}
+@media(max-width:700px){
+ .reader-content .summary{color:#43596f!important}
+ .reader-content .kbody p,.reader-content .kbody li,.reader-content .kbody ul{color:#34495e!important}
+ .reader-content .example *{color:#34495e!important}
+ .reader-content .example strong{color:#206c65!important}
+}
+
 </style>
 </head>
 <body><div class="shell">
