@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>化学反应预测回归测试</title>
+<style>body{font:16px system-ui,sans-serif;max-width:900px;margin:24px auto;padding:0 16px;background:#111827;color:#e5e7eb}h1{font-size:1.5rem}li{padding:10px;margin:6px 0;border-radius:8px;background:#1f2937}.pass{color:#86efac}.fail{color:#fca5a5}small{color:#9ca3af}</style></head><body>
+<h1>化学反应预测引擎 · 回归测试</h1><p>此页检查规则匹配、反应物顺序无关、多候选和未知反应安全提示。</p><div id="summary">测试中…</div><ol id="results"></ol>
+<script src="../js/chemistry-predictor.js"></script><script>
+(function(){
+ const P=window.ZXChemistryPredictor, cases=[
+  {name:'常见中和反应',input:'NaOH + HCl',count:1,includes:'NaCl'},
+  {name:'反应物顺序不影响匹配',input:'HCl + Zn',count:1,includes:'ZnCl2'},
+  {name:'碳与氧气返回多个候选',input:'C + O2',count:2,includes:'CO2'},
+  {name:'铁与氧气返回条件候选',input:'O2 + Fe',count:2,includes:'Fe3O4'},
+  {name:'化学式下标兼容',input:'NaHCO₃ + HCl',count:1,includes:'NaCl'},
+  {name:'已有箭头时拒绝预测',input:'H2 + O2 -> H2O',ok:false},
+  {name:'未知反应不胡乱生成产物',input:'Au + H2O',ok:false},
+  {name:'碳酸钙受热分解',input:'CaCO3',count:1,includes:'CaO'}
+ ];
+ let pass=0; const ol=document.getElementById('results');
+ cases.forEach(t=>{
+  let r,ok=false,detail='';
+  try{
+   r=P.predict(t.input);
+   ok=t.ok===false?!r.ok:(r.ok&&r.candidates.length===t.count&&r.candidates.some(c=>c.equation.includes(t.includes)));
+   detail=r.candidates.length?'候选：'+r.candidates.map(c=>c.equation).join('；'):r.message;
+  }catch(e){detail='异常：'+e.message;}
+  if(ok)pass++;
+  const li=document.createElement('li');li.innerHTML='<strong class="'+(ok?'pass':'fail')+'">'+(ok?'通过':'失败')+'：'+t.name+'</strong><br><small>'+detail+'</small>';ol.appendChild(li);
+ });
+ document.getElementById('summary').textContent='通过 '+pass+' / '+cases.length+' 项。';
+ document.getElementById('summary').className=pass===cases.length?'pass':'fail';
+})();
+</script></body></html>
