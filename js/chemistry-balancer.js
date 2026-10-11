@@ -7,7 +7,7 @@ const F=(n,d=1n)=>{if(d===0n)throw Error('内部错误：分母为零');if(d<0n)
 const add=(a,b)=>F(a.n*b.d+b.n*a.d,a.d*b.d),sub=(a,b)=>F(a.n*b.d-b.n*a.d,a.d*b.d),mul=(a,b)=>F(a.n*b.n,a.d*b.d),div=(a,b)=>F(a.n*b.d,a.d*b.n);
 const zero=()=>F(0n),one=()=>F(1n);
 function parseFormula(raw){
- let s=raw.trim();if(!s)throw Error('化学式不能为空');
+ let s=raw.trim().replace(/[↑↓]/g,'');if(!s)throw Error('化学式不能为空');
  if(/^e[-−⁻]$/i.test(s))return {__charge:-1n};if(/^e[+＋⁺]$/i.test(s))return {__charge:1n};
  const sub={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'},sup={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9'};
  s=s.replace(/([⁰¹²³⁴⁵⁶⁷⁸⁹]*)([⁺⁻])$/,(_,d,z)=>'^'+Array.from(d).map(c=>sup[c]).join('')+(z==='⁻'?'-':'+'));
