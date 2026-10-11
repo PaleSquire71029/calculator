@@ -1,0 +1,17 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>化学配平回归测试</title><style>body{font:16px system-ui;max-width:900px;margin:24px auto;padding:0 14px;background:#111318;color:#eee}li{padding:9px;border-bottom:1px solid #333}.ok{color:#7bd88f}.fail{color:#ff8181}</style><h1>化学方程式配平回归测试</h1><p>本页直接调用与主页面相同的配平核心。请在浏览器打开后确认测试结果。</p><ol id="results"></ol><script src="../js/chemistry-balancer.js"></script><script>
+const cases=[
+['铁燃烧','Fe + O2 → Fe2O3','4 : 3 : 2'],
+['铝与盐酸','Al + HCl → AlCl3 + H2','2 : 6 : 2 : 3'],
+['高锰酸钾受热分解','KMnO4 → K2MnO4 + MnO2 + O2','2 : 1 : 1 : 1'],
+['氢氧化钠与盐酸离子式','H⁺ + OH⁻ → H2O','1 : 1 : 1'],
+['硫酸根与钡离子','SO₄²⁻ + Ba²⁺ → BaSO4','1 : 1 : 1'],
+['钙与水','Ca + H2O → Ca(OH)2 + H2','1 : 2 : 1 : 1'],
+['括号','Fe(OH)3 + H2SO4 → Fe2(SO4)3 + H2O','2 : 3 : 1 : 6'],
+['结晶水','CuSO4·5H2O → CuSO4 + H2O','1 : 1 : 5'],
+['电荷不守恒应拒绝','Fe³⁺ → Fe²⁺','1 : 1','error'],
+['括号错误应拒绝','Ca(OH2 → CaO','1 : 1','error']
+];
+const root=document.getElementById('results');let passed=0;
+for(const [name,input,expected,mode] of cases){const li=document.createElement('li');try{const r=ZXChemistryBalancer.balance(input),actual=r.coeff.join(' : ');if(mode==='error')throw Error('该无效式未被拒绝');if(actual!==expected)throw Error('系数 '+actual+'，预期 '+expected);li.className='ok';li.textContent='通过：'+name+' — '+actual;passed++;}catch(e){if(mode==='error'&&/该无效式/.test(e.message)){li.className='fail';li.textContent='失败：'+name+' — 未能拒绝无效式';}else if(mode==='error'){li.className='ok';li.textContent='通过：'+name+' — 已拒绝（'+e.message+'）';passed++;}else{li.className='fail';li.textContent='失败：'+name+' — '+e.message;}}root.appendChild(li);}
+const summary=document.createElement('p');summary.textContent='测试通过 '+passed+' / '+cases.length;root.before(summary);
+</script></html>
