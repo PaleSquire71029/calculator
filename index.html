@@ -2212,7 +2212,12 @@ function zxEvalArithmetic(src) {
           function balance(raw){
             const normalized=raw.trim().replace(/⇌|⟶|→|⇒|＝|=/g,'->').replace(/−/g,'-');
             const sides=normalized.split(/->/);if(sides.length!==2)throw Error('请用 + 分隔同侧物质，用 → 分隔反应物和生成物。');
-            const split=x=>x.split('+').map(v=>v.trim()).filter(Boolean);
+            const split=x=>{
+              // 只把物质之间的加号当作分隔符；末尾的离子电荷 + 不应被拆开。
+              const terms=x.trim().split(/\\s+\\+\\s+|(?<=[A-Za-z0-9)])\\+(?=[A-Z(])/).map(v=>v.trim()).filter(Boolean);
+              // 输入中已有的化学计量数只作为提示，不参与求解；最终统一输出最简正整数系数。
+              return terms.map(v=>v.replace(/^\\d+\\s*(?=[A-Z(])/, '').trim());
+            };
             const left=split(sides[0]),right=split(sides[1]),forms=left.concat(right);
             if(!left.length||!right.length||forms.length>12)throw Error('请检查方程式，反应物和生成物总数不能超过 12 种。');
             const parsed=forms.map(parseFormula),elements=[...new Set(parsed.flatMap(f=>Object.keys(f).filter(k=>k!=='__charge')))];
