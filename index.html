@@ -2209,9 +2209,11 @@ function zxEvalArithmetic(src) {
             function norm(v){let g=v.reduce((x,y)=>gcd(x,y),0n)||1n;v=v.map(x=>x/g);if(v.every(x=>x<0n))v=v.map(x=>-x);return v;}
             let best=null,bestSum=null;
             function consider(v){
-              if(v.some(x=>x.d!==1n))return;
-              let ints=v.map(x=>x.n);if(ints.some(x=>x<=0n))return;
-              ints=norm(ints);const sum=ints.reduce((x,y)=>x+y,0n);
+              if(v.some(x=>x.n<=0n))return;
+              let den=1n;v.forEach(x=>den=lcm(den,x.d));
+              let ints=v.map(x=>x.n*(den/x.d));
+              ints=norm(ints);if(ints.some(x=>x<=0n))return;
+              const sum=ints.reduce((x,y)=>x+y,0n);
               if(bestSum===null||sum<bestSum){best=ints;bestSum=sum;}
             }
             // 在有界范围内枚举自由变量，再由行最简方程直接计算主变量；
