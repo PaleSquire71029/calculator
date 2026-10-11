@@ -688,6 +688,58 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
 .zx-chem-use{align-self:flex-start;max-width:100%;white-space:normal}
 @media(max-width:768px){.zx-chem-candidate{padding:12px;gap:9px}.zx-chem-candidate-name{font-size:15px}.zx-chem-equation{font-size:17px}.zx-chem-use{width:100%;min-height:43px}}
 
+
+/* 化学键盘移动端重排：固定工具栏 + 独立滚动按键区，避免键盘盖住输入页面 */
+@media(max-width:768px){
+ [data-view="chemistry"] #chemKeyboard:not([hidden]){
+  display:flex!important;flex-direction:column;gap:8px;
+  box-sizing:border-box;height:min(66dvh,590px);max-height:calc(100dvh - 18px)!important;
+  padding:10px max(12px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))!important;
+  overflow:hidden!important;border:1px solid #343d4b!important;border-bottom:0!important;
+  border-radius:18px 18px 0 0!important;background:#0e1219!important;
+ }
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-tools{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;
+  flex:0 0 auto;margin:0;padding:0 0 8px;background:#0e1219;border-bottom:1px solid #28303b;
+ }
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-ime-inline{display:none!important}
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-search{
+  width:100%;min-width:0;height:42px;box-sizing:border-box;font-size:14px!important;
+ }
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) #chemKeyboardClose{
+  min-height:42px;padding:0 12px;white-space:nowrap;font-size:13px;
+ }
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-tabs{
+  display:grid;grid-template-columns:1fr 1fr;gap:7px;flex:0 0 auto;margin:0;
+ }
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-tabs button{
+  min-height:38px;border-radius:9px;font-size:13px;
+ }
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) #chemElementPanel,
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) #chemSymbolPanel{
+  min-height:0;flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;padding-bottom:4px;
+ }
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:0;padding:2px 1px 8px;
+ }
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;
+  min-width:0;min-height:clamp(44px,7dvh,54px);padding:4px 2px;border-radius:10px;
+  font-size:16px;line-height:1.15;overflow:hidden;
+ }
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button small{
+  max-width:100%;font-size:10px;line-height:1.15;white-space:nowrap;
+ }
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbol-grid button{min-height:50px}
+}
+@media(max-width:380px){
+ [data-view="chemistry"] #chemKeyboard:not([hidden]){height:64dvh}
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{gap:4px}
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:42px;font-size:15px}
+ [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button small{font-size:9px}
+}
+
 </style>
 
     <script>
