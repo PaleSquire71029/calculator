@@ -1015,6 +1015,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                     <input id="chemInput" type="text" class="zx-field" autocomplete="off" spellcheck="false" inputmode="none" placeholder="例如：Fe + O2 → Fe2O3" aria-label="待配平化学方程式">
                     <div class="zx-chem-toolbar">
                       <button type="button" class="zx-btn is-go" id="chemBalanceBtn"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> 配平</button>
+                      <button type="button" class="zx-btn" id="chemProductSuggestBtn" title="根据常见反应类型尝试补全生成物"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> 补全生成物</button>
                       <button type="button" class="zx-btn" id="chemKeyboardToggle" aria-expanded="false"><i class="fa-solid fa-keyboard" aria-hidden="true"></i> 打开化学键盘</button>
                       <button type="button" class="zx-btn" id="chemClearBtn"><i class="fa-solid fa-eraser" aria-hidden="true"></i> 清空</button>
                       <button type="button" class="zx-btn" id="chemUndoBtn"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> 撤销</button>
@@ -1034,7 +1035,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
                     <div class="zx-label mt-4">常见方程式</div>
                     <div id="chemExamples" class="flex flex-wrap gap-2"><button type="button" class="zx-chip" data-chem="H2 + O2 -> H2O">氢气燃烧</button><button type="button" class="zx-chip" data-chem="Fe + O2 -> Fe3O4">铁在氧气中燃烧</button><button type="button" class="zx-chip" data-chem="NaOH + HCl -> NaCl + H2O">酸碱中和</button><button type="button" class="zx-chip" data-chem="CaCO3 + HCl -> CaCl2 + CO2 + H2O">碳酸钙与盐酸</button><button type="button" class="zx-chip" data-chem="BaCl2 + Na2SO4 -> BaSO4 + NaCl">沉淀反应</button></div>              </div>
                     <div class="zx-label mt-4">配平结果</div>
-                    <div id="chemOutput" class="zx-out" aria-live="polite"><div class="zx-out-row"><span>等待输入</span><span>支持 →、-&gt; 或 =</span></div></div>
+                    <div id="chemProductSuggestNote" class="zx-out-row" hidden></div><div id="chemOutput" class="zx-out" aria-live="polite"><div class="zx-out-row"><span>等待输入</span><span>支持 →、-&gt; 或 =</span></div></div>
                     <div class="zx-label mt-4">使用说明</div>
                     <div class="zx-out">
                       <div class="zx-out-row"><span>写法</span><span>H2O、Ca(OH)2、CuSO4·5H2O</span></div>
