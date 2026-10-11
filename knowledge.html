@@ -391,6 +391,33 @@ html,body{min-height:100%;overflow-x:hidden}
  #sidebar.open *{overscroll-behavior:contain}
 }
 
+
+/* Keep the complete mobile drawer above the reading header */
+@media(max-width:700px){
+ #sidebarBackdrop.open{
+   z-index:10001!important;
+ }
+ #sidebar.open,.shell.reading #sidebar.open{
+   z-index:10002!important;
+   top:10px!important;
+   bottom:10px!important;
+   height:calc(100dvh - 20px)!important;
+   max-height:calc(100dvh - 20px)!important;
+   padding-top:18px!important;
+   overflow-y:auto!important;
+   overscroll-behavior-y:contain!important;
+   -webkit-overflow-scrolling:touch!important;
+ }
+ .shell.reading .topbar{z-index:10000!important}
+ #sidebar.open .side-head{
+   position:sticky!important;
+   top:0!important;
+   margin-top:0!important;
+   padding-top:8px!important;
+   background:#e9edf2!important;
+ }
+}
+
 </style>
 </head>
 <body><div class="shell">
