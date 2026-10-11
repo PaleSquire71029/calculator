@@ -2618,7 +2618,7 @@ function zxEvalArithmetic(src) {
             const examples=kind==='equation'
                 ? {'linear':'2x+3=0','quadratic':'x^2-5x+6=0','cubic':'x^3-6x=0','custom':'(x-1)(x+2)=0'}
                 : {'linear':'2x+3>0','quadratic':'x^2-5x+6<0','cubic':'x^3-x>=0','custom':'1/x>=2'};
-            function fields(){return degree==='linear'?[['a','a',''],['b','b','']]:degree==='quadratic'?[['a','a',''],['b','b',''],['c','c','']]:degree==='vertex'?[['a','a',''],['h','h（顶点横坐标）',''],['k','k（顶点纵坐标）','']]:degree==='inverse'?[['k','k（比例系数）','']]:degree==='cubic'?[['a','a',''],['b','b',''],['c','c',''],['d','d','']]:[];}
+            function fields(){return degree==='linear'?[['a','a',''],['b','b','']]:degree==='quadratic'?[['a','a',''],['b','b',''],['c','c','']]:degree==='vertex'?[['a','a',''],['h','h（顶点横坐标）',''],['k','k（顶点纵坐标）','']]:degree==='inverse'?[['k','k（比例系数）',''],['y','已知函数值 y','']]:degree==='cubic'?[['a','a',''],['b','b',''],['c','c',''],['d','d','']]:[];}
             function render(){
                 if(!root)return;
                 root.innerHTML='<div class="structured-top"><label class="structured-select"><span>方程形式</span><select data-degree><option value="linear">一次标准式</option><option value="quadratic">二次标准式</option><option value="vertex">二次顶点式</option><option value="inverse">反比例函数式</option><option value="cubic">三次标准式</option><option value="custom">分式 / 括号 / 自定义</option></select></label>'+
@@ -2656,7 +2656,7 @@ function zxEvalArithmetic(src) {
                 if(degree==='linear')return '('+v.a+')*x+('+v.b+')'+(kind==='equation'?'=0':relation+'0');
                 if(degree==='quadratic')return '('+v.a+')*x^2+('+v.b+')*x+('+v.c+')'+(kind==='equation'?'=0':relation+'0');
                 if(degree==='vertex')return '('+v.a+')*(x-('+v.h+'))^2+('+v.k+')'+(kind==='equation'?'=0':relation+'0');
-                if(degree==='inverse')return 'y=('+v.k+')/x';
+                if(degree==='inverse')return '已知 k='+v.k+'，y='+v.y+'，求 x';
                 return '('+v.a+')*x^3+('+v.b+')*x^2+('+v.c+')*x+('+v.d+')'+(kind==='equation'?'=0':relation+'0');
             }
             function setExample(expr){
@@ -2677,7 +2677,7 @@ function zxEvalArithmetic(src) {
             }
             function clear(){root.querySelectorAll('[data-math-field]').forEach(function(el){el.value='';});const custom=root.querySelector('[data-custom-expression]');if(custom)custom.value='';}
             function setRaw(raw){degree='custom';render();const el=root.querySelector('[data-custom-expression]');if(el)el.value=String(raw||'');}
-            render();return {getRaw:getRaw,clear:clear,setExample:setExample,setRaw:setRaw};
+            function getInverseResult(){if(degree!=='inverse')return null;const fields=Array.from(root.querySelectorAll('[data-math-field]'));const v={};fields.forEach(function(el){v[el.getAttribute('data-math-field')]=String(el.value||'').trim();});if(!v.k||!v.y)return {ok:false,error:'请输入比例系数 k 和已知函数值 y'};const k=Number(v.k),y=Number(v.y);if(!Number.isFinite(k)||!Number.isFinite(y))return {ok:false,error:'k 和 y 必须是有限数值'};if(k===0)return {ok:false,error:'反比例函数要求比例系数 k≠0'};if(y===0)return {ok:false,error:'y 不能为 0；反比例函数的函数值不为 0'};const x=k/y;if(!Number.isFinite(x))return {ok:false,error:'计算结果超出数值范围'};return {ok:true,k:k,y:y,x:x};}\n            render();return {getRaw:getRaw,clear:clear,setExample:setExample,setRaw:setRaw,getInverseResult:getInverseResult,getDegree:function(){return degree;}};
         }
         function initPointFields(rootId){
             const root=$(rootId);
@@ -2749,7 +2749,7 @@ function zxEvalArithmetic(src) {
             eqStructuredApi = ui;
             makeSolver({
                 kind: 'equation', input: 'eqInput', out: 'eqOut', btn: 'eqSolveBtn', clear: 'eqClearBtn', inserts: 'eqInserts', enterRoot: 'eqStructured',
-                run: function (s) { return zxSolveEquation(s); }, getRaw: ui.getRaw, onClear: ui.clear,
+                run: function (s) { if(ui.getDegree&&ui.getDegree()==='inverse'){const v=ui.getInverseResult();if(!v||!v.ok)return {ok:false,error:v&&v.error||'请输入 k 和 y'};return {ok:true,text:'已知：y = k / x\\nk = '+zxFmtNum(v.k)+'，y = '+zxFmtNum(v.y)+'\\n由 y = k / x，得 x = k / y\\n代入：x = '+zxFmtNum(v.k)+' / ('+zxFmtNum(v.y)+')\\n所以：x = '+zxFmtNum(v.x)};} return zxSolveEquation(s); }, getRaw: ui.getRaw, onClear: ui.clear,
                 setRawFromExample: ui.setExample, setOf: true,
                 emptyHint: '请输入方程系数'
             }).solve(true);
