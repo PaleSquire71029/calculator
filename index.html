@@ -2164,25 +2164,40 @@ function zxEvalArithmetic(src) {
             const raw=input.value.trim(),note=document.getElementById('chemProductSuggestNote');
             const sides=raw.split(/->|→|⟶|⇒|＝|=/);
             if(sides.length!==1||!sides[0].trim()){note.hidden=false;note.innerHTML='<span>提示</span><span>请只输入反应物，例如：Ca + H2O。此功能只会对内置规则覆盖的常见反应提出候选产物。</span>';return;}
-            const key=sides[0].replace(/\s+/g,'').replace(/[₀-₉]/g,'').toLowerCase();
+            const subMap={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'};
+            const key=sides[0].replace(/\s+/g,'').replace(/[₀-₉]/g,ch=>subMap[ch]).toLowerCase();
             const rules=[
-              [/^ca\+h2o$/,'Ca + H2O → Ca(OH)2 + H2','钙与水反应'],
-              [/^na\+h2o$/,'Na + H2O → NaOH + H2','活泼金属与水反应'],
-              [/^k\+h2o$/,'K + H2O → KOH + H2','活泼金属与水反应'],
-              [/^mg\+hcl$/,'Mg + HCl → MgCl2 + H2','金属与酸反应'],
-              [/^zn\+hcl$/,'Zn + HCl → ZnCl2 + H2','金属与酸反应'],
-              [/^fe\+hcl$/,'Fe + HCl → FeCl2 + H2','金属与非氧化性酸反应'],
+              [/^ca\+h2o$/,'Ca + H2O → Ca(OH)2 + H2','钙与冷水反应'],
+              [/^na\+h2o$/,'Na + H2O → NaOH + H2','钠与水反应'],
+              [/^k\+h2o$/,'K + H2O → KOH + H2','钾与水反应'],
+              [/^mg\+hcl$/,'Mg + HCl → MgCl2 + H2','镁与盐酸反应'],
+              [/^zn\+hcl$/,'Zn + HCl → ZnCl2 + H2','锌与盐酸反应'],
+              [/^fe\+hcl$/,'Fe + HCl → FeCl2 + H2','铁与稀盐酸反应'],
+              [/^mg\+h2so4$/,'Mg + H2SO4 → MgSO4 + H2','镁与稀硫酸反应'],
+              [/^zn\+h2so4$/,'Zn + H2SO4 → ZnSO4 + H2','锌与稀硫酸反应'],
               [/^naoh\+hcl$/,'NaOH + HCl → NaCl + H2O','酸碱中和'],
               [/^h2so4\+naoh$/,'H2SO4 + NaOH → Na2SO4 + H2O','酸碱中和'],
+              [/^hno3\+naoh$/,'HNO3 + NaOH → NaNO3 + H2O','酸碱中和'],
+              [/^hcl\+koh$/,'HCl + KOH → KCl + H2O','酸碱中和'],
               [/^caco3\+hcl$/,'CaCO3 + HCl → CaCl2 + CO2 + H2O','碳酸盐与酸反应'],
               [/^na2co3\+hcl$/,'Na2CO3 + HCl → NaCl + CO2 + H2O','碳酸盐与酸反应'],
-              [/^agno3\+nacl$/,'AgNO3 + NaCl → AgCl + NaNO3','复分解沉淀反应'],
-              [/^bacl2\+na2so4$/,'BaCl2 + Na2SO4 → BaSO4 + NaCl','复分解沉淀反应'],
-              [/^fe\+cuso4$/,'Fe + CuSO4 → FeSO4 + Cu','金属置换反应'],
-              [/^al\+o2$/,'Al + O2 → Al2O3','金属与氧气反应'],
-              [/^fe\+o2$/,'Fe + O2 → Fe3O4','铁在氧气中燃烧'],
+              [/^nahco3\+hcl$/,'NaHCO3 + HCl → NaCl + CO2 + H2O','碳酸氢盐与酸反应'],
+              [/^agno3\+nacl$/,'AgNO3 + NaCl → AgCl + NaNO3','生成氯化银沉淀'],
+              [/^bacl2\+na2so4$/,'BaCl2 + Na2SO4 → BaSO4 + NaCl','生成硫酸钡沉淀'],
+              [/^cuso4\+naoh$/,'CuSO4 + NaOH → Cu(OH)2 + Na2SO4','生成氢氧化铜沉淀'],
+              [/^fe\+cuso4$/,'Fe + CuSO4 → FeSO4 + Cu','铁置换硫酸铜中的铜'],
+              [/^cu\+agno3$/,'Cu + AgNO3 → Cu(NO3)2 + Ag','铜置换硝酸银中的银'],
+              [/^al\+o2$/,'Al + O2 → Al2O3','铝与氧气反应'],
+              [/^fe\+o2$/,'Fe + O2 → Fe3O4','铁在氧气中燃烧（产物受条件影响）'],
               [/^h2\+o2$/,'H2 + O2 → H2O','氢气燃烧'],
-              [/^ch4\+o2$/,'CH4 + O2 → CO2 + H2O','烃的完全燃烧']
+              [/^c\+o2$/,'C + O2 → CO2','碳在氧气充足时燃烧'],
+              [/^ch4\+o2$/,'CH4 + O2 → CO2 + H2O','甲烷完全燃烧'],
+              [/^c2h5oh\+o2$/,'C2H5OH + O2 → CO2 + H2O','乙醇完全燃烧'],
+              [/^kclo3$/,'KClO3 → KCl + O2','氯酸钾受热分解（通常需催化剂）'],
+              [/^h2o2$/,'H2O2 → H2O + O2','过氧化氢分解'],
+              [/^caco3$/,'CaCO3 → CaO + CO2','碳酸钙高温分解'],
+              [/^cuo\+h2$/,'CuO + H2 → Cu + H2O','氢气还原氧化铜（加热）'],
+              [/^fe2o3\+co$/,'Fe2O3 + CO → Fe + CO2','一氧化碳还原氧化铁（加热）']
             ];
             const hit=rules.find(([re])=>re.test(key));
             note.hidden=false;
