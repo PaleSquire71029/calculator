@@ -301,6 +301,49 @@ html,body{min-height:100%;overflow-x:hidden}
  .shell.reading .sidebar.open{top:8px;bottom:8px}
 }
 
+
+/* Mobile drawer alignment and independent touch scrolling */
+@media(max-width:700px){
+ html,body{width:100%;max-width:100%;overflow-x:hidden}
+ #pageLayout{position:relative;min-width:0}
+ #sidebarBackdrop.open{
+   position:fixed!important;inset:0!important;z-index:9998!important;
+   display:block!important;background:rgba(39,54,72,.28)!important;
+   -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+   touch-action:none;
+ }
+ #sidebar.open,.shell.reading #sidebar.open{
+   display:block!important;position:fixed!important;
+   left:10px!important;right:auto!important;
+   top:10px!important;bottom:10px!important;
+   width:min(360px,calc(100vw - 28px))!important;
+   height:auto!important;max-height:none!important;
+   margin:0!important;padding:18px 12px!important;
+   box-sizing:border-box!important;
+   overflow-x:hidden!important;overflow-y:auto!important;
+   overscroll-behavior:contain!important;
+   -webkit-overflow-scrolling:touch!important;
+   touch-action:pan-y!important;
+   z-index:9999!important;
+   border:1px solid #f5f7fb!important;border-radius:24px!important;
+   background:#e9edf2!important;color:#34495e!important;
+   box-shadow:8px 8px 18px #cbd2dc,-8px -8px 18px #fff!important;
+   transform:none!important;
+   pointer-events:auto!important;
+ }
+ #sidebar.open *{touch-action:pan-y}
+ #sidebar.open .side-head{position:sticky;top:-18px;z-index:2;background:#e9edf2;padding:8px 0 12px}
+ #sidebar.open .navbtn,#sidebar.open .chapter,#sidebar.open .side-note,
+ #sidebar.open .navsub,#sidebar.open .chapter-topic{
+   box-sizing:border-box;max-width:100%;color:#34495e!important;
+   background:#e9edf2!important;
+ }
+ #sidebar.open .navbtn{width:100%;margin:5px 0}
+ #sidebar.open .chapter{width:calc(100% - 4px);margin-left:2px}
+ #sidebar.open .navsub{margin-left:12px;width:calc(100% - 16px)}
+ .shell.reading .topbar{z-index:10000}
+}
+
 </style>
 </head>
 <body><div class="shell">
@@ -553,7 +596,7 @@ function indexRow(k,i){const color=k.subject==="化学"?"chem":k.level==="初中
 function iconSvg(name){const paths={home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',math:'<path d="M7 4h10M7 20h10M15 4 9 20"/><path d="M5 9h5M14 15h5"/>',chem:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M8 15h8"/>',reaction:'<path d="M4 7h15l-3-3M20 17H5l3 3"/>',book:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 1 4 17.5z"/><path d="M4 5.5v12M8 7h8M8 11h8M8 15h5"/>'};return '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.book)+'</svg>'}
 const navIconMarkup={home:iconSvg("home"),math:iconSvg("math"),chem:iconSvg("chem"),reaction:iconSvg("reaction"),book:iconSvg("book")};document.querySelectorAll(".navicon[data-icon]").forEach(el=>{el.innerHTML=navIconMarkup[el.dataset.icon]||navIconMarkup.book});
 function closeSidebar(){const side=$("sidebar"),layout=$("pageLayout"),backdrop=$("sidebarBackdrop");side.classList.remove("open");backdrop.classList.remove("open");$("menuToggle").setAttribute("aria-expanded","false");$("menuToggle").setAttribute("aria-label","打开目录");if(innerWidth>700)layout.classList.add("sidebar-collapsed");document.body.style.overflow=""}
-function openSidebar(){const side=$("sidebar"),layout=$("pageLayout"),backdrop=$("sidebarBackdrop");if(innerWidth<=700){side.classList.add("open");backdrop.classList.add("open");document.body.style.overflow="hidden"}else{layout.classList.remove("sidebar-collapsed")} $("menuToggle").setAttribute("aria-expanded","true");$("menuToggle").setAttribute("aria-label","关闭目录")}
+function openSidebar(){const side=$("sidebar"),layout=$("pageLayout"),backdrop=$("sidebarBackdrop");if(innerWidth<=700){side.classList.add("open");backdrop.classList.add("open");document.body.style.overflow="hidden";side.scrollTop=0;side.style.webkitOverflowScrolling="touch"}else{layout.classList.remove("sidebar-collapsed")} $("menuToggle").setAttribute("aria-expanded","true");$("menuToggle").setAttribute("aria-label","关闭目录")}
 function toggleSidebar(){const open=innerWidth<=700?$("sidebar").classList.contains("open"):!$("pageLayout").classList.contains("sidebar-collapsed");if(open)closeSidebar();else openSidebar()}
 
 const searchText=new Map(allK.map(k=>[k,[k.title,k.summary,k.formula,k.explain,k.example,k.chapter,k.subject,k.level,...k.tags,...k.mistakes].join(" ").toLocaleLowerCase()]));
