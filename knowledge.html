@@ -254,6 +254,21 @@ body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,
  .reader-content .example strong{color:#206c65!important}
 }
 
+
+/* Keep the decorative character behind the hero copy without reducing contrast */
+.hero{isolation:isolate;overflow:hidden;position:relative}
+.hero:after{z-index:-1;right:0;top:50%;transform:translateY(-50%);font-size:clamp(100px,18vw,190px);color:#d3dce7!important;opacity:.42}
+.hero h1,.hero p,.hero .eyebrow,.hero .stats{position:relative;z-index:1}
+.hero p{max-width:620px;color:#4f6378;line-height:1.85}
+@media(max-width:700px){
+ .hero{padding:19px 18px}
+ .hero:after{right:-8px;top:42%;font-size:116px;opacity:.25}
+ .hero h1{max-width:100%;font-size:25px;line-height:1.42}
+ .hero p{max-width:100%;font-size:13px;line-height:1.8}
+ .hero .stats{gap:7px}
+ .hero .stat{font-size:10px;padding:5px 8px}
+}
+
 </style>
 </head>
 <body><div class="shell">
@@ -276,7 +291,7 @@ body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,
 <div class="side-note">学习建议：先看概念，再理解推导过程，最后做例题。遇到易错点时，尝试解释“为什么不能这样做”。</div>
 </aside>
 <main class="main">
-<section class="hero"><div class="eyebrow">ZHIXING · STUDY SYSTEM</div><h1>把知识学明白，<br>比记住答案更重要。</h1><p>面向初中与高中数学、化学的学习知识库。支持按目录浏览，也可以直接搜索公式、关键词、化学式和常见反应；每个知识点尽量提供原理、例题思路与易错提醒。</p><div class="stats"><span class="stat"><strong id="countStat">—</strong>个知识页面</span><span class="stat"><strong>初中 + 高中</strong>学习范围</span><span class="stat"><strong>原理 / 例题 / 易错点</strong>分层解析</span></div></section>
+<section class="hero"><div class="eyebrow">ZHIXING · STUDY SYSTEM</div><h1>把知识学明白，<br>比记住答案更重要。</h1><p>收录初高中数学与化学重点知识，支持按分类浏览或直接搜索。每个知识点提供核心公式、解题思路与易错提醒。</p><div class="stats"><span class="stat"><strong id="countStat">—</strong>个知识页面</span><span class="stat"><strong>初中 + 高中</strong>学习范围</span><span class="stat"><strong>原理 / 例题 / 易错点</strong>分层解析</span></div></section>
 <div class="filters"><select id="subjectFilter" aria-label="学科"><option value="全部">全部学科</option><option value="数学">数学</option><option value="化学">化学</option></select><select id="chapterFilter" aria-label="知识分类"><option value="全部">全部分类</option></select><select id="levelFilter" aria-label="学段"><option value="全部">全部学段</option><option value="初中">初中</option><option value="高中">高中</option></select></div>
 <div class="resultline"><span id="resultCount">正在整理知识点…</span><span>点击目录筛选 · 搜索支持公式与化学式</span></div>
 <section class="knowledge-index" id="cards" aria-live="polite"></section><article class="reader-page hidden" id="reader" aria-live="polite"></article>
