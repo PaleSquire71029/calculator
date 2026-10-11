@@ -230,7 +230,28 @@
     const parts=raw.split('+').map(s=>s.trim()).filter(Boolean);
     if(!parts.length||parts.some(s=>!s)) return {ok:false,message:'请用 + 分隔反应物，例如：Zn + HCl。',candidates:[]};
     const key=sortKey(parts);
-    const candidates=db.filter(r=>sortKey(r.reactants)===key).map((r,i)=>Object.assign({id:i,score:r.confidence==='条件敏感'?0.65:0.9},r));
+    const candidates=db.filter(r=>sortKey(r.reactants)===key).map((r,i)=>{
+      const item=Object.assign({id:i,score:r.confidence==='条件敏感'?0.65:0.9},r);
+      // 若配平核心已加载，则为每个候选生成配平式并做元素守恒校验。
+      // 预测与配平分层：配平成功不代表产物在该条件下一定真实发生。
+      const balancer=root.ZXChemistryBalancer;
+      if(balancer&&typeof balancer.balance==='function'){
+        try{
+          const balanced=balancer.balance(item.equation);
+          item.balancedEquation=balanced.equation;
+          item.balanceCoefficients=balanced.coeff;
+          item.conservationVerified=true;
+        }catch(err){
+          item.conservationVerified=false;
+          item.validationWarning='候选方程式未能通过配平校验：'+String(err&&err.message||err);
+          item.score=Math.min(item.score,0.3);
+        }
+      }else{
+        item.conservationVerified=null;
+        item.validationWarning='配平核心尚未加载，暂未进行自动守恒校验。';
+      }
+      return item;
+    });
     // 额外明确提示：硝酸/浓硫酸具有氧化性，不能套用普通酸与金属放氢规则。
     const acidSensitive=parts.some(x=>/^HNO3$/i.test(canonical(x))||/^H2SO4$/i.test(canonical(x)));
     const metal=parts.some(x=>/^(Mg|Al|Zn|Fe|Cu|Ag)$/i.test(canonical(x)));
@@ -243,5 +264,5 @@
     else if(parts.length===2&&parts.some(x=>/^O2$/i.test(canonical(x)))) message='检测到含氧气反应，但无法仅凭反应物可靠判断完全燃烧、部分氧化或其他产物；请补充氧气量、温度及反应对象。';
     return {ok:false,message,candidates:[],warnings};
   }
-  root.ZXChemistryPredictor={predict,ruleCount:db.length,version:'2.0-expanded'};
+  root.ZXChemistryPredictor={predict,ruleCount:db.length,version:'3.0-validated'};
 })(typeof window!=='undefined'?window:globalThis);
