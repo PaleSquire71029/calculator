@@ -663,6 +663,19 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
   .zx-mobile-mathpad-grid button{min-height:40px}
 }
 
+
+/* 化学反应候选：移动端采用纵向卡片，避免双列挤压造成文字逐字换行 */
+.zx-chem-candidate-list{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:12px}
+.zx-chem-candidate{display:flex;flex-direction:column;align-items:stretch;gap:10px;min-width:0;padding:14px;border:1px solid #303946;border-radius:13px;background:linear-gradient(145deg,rgba(26,34,45,.96),rgba(16,19,24,.98))}
+.zx-chem-candidate-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
+.zx-chem-candidate-index{flex:none;padding:4px 8px;border-radius:7px;background:rgba(201,166,96,.12);color:#d7bc80;font-size:12px;font-weight:700}
+.zx-chem-candidate-name{min-width:0;color:#e5e9ef;font-size:15px;font-weight:700;line-height:1.5;overflow-wrap:anywhere}
+.zx-chem-equation{display:block;max-width:100%;padding:11px 12px;border:1px solid rgba(201,166,96,.2);border-radius:9px;background:rgba(0,0,0,.18);color:#f0d9a4;font-size:clamp(16px,4vw,20px);font-weight:750;line-height:1.55;overflow-wrap:anywhere;word-break:normal}
+.zx-chem-meta{display:flex;flex-wrap:wrap;gap:6px 12px;color:#aab4c1;font-size:13px;line-height:1.55}
+.zx-chem-meta span{min-width:0;overflow-wrap:anywhere}
+.zx-chem-use{align-self:flex-start;max-width:100%;white-space:normal}
+@media(max-width:768px){.zx-chem-candidate{padding:12px;gap:9px}.zx-chem-candidate-name{font-size:15px}.zx-chem-equation{font-size:17px}.zx-chem-use{width:100%;min-height:43px}}
+
 </style>
 
     <script>
@@ -2172,7 +2185,7 @@ function zxEvalArithmetic(src) {
               note.innerHTML='<span>预测说明</span><span>'+escHtml(result.message)+(result.warnings||[]).map(w=>'<div class="mt-2">'+escHtml(w)+'</div>').join('')+'</span>';
               return;
             }
-            note.innerHTML='<span>反应候选（'+result.candidates.length+' 项）</span><span>'+escHtml(result.message)+(result.warnings||[]).map(w=>'<div class="mt-2">'+escHtml(w)+'</div>').join('')+'<div class="flex flex-col gap-2 mt-2">'+result.candidates.map((candidate,index)=>'<div class="zx-out-row"><span><strong>'+String(index+1)+'. '+escHtml(candidate.label)+'</strong><br><small>'+escHtml(candidate.conditions)+'；'+escHtml(candidate.confidence)+'</small></span><span><strong>'+escHtml(candidate.equation)+'</strong><br><button type="button" class="zx-btn is-go mt-1" data-chem-candidate="'+index+'">采用并配平</button></span></div>').join('')+'</div><small class="block mt-3">注意：这是基于内置规则的候选检索，不是对任意化学反应的保证性预测。实验请遵循教师指导和安全规范。</small></span>';
+            note.innerHTML='<span>反应候选（'+result.candidates.length+' 项）</span><span>'+escHtml(result.message)+(result.warnings||[]).map(w=>'<div class="mt-2">'+escHtml(w)+'</div>').join('')+'<div class="flex flex-col gap-2 mt-2">'+result.candidates.map((candidate,index)=>'<article class="zx-chem-candidate"><div class="zx-chem-candidate-head"><span class="zx-chem-candidate-index">候选 '+String(index+1)+'</span><span class="zx-chem-candidate-name">'+escHtml(candidate.label)+'</span></div><div class="zx-chem-equation">'+escHtml(candidate.equation)+'</div><div class="zx-chem-meta"><span>'+escHtml(candidate.conditions)+'</span><span>'+escHtml(candidate.confidence)+'</span></div><button type="button" class="zx-btn is-go zx-chem-use" data-chem-candidate="'+index+'">采用并配平</button></article>').join('')+'</div><small class="block mt-3">注意：这是基于内置规则的候选检索，不是对任意化学反应的保证性预测。实验请遵循教师指导和安全规范。</small></span>';
             note.querySelectorAll('[data-chem-candidate]').forEach(btn=>btn.addEventListener('click',()=>{
               const chosen=result.candidates[Number(btn.getAttribute('data-chem-candidate'))];
               if(!chosen)return;
