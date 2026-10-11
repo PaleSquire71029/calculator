@@ -1081,7 +1081,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
             <a href="https://11.hongye71.dpdns.org/#/workbench/tools" class="text-brand-400 hover:text-brand-300 transition-colors">前往效率工作台</a>
         </p>
     </footer>
-    <script src="js/chemistry-balancer.js"></script>
+    <script src="js/chemistry-balancer.js"></script>\n<script src="js/chemistry-predictor.js"></script>
 <script>
         /* ==================================================================
            一、数学引擎
@@ -2161,55 +2161,21 @@ function zxEvalArithmetic(src) {
           const balance=window.ZXChemistryBalancer.balance;
           function render(){try{const r=balance(input.value);const raw=input.value.trim();const compact=raw.replace(/\s+/g,'').replace(/⇌|⟶|→|⇒|＝|=/g,'->');const ions=[[/^NaOH\s*\+\s*HCl/i,'H⁺ + OH⁻ → H₂O'],[/^BaCl2\s*\+\s*Na2SO4/i,'Ba²⁺ + SO₄²⁻ → BaSO₄↓'],[/^AgNO3\s*\+\s*NaCl/i,'Ag⁺ + Cl⁻ → AgCl↓'],[/^CaCO3\s*\+\s*HCl/i,'CaCO₃ + 2H⁺ → Ca²⁺ + CO₂↑ + H₂O'],[/^Na2CO3\s*\+\s*HCl/i,'CO₃²⁻ + 2H⁺ → CO₂↑ + H₂O'],[/^CuSO4\s*\+\s*NaOH/i,'Cu²⁺ + 2OH⁻ → Cu(OH)₂↓'],[/^Zn\s*\+\s*HCl/i,'Zn + 2H⁺ → Zn²⁺ + H₂↑'],[/^Al\s*\+\s*HCl/i,'2Al + 6H⁺ → 2Al³⁺ + 3H₂↑'],[/^Fe\s*\+\s*CuSO4/i,'Fe + Cu²⁺ → Fe²⁺ + Cu']];const ion=(ions.find(x=>x[0].test(raw))||[])[1]||'该反应暂无内置离子方程式模板；请在知识库核对。';const chemistryWarning=/^(?:Ca\+H2O->CaO\+H2|Ca\+H2O->CaO\+H2)$/.test(compact)?'<div class="zx-out-row"><span>化学合理性提示</span><strong>该式原子数守恒，但产物不符合钙与水的常见反应。通常应为：Ca + 2H₂O → Ca(OH)₂ + H₂。配平器只调整系数，不会自动更改化学式。</strong></div>':'';output.innerHTML='<div class="zx-out-row"><span>配平结果</span><strong>'+r.equation+'</strong></div><div class="zx-out-row"><span>系数比</span><span>'+r.coeff.join(' : ')+'</span></div><div class="zx-out-row"><span>守恒校验</span><span>元素原子数'+(r.elements.includes('__charge')?'及总电荷':'')+'均相等</span></div>'+chemistryWarning+'<div class="zx-out-row"><span>对应离子方程式</span><strong>'+ion+'</strong></div>';}catch(e){output.textContent=e.message||'配平失败，请检查输入。';}}
           document.getElementById('chemProductSuggestBtn').addEventListener('click',()=>{
-            const raw=input.value.trim(),note=document.getElementById('chemProductSuggestNote');
-            const sides=raw.split(/->|→|⟶|⇒|＝|=/);
-            if(sides.length!==1||!sides[0].trim()){note.hidden=false;note.innerHTML='<span>提示</span><span>请只输入反应物，例如：Ca + H2O。此功能只会对内置规则覆盖的常见反应提出候选产物。</span>';return;}
-            const subMap={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'};
-            const key=sides[0].replace(/\s+/g,'').replace(/[₀-₉]/g,ch=>subMap[ch]).toLowerCase();
-            const rules=[
-              [/^ca\+h2o$/,'Ca + H2O → Ca(OH)2 + H2','钙与冷水反应'],
-              [/^na\+h2o$/,'Na + H2O → NaOH + H2','钠与水反应'],
-              [/^k\+h2o$/,'K + H2O → KOH + H2','钾与水反应'],
-              [/^mg\+hcl$/,'Mg + HCl → MgCl2 + H2','镁与盐酸反应'],
-              [/^zn\+hcl$/,'Zn + HCl → ZnCl2 + H2','锌与盐酸反应'],
-              [/^fe\+hcl$/,'Fe + HCl → FeCl2 + H2','铁与稀盐酸反应'],
-              [/^mg\+h2so4$/,'Mg + H2SO4 → MgSO4 + H2','镁与稀硫酸反应'],
-              [/^zn\+h2so4$/,'Zn + H2SO4 → ZnSO4 + H2','锌与稀硫酸反应'],
-              [/^naoh\+hcl$/,'NaOH + HCl → NaCl + H2O','酸碱中和'],
-              [/^h2so4\+naoh$/,'H2SO4 + NaOH → Na2SO4 + H2O','酸碱中和'],
-              [/^hno3\+naoh$/,'HNO3 + NaOH → NaNO3 + H2O','酸碱中和'],
-              [/^hcl\+koh$/,'HCl + KOH → KCl + H2O','酸碱中和'],
-              [/^caco3\+hcl$/,'CaCO3 + HCl → CaCl2 + CO2 + H2O','碳酸盐与酸反应'],
-              [/^na2co3\+hcl$/,'Na2CO3 + HCl → NaCl + CO2 + H2O','碳酸盐与酸反应'],
-              [/^nahco3\+hcl$/,'NaHCO3 + HCl → NaCl + CO2 + H2O','碳酸氢盐与酸反应'],
-              [/^agno3\+nacl$/,'AgNO3 + NaCl → AgCl + NaNO3','生成氯化银沉淀'],
-              [/^bacl2\+na2so4$/,'BaCl2 + Na2SO4 → BaSO4 + NaCl','生成硫酸钡沉淀'],
-              [/^cuso4\+naoh$/,'CuSO4 + NaOH → Cu(OH)2 + Na2SO4','生成氢氧化铜沉淀'],
-              [/^fe\+cuso4$/,'Fe + CuSO4 → FeSO4 + Cu','铁置换硫酸铜中的铜'],
-              [/^cu\+agno3$/,'Cu + AgNO3 → Cu(NO3)2 + Ag','铜置换硝酸银中的银'],
-              [/^al\+o2$/,'Al + O2 → Al2O3','铝与氧气反应'],
-              [/^fe\+o2$/,'Fe + O2 → Fe3O4','铁在氧气中燃烧（产物受条件影响）'],
-              [/^h2\+o2$/,'H2 + O2 → H2O','氢气燃烧'],
-              [/^c\+o2$/,'C + O2 → CO2','碳在氧气充足时燃烧'],
-              [/^ch4\+o2$/,'CH4 + O2 → CO2 + H2O','甲烷完全燃烧'],
-              [/^c2h5oh\+o2$/,'C2H5OH + O2 → CO2 + H2O','乙醇完全燃烧'],
-              [/^kclo3$/,'KClO3 → KCl + O2','氯酸钾受热分解（通常需催化剂）'],
-              [/^h2o2$/,'H2O2 → H2O + O2','过氧化氢分解'],
-              [/^caco3$/,'CaCO3 → CaO + CO2','碳酸钙高温分解'],
-              [/^cuo\+h2$/,'CuO + H2 → Cu + H2O','氢气还原氧化铜（加热）'],
-              [/^fe2o3\+co$/,'Fe2O3 + CO → Fe + CO2','一氧化碳还原氧化铁（加热）']
-            ];
-            const hits=rules.filter(([re])=>re.test(key));
-            // 同一组反应物可以对应不同产物；保留所有匹配项供用户选择，不擅自覆盖输入。
-            if(/^fe\\+o2$/.test(key)) hits.push([/^fe\\+o2$/,'Fe + O2 → Fe2O3','铁缓慢氧化/其他条件下的氧化产物（需核对条件）']);
-            if(/^c\\+o2$/.test(key)) hits.push([/^c\\+o2$/,'C + O2 → CO','碳在氧气不足时不完全燃烧']);
+            const note=document.getElementById('chemProductSuggestNote');
+            const predictor=window.ZXChemistryPredictor;
             note.hidden=false;
-            if(!hits.length){note.innerHTML='<span>暂未匹配</span><span>当前仅覆盖部分常见反应，无法可靠推断此反应的生成物。请补充反应条件或手动输入产物；不会猜测并自动覆盖内容。</span>';return;}
-            note.innerHTML='<span>生成物候选（'+hits.length+' 种）</span><span>请选择符合反应条件的一项；候选仅作提示，不代表所有条件下都成立。<div class="flex flex-col gap-2 mt-2">'+hits.map((hit,index)=>'<div class="zx-out-row"><span>'+String(index+1)+'. '+hit[2]+'</span><span><strong>'+hit[1]+'</strong> <button type="button" class="zx-btn is-go" data-chem-candidate="'+index+'">采用并配平</button></span></div>').join('')+'</div></span>';
+            if(!predictor){note.textContent='反应预测模块未加载，请刷新页面后重试。';return;}
+            const result=predictor.predict(input.value);
+            const escHtml=value=>String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+            if(!result.candidates.length){
+              note.innerHTML='<span>预测说明</span><span>'+escHtml(result.message)+(result.warnings||[]).map(w=>'<div class="mt-2">'+escHtml(w)+'</div>').join('')+'</span>';
+              return;
+            }
+            note.innerHTML='<span>反应候选（'+result.candidates.length+' 项）</span><span>'+escHtml(result.message)+(result.warnings||[]).map(w=>'<div class="mt-2">'+escHtml(w)+'</div>').join('')+'<div class="flex flex-col gap-2 mt-2">'+result.candidates.map((candidate,index)=>'<div class="zx-out-row"><span><strong>'+String(index+1)+'. '+escHtml(candidate.label)+'</strong><br><small>'+escHtml(candidate.conditions)+'；'+escHtml(candidate.confidence)+'</small></span><span><strong>'+escHtml(candidate.equation)+'</strong><br><button type="button" class="zx-btn is-go mt-1" data-chem-candidate="'+index+'">采用并配平</button></span></div>').join('')+'</div><small class="block mt-3">注意：这是基于内置规则的候选检索，不是对任意化学反应的保证性预测。实验请遵循教师指导和安全规范。</small></span>';
             note.querySelectorAll('[data-chem-candidate]').forEach(btn=>btn.addEventListener('click',()=>{
-              const chosen=hits[Number(btn.getAttribute('data-chem-candidate'))];
+              const chosen=result.candidates[Number(btn.getAttribute('data-chem-candidate'))];
               if(!chosen)return;
-              input.value=chosen[1].replace(/→/g,' -> ');
+              input.value=chosen.equation.replace(/→/g,' -> ');
               render();
             }));
           });
