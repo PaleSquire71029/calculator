@@ -1080,7 +1080,8 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
             <a href="https://11.hongye71.dpdns.org/#/workbench/tools" class="text-brand-400 hover:text-brand-300 transition-colors">前往效率工作台</a>
         </p>
     </footer>
-    <script>
+    <script src="js/chemistry-balancer.js"></script>
+<script>
         /* ==================================================================
            一、数学引擎
            以下整段与主站 index.html 中的引擎逐字一致（多项式求值器 + 方程 /
@@ -2156,121 +2157,7 @@ function zxEvalArithmetic(src) {
           if(toggle)toggle.addEventListener('click',async()=>{const opening=keyboard.hidden;if(opening){input.setAttribute('inputmode','none');if(ime)ime.innerHTML='<i class="fa-solid fa-keyboard"></i> 系统输入法';}keyboard.hidden=!opening;toggle.setAttribute('aria-expanded',String(opening));toggle.innerHTML=opening?'<i class="fa-solid fa-keyboard"></i> 收起化学键盘':'<i class="fa-solid fa-keyboard"></i> 打开化学键盘';if(opening){renderElements(search?.value||'');}});
           document.getElementById('chemKeyboardClose')?.addEventListener('click',()=>{keyboard.hidden=true;toggle?.setAttribute('aria-expanded','false');if(toggle)toggle.innerHTML='<i class="fa-solid fa-keyboard"></i> 打开化学键盘';});
           document.querySelectorAll('[data-chemtab]').forEach(b=>b.addEventListener('click',()=>{const el=b.dataset.chemtab==='elements';document.getElementById('chemElementPanel').hidden=!el;document.getElementById('chemSymbolPanel').hidden=el;document.querySelectorAll('[data-chemtab]').forEach(t=>t.setAttribute('aria-selected',String(t===b)));}));
-          function gcd(a,b){a=a<0n?-a:a;b=b<0n?-b:b;while(b){const t=a%b;a=b;b=t;}return a||1n;}
-          function lcm(a,b){return a/gcd(a,b)*b;}
-          function frac(n,d=1n){if(d<0n){n=-n;d=-d;}const g=gcd(n,d);return {n:n/g,d:d/g};}
-          const add=(a,b)=>frac(a.n*b.d+b.n*a.d,a.d*b.d),sub=(a,b)=>frac(a.n*b.d-b.n*a.d,a.d*b.d),mul=(a,b)=>frac(a.n*b.n,a.d*b.d),div=(a,b)=>frac(a.n*b.d,a.d*b.n);
-          const zero=()=>frac(0n),one=()=>frac(1n);
-          function parseFormula(raw){
-            const original=raw.trim();
-            if(/^e[-−⁻]$/i.test(original))return {__charge:-1n};
-            if(/^e[+＋⁺]$/i.test(original))return {__charge:1n};
-            // 将化学键盘常用的 Unicode 下标/上标统一成标准数字与电荷格式。
-            const subMap={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'};
-            const supMap={'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9'};
-            let formula=original;
-            // 先识别 Unicode 上标电荷，避免把 SO₄²⁻ 错读成 SO42-。
-            formula=formula.replace(/([⁰¹²³⁴⁵⁶⁷⁸⁹]*)([⁺⁻])$/,(_,digits,sign)=>'^'+(digits?Array.from(digits).map(ch=>supMap[ch]).join(''):'')+(sign==='⁻'?'-':'+'));
-            formula=formula.replace(/[₀-₉]/g,ch=>subMap[ch]).replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g,ch=>supMap[ch]).replace(/[［【\[]/g,'(').replace(/[］】\]]/g,')').replace(/[·⋅]/g,'.').replace(/−/g,'-');
-            // 普通字符形式的 H+、OH-、SO4^2- 也可识别。
-            if(!/\^[0-9]*[+-]$/.test(formula))formula=formula.replace(/([+-])$/,'^$1');
-            formula=formula.replace(/(?<!\^)(\d+)([+-])$/,'^$1$2');
-            let charge=0n;
-            const cm=formula.match(/\^(?:(\d+))?([+-])$/);if(cm){charge=BigInt(cm[1]||'1')*(cm[2]==='-'?-1n:1n);formula=formula.slice(0,cm.index);}
-            if(!formula)throw Error('化学式不能为空');
-            const merge=(a,b,k)=>Object.keys(b).forEach(x=>a[x]=(a[x]||0n)+b[x]*k);
-            function segment(str){
-              let i=0,stack=[{}];
-              while(i<str.length){
-                const c=str[i];
-                if(c==='('){stack.push({});i++;continue;}
-                if(c===')'){if(stack.length<2)throw Error('括号不匹配：'+raw);i++;let digits='';while(/\d/.test(str[i]||''))digits+=str[i++];merge(stack[stack.length-2],stack.pop(),BigInt(digits||'1'));continue;}
-                if(/[A-Z]/.test(c)){let el=c;i++;while(/[a-z]/.test(str[i]||''))el+=str[i++];let digits='';while(/\d/.test(str[i]||''))digits+=str[i++];stack[stack.length-1][el]=(stack[stack.length-1][el]||0n)+BigInt(digits||'1');continue;}
-                throw Error('无法识别化学式：'+raw+'。离子电荷请写成 ^2-、^3+ 形式。');
-              }
-              if(stack.length!==1)throw Error('括号不匹配：'+raw);return stack[0];
-            }
-            const atoms={};formula.split('.').forEach(piece=>{const m=piece.match(/^(\d+)(?=[A-Z(])/);const mult=m?BigInt(m[1]):1n;if(m)piece=piece.slice(m[0].length);merge(atoms,segment(piece),mult);});
-            atoms.__charge=charge;return atoms;
-          }
-          function solveInteger(matrix,n){
-            const a=matrix.map(row=>row.map(v=>frac(v)));
-            let pivotCols=[],r=0;
-            for(let c=0;c<n&&r<a.length;c++){
-              let p=r;while(p<a.length&&a[p][c].n===0n)p++;
-              if(p===a.length)continue;
-              [a[r],a[p]]=[a[p],a[r]];
-              const pv=a[r][c];a[r]=a[r].map(x=>div(x,pv));
-              for(let rr=0;rr<a.length;rr++)if(rr!==r&&a[rr][c].n!==0n){const f=a[rr][c];a[rr]=a[rr].map((x,j)=>sub(x,mul(f,a[r][j])));}
-              pivotCols.push(c);r++;
-            }
-            const free=[];for(let c=0;c<n;c++)if(!pivotCols.includes(c))free.push(c);
-            if(!free.length)throw Error('该方程没有非零配平解，请检查反应物和生成物。');
-            function norm(v){let g=v.reduce((x,y)=>gcd(x,y),0n)||1n;v=v.map(x=>x/g);if(v.every(x=>x<0n))v=v.map(x=>-x);return v;}
-            let best=null,bestSum=null;
-            function consider(v){
-              if(v.some(x=>x.n<=0n))return;
-              let den=1n;v.forEach(x=>den=lcm(den,x.d));
-              let ints=v.map(x=>x.n*(den/x.d));
-              ints=norm(ints);if(ints.some(x=>x<=0n))return;
-              const sum=ints.reduce((x,y)=>x+y,0n);
-              if(bestSum===null||sum<bestSum){best=ints;bestSum=sum;}
-            }
-            // 在有界范围内枚举自由变量，再由行最简方程直接计算主变量；
-            // 比组合基向量更可靠，可避免自由变量相互抵消后漏掉常见最简整数解。
-            if(free.length<=4){
-              const values=Array(free.length).fill(1n),limit=24;
-              function search(k){
-                if(k===free.length){
-                  const v=Array.from({length:n},zero);
-                  free.forEach((fc,i)=>v[fc]=frac(values[i]));
-                  for(let rr=0;rr<pivotCols.length;rr++){
-                    let sum=zero();
-                    free.forEach(fc=>{sum=add(sum,mul(a[rr][fc],v[fc]));});
-                    v[pivotCols[rr]]=frac(-sum.n,sum.d);
-                  }
-                  // 所有主变量必须为正；候选解统一转成最简正整数比并做原矩阵回代验证。
-                  if(v.some(x=>x.n<=0n))return;
-                  const candidate=v.slice();
-                  consider(candidate);return;
-                }
-                for(let x=1;x<=limit;x++){values[k]=BigInt(x);search(k+1);}
-              }
-              search(0);
-            }else{
-              // 自由变量过多时限制组合量，避免手机端计算卡顿。
-              const bases=free.map(fc=>{const v=Array.from({length:n},zero);v[fc]=one();for(let rr=0;rr<pivotCols.length;rr++)v[pivotCols[rr]]=frac(-a[rr][fc].n,a[rr][fc].d);let den=1n;v.forEach(x=>den=lcm(den,x.d));let ints=v.map(x=>x.n*(den/x.d));let g=ints.reduce((x,y)=>gcd(x,y),0n)||1n;return ints.map(x=>x/g);});
-              const coeff=Array(bases.length).fill(0),max=6;
-              function combine(k){if(k===bases.length){if(coeff.every(x=>x===0))return;const v=Array(n).fill(0n);bases.forEach((base,i)=>base.forEach((x,j)=>v[j]+=x*BigInt(coeff[i])));if(v.every(x=>x>0n))consider(v.map(x=>frac(x)));return;}for(let x=-max;x<=max;x++){coeff[k]=x;combine(k+1);}}
-              combine(0);
-            }
-            if(!best)throw Error('在当前搜索范围内没有找到正整数配平解。请检查化学式，或尝试补充/核对产物。');
-            return best;
-          }
-          function balance(raw){
-            const normalized=raw.trim().replace(/⇌|⟶|→|⇒|＝|=/g,'->').replace(/−/g,'-');
-            const sides=normalized.split(/->/);if(sides.length!==2)throw Error('请用 + 分隔同侧物质，用 → 分隔反应物和生成物。');
-            const split=x=>{
-              // 只把物质之间的加号当作分隔符；末尾的离子电荷 + 不应被拆开。
-              const terms=x.trim().split(/\s+\+\s+|(?<=[A-Za-z0-9)])\+(?=[A-Z(])/).map(v=>v.trim()).filter(Boolean);
-              // 输入中已有的化学计量数只作为提示，不参与求解；最终统一输出最简正整数系数。
-              return terms.map(v=>v.replace(/^\d+\s*(?=[A-Z(])/, '').trim());
-            };
-            const left=split(sides[0]),right=split(sides[1]),forms=left.concat(right);
-            if(!left.length||!right.length||forms.length>12)throw Error('请检查方程式，反应物和生成物总数不能超过 12 种。');
-            const parsed=forms.map(parseFormula),elements=[...new Set(parsed.flatMap(f=>Object.keys(f).filter(k=>k!=='__charge')))];
-            if(parsed.some(f=>f.__charge!==0n))elements.push('__charge');
-            const matrix=elements.map(el=>parsed.map((f,i)=>{const value=el==='__charge'?f.__charge:(f[el]||0n);return i<left.length?value:-value;}));
-            const coeff=solveInteger(matrix,forms.length);
-            const verify=matrix.every(row=>row.reduce((sum,v,i)=>sum+v*coeff[i],0n)===0n);
-            if(!verify)throw Error('内部守恒校验未通过，请检查输入。');
-            if(coeff.some(v=>v<=0n))throw Error('配平结果出现非正系数，已阻止输出；请检查方程式。');
-            const divisor=coeff.reduce((g,v)=>gcd(g,v),0n)||1n;
-            if(coeff.some(v=>v%divisor!==0n))throw Error('系数约分校验未通过，请重试。');
-            const pretty=f=>f.replace(/\.(\d+)/g,'·$1').replace(/([A-Za-z)])(\d+)/g,'$1<sub>$2</sub>').replace(/\^(\d*[+-])/g,'<sup>$1</sup>');
-            const equation=left.map((f,i)=>(coeff[i]===1n?'':coeff[i].toString())+pretty(f)).join(' + ')+' → '+right.map((f,i)=>(coeff[left.length+i]===1n?'':coeff[left.length+i].toString())+pretty(f)).join(' + ');
-            return {equation,coeff:coeff.map(String),elements};
-          }
+          const balance=window.ZXChemistryBalancer.balance;
           function render(){try{const r=balance(input.value);const raw=input.value.trim();const compact=raw.replace(/\s+/g,'').replace(/⇌|⟶|→|⇒|＝|=/g,'->');const ions=[[/^NaOH\s*\+\s*HCl/i,'H⁺ + OH⁻ → H₂O'],[/^BaCl2\s*\+\s*Na2SO4/i,'Ba²⁺ + SO₄²⁻ → BaSO₄↓'],[/^AgNO3\s*\+\s*NaCl/i,'Ag⁺ + Cl⁻ → AgCl↓'],[/^CaCO3\s*\+\s*HCl/i,'CaCO₃ + 2H⁺ → Ca²⁺ + CO₂↑ + H₂O'],[/^Na2CO3\s*\+\s*HCl/i,'CO₃²⁻ + 2H⁺ → CO₂↑ + H₂O'],[/^CuSO4\s*\+\s*NaOH/i,'Cu²⁺ + 2OH⁻ → Cu(OH)₂↓'],[/^Zn\s*\+\s*HCl/i,'Zn + 2H⁺ → Zn²⁺ + H₂↑'],[/^Al\s*\+\s*HCl/i,'2Al + 6H⁺ → 2Al³⁺ + 3H₂↑'],[/^Fe\s*\+\s*CuSO4/i,'Fe + Cu²⁺ → Fe²⁺ + Cu']];const ion=(ions.find(x=>x[0].test(raw))||[])[1]||'该反应暂无内置离子方程式模板；请在知识库核对。';const chemistryWarning=/^(?:Ca\+H2O->CaO\+H2|Ca\+H2O->CaO\+H2)$/.test(compact)?'<div class="zx-out-row"><span>化学合理性提示</span><strong>该式原子数守恒，但产物不符合钙与水的常见反应。通常应为：Ca + 2H₂O → Ca(OH)₂ + H₂。配平器只调整系数，不会自动更改化学式。</strong></div>':'';output.innerHTML='<div class="zx-out-row"><span>配平结果</span><strong>'+r.equation+'</strong></div><div class="zx-out-row"><span>系数比</span><span>'+r.coeff.join(' : ')+'</span></div><div class="zx-out-row"><span>守恒校验</span><span>元素原子数'+(r.elements.includes('__charge')?'及总电荷':'')+'均相等</span></div>'+chemistryWarning+'<div class="zx-out-row"><span>对应离子方程式</span><strong>'+ion+'</strong></div>';}catch(e){output.textContent=e.message||'配平失败，请检查输入。';}}
           document.getElementById('chemBalanceBtn').addEventListener('click',render);
           document.querySelectorAll('[data-chem]').forEach(b=>b.addEventListener('click',()=>{input.value=b.getAttribute('data-chem');render();}));
