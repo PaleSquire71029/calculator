@@ -214,7 +214,7 @@
 
 /* Chemistry keyboard docks to the same bottom position as the math keypad */
 @media(max-width:768px){
-  [data-view="chemistry"] #chemKeyboard:not([hidden]){
+  #chemKeyboard:not([hidden]){
     position:fixed!important;z-index:95!important;left:0!important;right:0!important;bottom:0!important;
     width:100%!important;max-width:none!important;max-height:min(58dvh,520px)!important;overflow:auto!important;
     margin:0!important;padding:10px max(12px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))!important;
@@ -222,27 +222,27 @@
     background:rgba(13,16,21,.99)!important;box-shadow:0 -8px 28px rgba(0,0,0,.35)!important;
     overscroll-behavior:contain;
   }
-  [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(5,minmax(0,1fr))}
-  [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:42px}
-  [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-tools{position:sticky;top:0;z-index:2;background:#0d1015;padding-bottom:7px}
+  #chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(5,minmax(0,1fr))}
+  #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:42px}
+  #chemKeyboard:not([hidden]) .zx-chem-tools{position:sticky;top:0;z-index:2;background:#0d1015;padding-bottom:7px}
 }
 [data-view="chemistry"] .view-head-mark i.fa-flask{font-size:0!important}
 [data-view="chemistry"] .view-head-mark i.fa-flask::before{content:"⚗";font-family:system-ui,sans-serif;font-size:30px;line-height:1}
 
 
 /* Responsive chemistry workspace: mobile fullscreen/landscape, tablet and desktop share layout */
-@media(max-width:768px){body.zx-chem-fullscreen-active{overflow:hidden!important}[data-view="chemistry"] #chemKeyboard:not([hidden]){max-height:min(66dvh,560px)!important}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:clamp(36px,6.2dvh,48px)}}
-@media(max-width:768px) and (orientation:landscape){[data-view="chemistry"] #chemKeyboard:not([hidden]){max-height:calc(100dvh - 12px)!important;padding:6px max(10px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-tools{gap:6px;padding-bottom:4px}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;margin-top:5px}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:34px;padding:3px;font-size:13px}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button small{font-size:8px}}
-@media(min-width:769px){[data-view="chemistry"] #chemKeyboard:not([hidden]){width:100%;max-width:100%;box-sizing:border-box}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(10,minmax(0,1fr));gap:8px}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:48px}}
-@media(min-width:769px) and (max-width:1100px){[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}[data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:42px}}
+@media(max-width:768px){body.zx-chem-fullscreen-active{overflow:hidden!important}#chemKeyboard:not([hidden]){max-height:min(66dvh,560px)!important}#chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:clamp(36px,6.2dvh,48px)}}
+@media(max-width:768px) and (orientation:landscape){#chemKeyboard:not([hidden]){max-height:calc(100dvh - 12px)!important;padding:6px max(10px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important}#chemKeyboard:not([hidden]) .zx-chem-tools{gap:6px;padding-bottom:4px}#chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;margin-top:5px}#chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:34px;padding:3px;font-size:13px}#chemKeyboard:not([hidden]) .zx-chem-symbols button small{font-size:8px}}
+@media(min-width:769px){#chemKeyboard:not([hidden]){width:100%;max-width:100%;box-sizing:border-box}#chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(10,minmax(0,1fr));gap:8px}#chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:48px}}
+@media(min-width:769px) and (max-width:1100px){#chemKeyboard:not([hidden]) .zx-chem-symbols{grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}#chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:42px}}
 
 
 /* Native keyboard action stays visible inside the fixed chemistry keypad */
 .zx-chem-ime-inline{display:none!important}
 @media(max-width:768px){
  .zx-chem-ime-inline{display:inline-flex!important;min-height:40px;white-space:nowrap}
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-tools{display:flex;flex-wrap:wrap;align-items:center}
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-search{flex:1 1 150px;min-width:0}
+ #chemKeyboard:not([hidden]) .zx-chem-tools{display:flex;flex-wrap:wrap;align-items:center}
+ #chemKeyboard:not([hidden]) .zx-chem-search{flex:1 1 150px;min-width:0}
 }
 
 </style>
@@ -694,53 +694,53 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
 
 /* 化学键盘移动端重排：固定工具栏 + 独立滚动按键区，避免键盘盖住输入页面 */
 @media(max-width:768px){
- [data-view="chemistry"] #chemKeyboard:not([hidden]){
+ #chemKeyboard:not([hidden]){
   display:flex!important;flex-direction:column;gap:8px;
   box-sizing:border-box;height:min(66dvh,590px);max-height:calc(100dvh - 18px)!important;
   padding:10px max(12px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))!important;
   overflow:hidden!important;border:1px solid #343d4b!important;border-bottom:0!important;
   border-radius:18px 18px 0 0!important;background:#0e1219!important;
  }
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-tools{
+ #chemKeyboard:not([hidden]) .zx-chem-tools{
   display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;
   flex:0 0 auto;margin:0;padding:0 0 8px;background:#0e1219;border-bottom:1px solid #28303b;
  }
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-ime-inline{display:none!important}
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-search{
+ #chemKeyboard:not([hidden]) .zx-chem-ime-inline{display:none!important}
+ #chemKeyboard:not([hidden]) .zx-chem-search{
   width:100%;min-width:0;height:42px;box-sizing:border-box;font-size:14px!important;
  }
- [data-view="chemistry"] #chemKeyboard:not([hidden]) #chemKeyboardClose{
+ #chemKeyboard:not([hidden]) #chemKeyboardClose{
   min-height:42px;padding:0 12px;white-space:nowrap;font-size:13px;
  }
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-tabs{
+ #chemKeyboard:not([hidden]) .zx-chem-tabs{
   display:grid;grid-template-columns:1fr 1fr;gap:7px;flex:0 0 auto;margin:0;
  }
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-tabs button{
+ #chemKeyboard:not([hidden]) .zx-chem-tabs button{
   min-height:38px;border-radius:9px;font-size:13px;
  }
- [data-view="chemistry"] #chemKeyboard:not([hidden]) #chemElementPanel,
- [data-view="chemistry"] #chemKeyboard:not([hidden]) #chemSymbolPanel{
+ #chemKeyboard:not([hidden]) #chemElementPanel,
+ #chemKeyboard:not([hidden]) #chemSymbolPanel{
   min-height:0;flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;padding-bottom:4px;
  }
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{
+ #chemKeyboard:not([hidden]) .zx-chem-symbols{
   display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:0;padding:2px 1px 8px;
  }
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{
+ #chemKeyboard:not([hidden]) .zx-chem-symbols button{
   display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;
   min-width:0;min-height:clamp(44px,7dvh,54px);padding:4px 2px;border-radius:10px;
   font-size:16px;line-height:1.15;overflow:hidden;
  }
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button small{
+ #chemKeyboard:not([hidden]) .zx-chem-symbols button small{
   max-width:100%;font-size:10px;line-height:1.15;white-space:nowrap;
  }
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbol-grid button{min-height:50px}
+ #chemKeyboard:not([hidden]) .zx-chem-symbol-grid button{min-height:50px}
 }
 @media(max-width:380px){
- [data-view="chemistry"] #chemKeyboard:not([hidden]){height:64dvh}
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols{gap:4px}
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:42px;font-size:15px}
- [data-view="chemistry"] #chemKeyboard:not([hidden]) .zx-chem-symbols button small{font-size:9px}
+ #chemKeyboard:not([hidden]){height:64dvh}
+ #chemKeyboard:not([hidden]) .zx-chem-symbols{gap:4px}
+ #chemKeyboard:not([hidden]) .zx-chem-symbols button{min-height:42px;font-size:15px}
+ #chemKeyboard:not([hidden]) .zx-chem-symbols button small{font-size:9px}
 }
 
 </style>
@@ -3962,6 +3962,34 @@ function zxFnAdvance(f,xValue,rangeText){
 
         /* ==================================================================
            十一、启动           ================================================================== */
+        /* 手机端把化学键盘挂到 body 下（硬修法）。
+           键盘靠 #chemKeyboard:not([hidden]){position:fixed;bottom:0} 贴底，而它在
+           .view-card 内部；只要祖先里出现 filter/backdrop-filter/transform（哪怕只是
+           入场动画的一帧、或 WebView 把动画时间线冻住），这个祖先就成为 fixed 元素的
+           包含块，键盘会被关进卡片、落在卡片内容盒下沿（页脚之上）。
+           数学键盘由 JS 直接 appendChild 到 body，从来没有这个问题 —— 这里让化学键盘
+           走同一条路。桌面（≥769px）键盘是卡片里的内联面板，位置保持不动。 */
+        function dockChemKeyboard(){
+            const kb=document.getElementById('chemKeyboard');
+            if(!kb)return;
+            const home=kb.parentNode,anchor=kb.nextSibling;
+            const mq=window.matchMedia('(max-width:768px)');
+            function place(){
+                try{
+                    if(mq.matches){
+                        if(kb.parentNode!==document.body)document.body.appendChild(kb);
+                    }else if(kb.parentNode===document.body){
+                        home.insertBefore(kb,anchor);
+                    }
+                }catch(e){/* DOM 结构异常时保持现状，不折腾 */}
+            }
+            place();
+            if(mq.addEventListener)mq.addEventListener('change',place);
+            else if(mq.addListener)mq.addListener(place);
+            window.addEventListener('resize',place);
+            window.addEventListener('orientationchange',place);
+        }
+
         function boot() {
             /* 移动端功能菜单：桌面端保持原侧栏，移动端通过右上角按钮打开。 */
             const mobileMenuToggle = $('mobileMenuToggle');
@@ -4018,6 +4046,7 @@ function zxFnAdvance(f,xValue,rangeText){
 
             initSolveKeypad();
             initMobileMathPad();
+            dockChemKeyboard();
             initBasic();
             initEquation();
             initInequality();
