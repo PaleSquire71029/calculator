@@ -1117,10 +1117,9 @@ html::after{
    transform/opacity/box-shadow，避免布局抖动。
    全部在文件末尾的 prefers-reduced-motion 块里被一键关掉。 */
 /* 视图卡片进场：淡入 + 上浮 + 去模糊（切换视图时自动重放）
-   终点写 filter:none（而不是 blur(0)）：动画用 both 保持终态，若终态是 blur(0)
-   会让每张卡片永久持有一个 filter，等于永久提升为合成层、并成为 fixed 子元素的
-   包含块。写成 none 则动画结束后不再有 filter。 */
-.view.is-active .view-card{animation:zxGlassIn .5s var(--zx-ease) both}
+   ⚠ 只给桌面（≥769px）。移动端整条祖先链在文件末尾第 19 节被强行压成
+   transform/filter:none —— 原因见第 19 节注释（包含块坑）。 */
+@media(min-width:769px){.view.is-active .view-card{animation:zxGlassIn .5s var(--zx-ease) both}}
 @keyframes zxGlassIn{
   from{opacity:0;transform:translateY(14px) scale(.988);filter:blur(7px)}
   to  {opacity:1;transform:none;filter:none}
@@ -1251,6 +1250,43 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
   font-family:var(--zx-font);font-size:11px;line-height:1.5;cursor:pointer;
 }
 .zx-chem-suggest-cancel:hover{background:rgba(var(--zx-cyan-rgb),.20)}
+
+/* ── 19. 移动端：化学键盘的祖先链上不许出现「包含块」属性 ──────────────────
+   症状：手机上化学键盘（元素 / 方程式符号键盘）贴不住屏幕底边，而是被关进视图
+   卡片里、贴在卡片内容盒的下沿（数学键盘一直正常 —— 它由 JS 直接挂在 body 上）。
+   根因：filter / -webkit-filter / backdrop-filter / transform / perspective /
+   will-change:transform / contain:paint 只要不是 none，该元素就成为其**后代**里
+   position:fixed 元素的包含块。键盘靠下面这条规则贴底：
+     @media(max-width:768px) [data-view="chemistry"] #chemKeyboard:not([hidden]){
+       position:fixed!important; left/right:0!important; bottom:0!important }
+   而它的祖先链是
+     html > body > .zx-layout > main > section.view > div.glass-panel.view-card > #chemKeyboard
+   —— 卡片一旦带上 transform/filter（入场动画 zxGlassIn 的 fill:both 常驻；WebView
+   把动画时间线冻住时更是长期停在动画态），fixed 的键盘就被关进卡片。
+   Chromium 明确规定：动画中的 transform 即使值等于 none，也照样是包含块
+   （issues.chromium.org/issues/41344340），所以「终态写成 none」解不了套。
+   修法：移动端把这条链上的相关属性用 !important 压成 none —— 作者 !important
+   声明优先于动画，动画期间也不会形成包含块。键盘自身外观不受影响（第 3 节已把
+   化学键盘 trio 从描边组摘出，恢复原版灰面板）。 */
+@media(max-width:768px){
+  html,
+  body,
+  .zx-layout,
+  .zx-layout > main,
+  section.view,
+  section.view > .view-card,
+  [data-view="chemistry"] .view-card,
+  #chemKeyboard{
+    transform:none!important;
+    filter:none!important;
+    -webkit-filter:none!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+    will-change:auto!important;
+    perspective:none!important;
+    contain:none!important;
+  }
+}
 </style>
 </head>
 <body class="text-slate-300 antialiased">
