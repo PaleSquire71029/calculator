@@ -1042,12 +1042,18 @@ h1,h2,h3,.view-title,.zx-brand,.workspace-title,.zx-result-title,.zx-menu-title,
    第 1 节已把画布做成多层金色极光 + 网格，第 14 节再加一层漂移的极光，
    正是玻璃的取景对象。
    性能取舍：只在「大块、浮在内容之上」的表面上开 backdrop-filter（导航、
-   侧栏、卡片、结果面板、底部键盘、下拉框）；按钮/芯片/按键这种小控件不开，
-   否则一屏几十个模糊层会让中低端机掉帧。 */
+   侧栏、结果面板、底部键盘、下拉框）；按钮/芯片/按键这种小控件不开，
+   否则一屏几十个模糊层会让中低端机掉帧。
+   【卡片 .glass-panel / .view-card 不进模糊组（2026-10 实测）】
+   backdrop-filter / filter 只要不是 none，该元素就**成为其后代中
+   position:fixed 元素的包含块**。手机上的化学键盘正是
+   `.view-card > #chemKeyboard`，靠
+   `[data-view="chemistry"] #chemKeyboard:not([hidden]){position:fixed!important;
+   left/right/bottom:0}` 贴底停靠；卡片一旦被糊住，键盘就被困在卡片里、
+   不再贴着视口底边（用户报「移动端化学键盘怎么变了」）。卡片本身是
+   半透明渐变底 + 斜向高光（下方两条规则），视觉上并不依赖模糊。 */
 .zx-header,
 .zx-menu,
-.glass-panel,
-.view-card,
 .zx-out,
 .zx-result-head,
 .zx-mobile-mathpad.is-visible,
@@ -1200,7 +1206,7 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
 }
 /* 中低端机：模糊半径减半、漂移变慢、减少同时运行的循环动效 */
 @media(max-width:768px){
-  .zx-header,.zx-menu,.glass-panel,.view-card,.zx-out,.zx-result-head,
+  .zx-header,.zx-menu,.zx-out,.zx-result-head,
   .zx-mobile-mathpad.is-visible,.structured-select select,.zx-chem-search input{
     -webkit-backdrop-filter:blur(10px) saturate(140%);
             backdrop-filter:blur(10px) saturate(140%);
