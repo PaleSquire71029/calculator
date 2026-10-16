@@ -1501,8 +1501,8 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
 }
 @supports (backdrop-filter:url(#zx-menu-liquid-filter)){
   .zx-menu.glass-panel{
-    -webkit-backdrop-filter:url(#zx-menu-liquid-filter) blur(5px) saturate(1.72) contrast(1.06);
-    backdrop-filter:url(#zx-menu-liquid-filter) blur(5px) saturate(1.72) contrast(1.06);
+    -webkit-backdrop-filter:url(#zx-menu-liquid-filter) blur(1.6px) saturate(1.72) contrast(1.06);
+    backdrop-filter:url(#zx-menu-liquid-filter) blur(1.6px) saturate(1.72) contrast(1.06);
   }
 }
 .zx-menu.glass-panel::before{
@@ -1598,8 +1598,8 @@ html.light .zx-menu.glass-panel{
 }
 @supports (backdrop-filter:url(#zx-menu-liquid-filter)){
   html.light .zx-menu.glass-panel{
-    -webkit-backdrop-filter:url(#zx-menu-liquid-filter) blur(5px) saturate(1.6) contrast(1.03);
-    backdrop-filter:url(#zx-menu-liquid-filter) blur(5px) saturate(1.6) contrast(1.03);
+    -webkit-backdrop-filter:url(#zx-menu-liquid-filter) blur(1.6px) saturate(1.6) contrast(1.03);
+    backdrop-filter:url(#zx-menu-liquid-filter) blur(1.6px) saturate(1.6) contrast(1.03);
   }
 }
 html.light .zx-menu .zx-menu-title{color:rgba(45,60,80,.62)}
@@ -4413,14 +4413,7 @@ function zxFnAdvance(f,xValue,rangeText){
     <filter id="zx-menu-liquid-filter" filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox"
       x="-0.06" y="-0.06" width="1.12" height="1.12" color-interpolation-filters="sRGB">
       <feImage id="zx-menu-liquid-map" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="edgeMap"/>
-      <feDisplacementMap in="SourceGraphic" in2="edgeMap" scale="0.055" xChannelSelector="R" yChannelSelector="G" result="redBent"/>
-      <feDisplacementMap in="SourceGraphic" in2="edgeMap" scale="0.050" xChannelSelector="R" yChannelSelector="G" result="greenBent"/>
-      <feDisplacementMap in="SourceGraphic" in2="edgeMap" scale="0.045" xChannelSelector="R" yChannelSelector="G" result="blueBent"/>
-      <feColorMatrix in="redBent" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redOnly"/>
-      <feColorMatrix in="greenBent" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenOnly"/>
-      <feColorMatrix in="blueBent" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueOnly"/>
-      <feBlend in="redOnly" in2="greenOnly" mode="screen" result="redGreen"/>
-      <feBlend in="redGreen" in2="blueOnly" mode="screen"/>
+      <feDisplacementMap in="SourceGraphic" in2="edgeMap" scale="26" xChannelSelector="R" yChannelSelector="G"/>
     </filter>
   </defs>
 </svg>
@@ -4478,7 +4471,7 @@ function zxFnAdvance(f,xValue,rangeText){
           nx=sx*qx/len;ny=sy*qy/len;
         }else if(qx>qy){nx=sx}
         else{ny=sy}
-        var offset=(y*w+x)*4,amp=54*weight;
+        var offset=(y*w+x)*4,amp=66*weight;
         data[offset]=Math.max(0,Math.min(255,128+nx*amp));
         data[offset+1]=Math.max(0,Math.min(255,128+ny*amp));
         data[offset+2]=128;
