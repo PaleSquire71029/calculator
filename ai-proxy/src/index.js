@@ -195,6 +195,15 @@ export default {
     try { result = JSON.parse(text); } catch { result = null; }
     if (!upstream.ok) {
       const upstreamMessage = result?.error?.message;
+      if (upstream.status === 401) {
+        return json({ error: "模型服务鉴权失败（上游 401）。请检查 Cloudflare Worker 的 AI_API_KEY 是否有效、是否已过期，以及密钥是否属于 AI_BASE_URL 对应的服务商。若换过服务商，必须同时核对 AI_BASE_URL、AI_MODEL 和 AI_API_KEY；不要把密钥填进网页。", code: "UPSTREAM_AUTH_FAILED" }, 502, cors);
+      }
+      if (upstream.status === 403) {
+        return json({ error: "模型服务拒绝访问（上游 403）。请检查账号权限、余额/配额、模型访问权限及地区限制。", code: "UPSTREAM_ACCESS_DENIED" }, 502, cors);
+      }
+      if (upstream.status === 404) {
+        return json({ error: "模型接口或模型名称不存在（上游 404）。请核对 AI_BASE_URL 是否为服务商的 API 根地址，以及 AI_MODEL 是否为该服务商支持的模型 ID。", code: "UPSTREAM_MODEL_NOT_FOUND" }, 502, cors);
+      }
       return json({ error: "模型服务返回错误（" + upstream.status + "）：" + (typeof upstreamMessage === "string" ? upstreamMessage.slice(0, 500) : "请检查模型名称、API 地址和密钥。") }, 502, cors);
     }
     const answer = result?.choices?.[0]?.message?.content;
