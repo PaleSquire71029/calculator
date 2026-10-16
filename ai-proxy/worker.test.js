@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { Script } from "node:vm";
 import worker from "./src/index.js";
 
 const origin = "https://c.zhixing.us.ci";
@@ -74,4 +76,12 @@ test("forwards a valid request to the OpenAI-compatible endpoint", async () => {
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test("AI frontend inline JavaScript parses without syntax errors", () => {
+  const html = readFileSync(new URL("../ai.html", import.meta.url), "utf8");
+  const start = html.lastIndexOf("<script>");
+  const end = html.lastIndexOf("</script>");
+  assert.ok(start >= 0 && end > start, "inline script must exist");
+  assert.doesNotThrow(() => new Script(html.slice(start + 8, end)));
 });
