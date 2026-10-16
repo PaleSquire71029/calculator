@@ -1288,6 +1288,75 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
   }
 }
 </style>
+
+<style id="zx-mobile-refine-2026">
+/* Mobile refinement: compact workspace, readable controls, keypad-aware scrolling. */
+@media (max-width:768px){
+  html,body{width:100%;max-width:100%;overflow-x:clip;overscroll-behavior-x:none}
+  .zx-header{position:sticky;top:0;z-index:80;padding-top:env(safe-area-inset-top);background:rgba(11,13,16,.97)}
+  .zx-header-inner{min-height:58px;padding:8px 12px;gap:10px}
+  .zx-brand{gap:9px}
+  .zx-brand-mark{width:36px;height:36px;border-radius:11px}
+  .zx-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:12px 10px calc(24px + env(safe-area-inset-bottom));}
+  .zx-layout>main,.view,.view-card{min-width:0;max-width:100%}
+  .view-card,.glass-panel.view-card{padding:14px!important;border-radius:14px!important}
+  .view-head{gap:10px;margin-bottom:14px;padding-bottom:12px}
+  .view-head-mark{width:38px;height:38px;flex-basis:38px;border-radius:11px;font-size:15px}
+  .view-title{font-size:16px;line-height:1.4}
+  .view-sub{font-size:11px;line-height:1.6}
+  .zx-label{margin-bottom:7px;font-size:11px;letter-spacing:.02em}
+  .zx-field,.structured-select select,.structured-field input,
+  input[data-math-field],input[data-custom-expression],select{
+    min-width:0;max-width:100%;font-size:16px!important;
+  }
+  .zx-field{min-height:46px;padding:10px 11px}
+  .structured-coefficients{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .structured-points{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .structured-point{min-width:0;padding:8px!important}
+  .structured-field input{height:46px!important;padding:8px!important}
+  .zx-btn,.zx-chip,.solve-mode-tab,.structured-mode-tabs button{min-height:42px}
+  .zx-out,.function-graph,.function-graph svg,.structured-equation{max-width:100%;overflow-wrap:anywhere}
+  .function-graph svg{height:auto}
+  .zx-mobile-mathpad.is-visible{
+    position:fixed!important;left:0!important;right:0!important;bottom:0!important;
+    z-index:100!important;width:100%!important;max-height:min(43dvh,340px)!important;
+    overflow-y:auto!important;overscroll-behavior:contain;
+    padding:8px max(10px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important;
+    border-radius:15px 15px 0 0!important;border:1px solid #353c46!important;border-bottom:0!important;
+    background:rgba(13,16,21,.985)!important;box-shadow:0 -10px 30px rgba(0,0,0,.42)!important;
+  }
+  .zx-mobile-mathpad-head{margin-bottom:5px!important}
+  .zx-mathpad-tabs{position:sticky;top:0;z-index:1;background:rgba(13,16,21,.985);padding:5px 0 7px!important}
+  .zx-mathpad-tabs button{min-height:35px!important}
+  .zx-mobile-mathpad-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important}
+  .zx-mobile-mathpad-grid button{min-width:0;min-height:42px!important;height:42px;border-radius:10px!important;font-size:16px!important}
+  .zx-mobile-mathpad-grid button[data-value="NEXT"]{font-size:12px!important;white-space:nowrap}
+  .zx-mobile-mathpad-grid button[data-value="CLEAR"],
+  .zx-mobile-mathpad-grid button[data-value="DEL"]{font-size:13px!important}
+  body.zx-mathpad-open{padding-bottom:0!important}
+  .view.is-active input[data-math-field],.view.is-active input[data-custom-expression]{scroll-margin-top:76px!important;scroll-margin-bottom:calc(44dvh + 16px)!important}
+  #calcInput{min-height:54px!important}
+  .calc-screen{min-width:0}
+  .zx-unit-row{gap:7px}
+  .zx-unit-row .zx-field{min-width:0}
+}
+@media (max-width:390px){
+  .zx-layout{padding-left:8px;padding-right:8px}
+  .view-card,.glass-panel.view-card{padding:12px!important}
+  .view-head-mark{width:34px;height:34px;flex-basis:34px}
+  .structured-points{gap:6px!important}
+  .structured-point{padding:6px!important}
+  .zx-mobile-mathpad-grid{gap:5px!important}
+}
+@media (max-width:768px) and (orientation:landscape){
+  .zx-header-inner{min-height:50px;padding-top:5px;padding-bottom:5px}
+  .zx-layout{padding-top:8px}
+  .view-head{margin-bottom:10px;padding-bottom:9px}
+  .zx-mobile-mathpad.is-visible{max-height:52dvh!important}
+  .zx-mobile-mathpad-grid button{min-height:36px!important;height:36px}
+}
+</style>
+
 </head>
 <body class="text-slate-300 antialiased">
 
@@ -2863,7 +2932,7 @@ function zxEvalArithmetic(src) {
                 const changed=active!==el;
                 active=el;el.readOnly=true;
                 if(changed){try{el.setSelectionRange(el.value.length,el.value.length);}catch(err){}}
-                const label=el.getAttribute('aria-label')||el.getAttribute('data-math-field')||'数学输入';
+                try{el.scrollIntoView({block:'center',behavior:'smooth'});}catch(err){};const label=el.getAttribute('aria-label')||el.getAttribute('data-math-field')||'数学输入';
                 const lab=document.getElementById('zxMathPadLabel');if(lab)lab.textContent='输入：'+label;
                 pad.classList.add('is-visible');document.body.classList.add('zx-mathpad-open');
             }
