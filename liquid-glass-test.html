@@ -29,11 +29,11 @@ h1{margin:0;font-size:clamp(26px,4vw,48px);line-height:1.08;letter-spacing:-.045
 .scene{position:absolute;inset:0;overflow:hidden;background:linear-gradient(118deg,#18253b 0%,#273552 24%,#542c57 55%,#db8b72 100%)}
 .scene::before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(5,9,18,.46),transparent 54%,rgba(5,9,18,.04)),repeating-linear-gradient(0deg,transparent 0 39px,#fff1 40px),repeating-linear-gradient(90deg,transparent 0 39px,#fff1 40px);opacity:.72}
 .scene::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 68% 44%,transparent 8%,rgba(5,9,18,.07) 62%,rgba(5,9,18,.48) 100%)}
-.orb{position:absolute;border-radius:50%;filter:blur(1px);will-change:transform}
+.orb{position:absolute;border-radius:50%;will-change:transform}
 .orb.a{width:420px;height:420px;left:-95px;top:85px;background:radial-gradient(circle at 34% 32%,#8de6ff 0,#3e82bb 22%,#2655a1 48%,#293a70 72%,transparent 73%);opacity:.9;animation:float-a 21s ease-in-out infinite alternate}
 .orb.b{width:410px;height:410px;right:110px;top:-120px;background:radial-gradient(circle at 34% 32%,#ffeac3 0,#e79a88 25%,#a95e8c 54%,#633c80 72%,transparent 73%);opacity:.92;animation:float-b 25s ease-in-out infinite alternate}
 .orb.c{width:370px;height:370px;right:-110px;bottom:-130px;background:radial-gradient(circle at 35% 35%,#ffc7a2 0,#ff8f7c 25%,#c44d77 51%,#81406d 72%,transparent 73%);opacity:.95;animation:float-c 23s ease-in-out infinite alternate}
-.orb.d{width:300px;height:300px;left:28%;bottom:-190px;background:radial-gradient(circle at 35% 35%,#a7e2d0 0,#398d99 33%,#245778 63%,transparent 73%);opacity:.72}
+.orb.d{display:none}
 @keyframes float-a{to{transform:translate(60px,-26px) scale(1.07)}}
 @keyframes float-b{to{transform:translate(-50px,70px) scale(.93)}}
 @keyframes float-c{to{transform:translate(-72px,-48px) scale(1.1)}}
@@ -104,6 +104,7 @@ input[type=range]{display:block;width:100%;accent-color:#dfc18b;cursor:pointer}
 .full-lens .lens-pane::before{background:radial-gradient(ellipse at var(--pointer-x) var(--pointer-y),rgba(255,255,255,.21),transparent 44%),linear-gradient(142deg,rgba(255,255,255,.16),transparent 20%,transparent 66%,rgba(255,255,255,.065))}
 .full-lens .lens-pane::after{opacity:calc(var(--rim) * 1.15)}
 .no-motion .orb{animation:none!important}
+@media(max-width:700px){.orb.a,.orb.b,.orb.c{animation:none}.orb{will-change:auto}.lens-pane{backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px) saturate(1.2)}}
 @media(max-width:900px){
  .intro{align-items:start}.intro-side{display:none}
  .stage{height:690px;min-height:690px}
@@ -287,7 +288,7 @@ input[type=range]{display:block;width:100%;accent-color:#dfc18b;cursor:pointer}
     var height=Math.max(200,Math.round(rect.height));
     if(width<80||height<100)return;
     var pad=Math.max(48,Math.round(Math.max(width,height)*.16));
-    var dpr=Math.min(1.5,window.devicePixelRatio||1);
+    var dpr=window.matchMedia('(max-width:700px)').matches?0.38:0.58;
     var key=[width,height,pad,dpr,Math.round(Number(rim.value)/10)].join(':');
     if(key===lastMapKey)return;
     lastMapKey=key;
@@ -297,8 +298,8 @@ input[type=range]{display:block;width:100%;accent-color:#dfc18b;cursor:pointer}
     var image=ctx.createImageData(canvas.width,canvas.height);
     var data=image.data;
     var radius=Math.min(parseFloat(getComputedStyle(pane).borderTopLeftRadius)||24,width*.13,height*.1);
-    var depth=12+(Number(rim.value)/100)*22;
-    var amplitude=22+(Number(strength.value)/100)*35;
+    var depth=10+(Number(rim.value)/100)*14;
+    var amplitude=12+(Number(strength.value)/100)*22;
     var cx=width/2,cy=height/2;
     for(var py=0;py<canvas.height;py++){
       var y=py/dpr-pad;
@@ -325,7 +326,7 @@ input[type=range]{display:block;width:100%;accent-color:#dfc18b;cursor:pointer}
       }
     }
     ctx.putImageData(image,0,0);
-    setMap(canvas.toDataURL('image/png'));
+    try{setMap(canvas.toDataURL('image/webp',0.68))}catch(e){setMap(canvas.toDataURL('image/png'))}
     filter.setAttribute('x',-pad);
     filter.setAttribute('y',-pad);
     filter.setAttribute('width',fullW);
@@ -336,7 +337,7 @@ input[type=range]{display:block;width:100%;accent-color:#dfc18b;cursor:pointer}
     mapImage.setAttribute('height',fullH);
   }
   function scheduleMap(){
-    if(frame)cancelAnimationFrame(frame);
+    if(frame)return;
     frame=requestAnimationFrame(function(){frame=0;makeMap()});
   }
   function update(){
@@ -351,12 +352,11 @@ input[type=range]{display:block;width:100%;accent-color:#dfc18b;cursor:pointer}
     edgeReadout.textContent=Math.round(12+(r/100)*22)+' px';
     document.documentElement.style.setProperty('--frost',(0.07+f/100*.34).toFixed(3));
     document.documentElement.style.setProperty('--rim',(r/100).toFixed(2));
-    var base=-(s*.95);
+    var base=-(s*.68);
     document.getElementById('zxDispR').setAttribute('scale',base);
-    document.getElementById('zxDispG').setAttribute('scale',base+c*.55);
-    document.getElementById('zxDispB').setAttribute('scale',base+c*1.1);
-    lastMapKey='';
-    scheduleMap();
+    document.getElementById('zxDispG').setAttribute('scale',base+c*.22);
+    document.getElementById('zxDispB').setAttribute('scale',base+c*.42);
+    if(update.needsMap){lastMapKey='';scheduleMap();update.needsMap=false;}
     if(s===0&&supportsLens){
       effectTitle.textContent='折射强度为 0';
       effectText.textContent='这是对照组：真实位移已经关闭。把折射强度调高后，比较边缘网格的变化。';
@@ -379,7 +379,11 @@ input[type=range]{display:block;width:100%;accent-color:#dfc18b;cursor:pointer}
       document.getElementById('engineStatusText').textContent='兼容回退 · 无法保证真实折射';
     }
   }
-  [strength,chroma,frost,rim].forEach(function(el){el.addEventListener('input',update)});
+  strength.addEventListener('input',function(){update.needsMap=true;update()});
+  rim.addEventListener('input',function(){update.needsMap=true;update()});
+  chroma.addEventListener('input',update);
+  frost.addEventListener('input',update);
+  update.needsMap=true;
   document.getElementById('resetBtn').addEventListener('click',function(){
     strength.value='64';chroma.value='8';frost.value='17';rim.value='85';
     isHighContrast=false;
