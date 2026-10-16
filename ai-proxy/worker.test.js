@@ -78,6 +78,26 @@ test("forwards a valid request to the OpenAI-compatible endpoint", async () => {
   }
 });
 
+test("general chat remains compatible with the AI learning edition", async () => {
+  const originalFetch = globalThis.fetch;
+  let sentBody;
+  globalThis.fetch = async (url, init) => {
+    sentBody = JSON.parse(init.body);
+    return new Response(JSON.stringify({
+      model: "vision-model",
+      choices: [{ message: { content: "可以，我会按题目条件逐步分析。" } }]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    const response = await worker.fetch(req({ mode: "general", messages: [userMessage] }, "198.51.100.18"), env);
+    assert.equal(response.status, 200);
+    assert.match(sentBody.messages[0].content, /多学科学习助手/);
+    assert.equal(sentBody.messages[1].content, userMessage.content);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("structured AI analysis uses the shared Worker prompt template", async () => {
   const originalFetch = globalThis.fetch;
   let sentBody;
