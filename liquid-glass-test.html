@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d14">
+<title>知行 · Liquid Glass 光学实验室</title>
+<style>
+:root{color-scheme:dark;--bg:#090c13;--ink:#f2f5fb;--muted:#a3adbf;--gold:#f3d5a0;--frost:.17;--rim:.85;--edge-depth:22px;--pointer-x:40%;--pointer-y:0%}
+*{box-sizing:border-box}
+html{min-height:100%;background:var(--bg)}
+body{margin:0;min-height:100vh;color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","Microsoft YaHei",sans-serif;background:radial-gradient(ellipse at 12% 2%,rgba(43,90,164,.2),transparent 34rem),radial-gradient(ellipse at 90% 30%,rgba(127,49,104,.18),transparent 34rem),#090c13;overflow-x:hidden}
+button,input{font:inherit}
+button{color:inherit}
+a{color:inherit}
+.page{width:min(1320px,100%);margin:0 auto;padding:calc(22px + env(safe-area-inset-top)) clamp(14px,3vw,38px) calc(42px + env(safe-area-inset-bottom))}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:30px}
+.brand{display:flex;align-items:center;gap:11px;font-size:12px;letter-spacing:.12em;font-weight:800}
+.brand-mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.23);background:linear-gradient(145deg,rgba(255,255,255,.18),rgba(255,255,255,.025));box-shadow:inset 0 1px rgba(255,255,255,.22),0 7px 24px #0005}
+.brand-mark svg{width:18px;height:18px}
+.status{display:flex;align-items:center;gap:8px;max-width:60%;border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:8px 12px;color:#c4ccda;background:#ffffff08;font-size:11px;line-height:1.35}
+.status-dot{width:7px;height:7px;flex:none;border-radius:50%;background:#e3b673;box-shadow:0 0 12px #e3b67399}
+.intro{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:20px}
+.eyebrow{margin:0 0 8px;color:#d4b989;font-size:10px;font-weight:800;letter-spacing:.23em}
+h1{margin:0;font-size:clamp(26px,4vw,48px);line-height:1.08;letter-spacing:-.045em;font-weight:650}
+.intro-copy{max-width:460px;margin:12px 0 0;color:#9aa5b8;font-size:13px;line-height:1.75}
+.intro-side{flex:none;color:#7f8b9f;font-size:10px;letter-spacing:.14em;text-align:right;line-height:1.8}
+.stage{height:660px;min-height:620px;position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(255,255,255,.13);border-radius:28px;background:#101827;box-shadow:0 35px 90px #0008,inset 0 1px #ffffff15}
+.scene{position:absolute;inset:0;overflow:hidden;background:linear-gradient(118deg,#18253b 0%,#273552 24%,#542c57 55%,#db8b72 100%)}
+.scene::before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(5,9,18,.46),transparent 54%,rgba(5,9,18,.04)),repeating-linear-gradient(0deg,transparent 0 39px,#fff1 40px),repeating-linear-gradient(90deg,transparent 0 39px,#fff1 40px);opacity:.72}
+.scene::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 68% 44%,transparent 8%,rgba(5,9,18,.07) 62%,rgba(5,9,18,.48) 100%)}
+.orb{position:absolute;border-radius:50%;filter:blur(1px);will-change:transform}
+.orb.a{width:420px;height:420px;left:-95px;top:85px;background:radial-gradient(circle at 34% 32%,#8de6ff 0,#3e82bb 22%,#2655a1 48%,#293a70 72%,transparent 73%);opacity:.9;animation:float-a 21s ease-in-out infinite alternate}
+.orb.b{width:410px;height:410px;right:110px;top:-120px;background:radial-gradient(circle at 34% 32%,#ffeac3 0,#e79a88 25%,#a95e8c 54%,#633c80 72%,transparent 73%);opacity:.92;animation:float-b 25s ease-in-out infinite alternate}
+.orb.c{width:370px;height:370px;right:-110px;bottom:-130px;background:radial-gradient(circle at 35% 35%,#ffc7a2 0,#ff8f7c 25%,#c44d77 51%,#81406d 72%,transparent 73%);opacity:.95;animation:float-c 23s ease-in-out infinite alternate}
+.orb.d{width:300px;height:300px;left:28%;bottom:-190px;background:radial-gradient(circle at 35% 35%,#a7e2d0 0,#398d99 33%,#245778 63%,transparent 73%);opacity:.72}
+@keyframes float-a{to{transform:translate(60px,-26px) scale(1.07)}}
+@keyframes float-b{to{transform:translate(-50px,70px) scale(.93)}}
+@keyframes float-c{to{transform:translate(-72px,-48px) scale(1.1)}}
+.scene-copy{position:absolute;z-index:1;left:clamp(24px,5vw,66px);top:92px;width:min(44%,440px);pointer-events:none}
+.scene-kicker{font-size:10px;letter-spacing:.24em;color:#fff9;font-weight:700}
+.scene-title{margin:19px 0 15px;color:#fff;font-size:clamp(45px,8vw,105px);font-weight:750;letter-spacing:-.085em;line-height:.81;text-shadow:0 12px 40px #0b102844}
+.scene-title span{display:block}
+.scene-desc{max-width:280px;margin-top:22px;color:#fffC;font-size:12px;line-height:1.8}
+.scene-ruler{display:flex;gap:5px;margin-top:32px;align-items:center}
+.scene-ruler i{display:block;width:20px;height:2px;background:#ffffff83}
+.scene-ruler i:nth-child(2){width:54px;background:#fff}
+.scene-foot{position:absolute;z-index:1;left:clamp(24px,5vw,66px);bottom:28px;color:#fffc;font-size:10px;letter-spacing:.12em}
+.scene-index{position:absolute;z-index:1;left:50%;top:42px;color:#ffffffa1;font-size:9px;letter-spacing:.18em;writing-mode:vertical-rl}
+.scene-rail{position:absolute;z-index:1;left:50%;top:0;bottom:0;width:1px;background:linear-gradient(transparent,#fff5 20%,#fff4 70%,transparent)}
+.scene-rail::before,.scene-rail::after{content:"";position:absolute;left:-3px;width:7px;height:7px;border-radius:50%;background:#fff9}
+.scene-rail::before{top:25%}.scene-rail::after{bottom:27%}
+.scene-tag{position:absolute;z-index:1;left:53%;bottom:100px;font-size:9px;letter-spacing:.15em;color:#fff9;transform:rotate(-90deg);transform-origin:left}
+.lens-pane{position:absolute;z-index:3;right:clamp(24px,6vw,78px);top:50%;transform:translateY(-50%);width:min(355px,42%);min-height:460px;padding:20px;border-radius:28px;overflow:hidden;isolation:isolate;background:rgba(20,25,37,var(--frost));border:1px solid rgba(255,255,255,.42);box-shadow:0 24px 75px #080a14a6,inset 0 1px 1px #ffffffb0,inset 0 -1px #ffffff20;backdrop-filter:blur(18px) saturate(1.55);-webkit-backdrop-filter:blur(18px) saturate(1.55);transition:background .2s,border-color .2s,box-shadow .2s}
+.lens-pane::before{content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;background:radial-gradient(ellipse at var(--pointer-x) var(--pointer-y),rgba(255,255,255,.23),transparent 44%),linear-gradient(142deg,rgba(255,255,255,.19),transparent 20%,transparent 66%,rgba(255,255,255,.07));opacity:var(--rim);mix-blend-mode:screen}
+.lens-pane::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;padding:1px;background:linear-gradient(145deg,rgba(255,255,255,.95),rgba(255,255,255,.18) 20%,rgba(255,255,255,.08) 56%,rgba(255,255,255,.44) 77%,rgba(255,255,255,.12));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:var(--rim)}
+.lens-header{display:flex;justify-content:space-between;gap:12px;align-items:center;padding-bottom:17px;border-bottom:1px solid #ffffff24;position:relative}
+.lens-brand{display:flex;align-items:center;gap:10px}
+.lens-symbol{width:35px;height:35px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,#ffffff39,#ffffff08);border:1px solid #ffffff52;box-shadow:inset 0 1px #ffffff63}
+.lens-symbol svg{width:18px;height:18px}
+.lens-name{font-size:12px;font-weight:750;letter-spacing:.01em}
+.lens-sub{margin-top:4px;color:#ffffffa6;font-size:9px;letter-spacing:.1em}
+.live-mark{display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid #ffffff31;border-radius:99px;background:#ffffff0c;color:#fffbdc;font-size:9px;white-space:nowrap}
+.live-mark::before{content:"";width:5px;height:5px;border-radius:50%;background:#b5e4bf;box-shadow:0 0 9px #b5e4bf}
+.lens-caption{margin:20px 0 10px;color:#ffffffa0;font-size:9px;font-weight:750;letter-spacing:.2em}
+.menu-items{display:grid;gap:6px}
+.menu-item{display:flex;align-items:center;gap:12px;min-height:52px;padding:10px 12px;border:1px solid transparent;border-radius:15px;color:#ffffffe8;background:rgba(255,255,255,.045);transition:background .18s,border-color .18s,transform .18s;cursor:pointer;text-align:left}
+.menu-item:hover,.menu-item:focus-visible{outline:none;background:rgba(255,255,255,.14);border-color:#ffffff40;transform:translateX(2px)}
+.menu-item.selected{background:linear-gradient(95deg,rgba(255,255,255,.22),rgba(255,255,255,.075));border-color:#ffffff46;box-shadow:inset 2px 0 #fff}
+.item-icon{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:10px;background:#ffffff12;border:1px solid #ffffff16;color:#fff}
+.item-icon svg{width:15px;height:15px}
+.item-copy{min-width:0;flex:1}
+.item-title{font-size:12px;font-weight:650}
+.item-sub{margin-top:4px;color:#ffffffa0;font-size:9px}
+.item-arrow{color:#ffffff80;font-size:14px}
+.lens-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:15px;padding-top:13px;border-top:1px solid #ffffff24;color:#ffffffa3;font-size:9px}
+.lens-bottom strong{color:#fff;font-weight:600}
+.floating-pill{position:absolute;z-index:4;left:clamp(16px,5vw,64px);top:28px;padding:9px 14px;border-radius:99px;color:#fff;border:1px solid #ffffff56;background:#e7edf21b;box-shadow:0 9px 30px #0b0d1540,inset 0 1px #ffffff79;backdrop-filter:blur(13px) saturate(1.5);-webkit-backdrop-filter:blur(13px) saturate(1.5);font-size:10px;letter-spacing:.08em}
+.stage-note{position:absolute;z-index:2;right:22px;bottom:18px;color:#ffffffa3;font-size:9px;letter-spacing:.08em}
+.control-area{margin-top:20px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:stretch}
+.controls{border:1px solid #ffffff16;border-radius:20px;padding:18px 20px;background:linear-gradient(145deg,#161b26f2,#0e121af2);box-shadow:0 16px 45px #0003}
+.control-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px}
+.control-title{font-size:12px;font-weight:750}
+.control-caption{margin-top:4px;color:#8995a9;font-size:10px}
+.control-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.control label{display:flex;justify-content:space-between;align-items:center;gap:7px;margin-bottom:10px;color:#cbd3e0;font-size:10px}
+.control output{color:#f1d7a9;font-variant-numeric:tabular-nums}
+input[type=range]{display:block;width:100%;accent-color:#dfc18b;cursor:pointer}
+.control-help{margin-top:8px;color:#778398;font-size:9px;line-height:1.5}
+.actions{display:flex;flex-direction:column;gap:9px;min-width:150px}
+.action-btn{min-height:43px;border:1px solid #ffffff1e;border-radius:13px;padding:10px 14px;background:#ffffff0a;color:#dce3ee;font-size:11px;cursor:pointer;transition:background .18s,border-color .18s}
+.action-btn:hover{background:#ffffff16;border-color:#ffffff42}
+.action-btn.primary{color:#17130d;background:linear-gradient(135deg,#f7e5c4,#c4a66d);border-color:#f9e8c9;font-weight:750}
+.action-btn.primary:hover{filter:brightness(1.06)}
+.status-box{display:flex;flex-direction:column;justify-content:center;gap:8px;margin-top:15px;padding:12px 14px;border-radius:13px;border:1px solid #ffffff13;background:#ffffff05;color:#9aa6bb;font-size:10px;line-height:1.65}
+.status-box strong{color:#e9d3aa;font-size:10px}
+.notes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.note{border:1px solid #ffffff13;border-radius:15px;padding:13px 14px;background:#ffffff04}
+.note strong{display:block;margin-bottom:6px;font-size:10px;color:#d6c19b}
+.note p{margin:0;color:#8f9bb0;font-size:10px;line-height:1.7}
+.footer{margin-top:22px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#657188;font-size:9px;line-height:1.6}
+.full-lens .lens-pane{-webkit-backdrop-filter:url(#zxLiquidFilter);backdrop-filter:url(#zxLiquidFilter)}
+.full-lens .lens-pane{background:rgba(20,25,37,var(--frost))}
+.full-lens .lens-pane::before{background:radial-gradient(ellipse at var(--pointer-x) var(--pointer-y),rgba(255,255,255,.21),transparent 44%),linear-gradient(142deg,rgba(255,255,255,.16),transparent 20%,transparent 66%,rgba(255,255,255,.065))}
+.full-lens .lens-pane::after{opacity:calc(var(--rim) * 1.15)}
+.no-motion .orb{animation:none!important}
+@media(max-width:900px){
+ .intro{align-items:start}.intro-side{display:none}
+ .stage{height:690px;min-height:690px}
+ .scene-copy{left:26px;top:85px;width:52%}
+ .scene-title{font-size:clamp(52px,13vw,84px)}
+ .lens-pane{right:24px;width:350px;max-width:calc(100% - 42px);min-height:0;top:auto;bottom:54px;transform:none;padding:17px;border-radius:25px}
+ .lens-header{padding-bottom:13px}
+ .lens-caption{margin:15px 0 8px}
+ .menu-items{gap:4px}
+ .menu-item{min-height:47px;padding:8px 10px}
+ .item-icon{width:27px;height:27px;border-radius:9px}
+ .lens-bottom{margin-top:11px;padding-top:10px}
+ .scene-foot{bottom:24px}
+ .scene-tag,.scene-index,.scene-rail{display:none}
+ .control-area{grid-template-columns:1fr}
+ .actions{flex-direction:row}.actions .action-btn{flex:1}
+}
+@media(max-width:560px){
+ .page{padding-left:12px;padding-right:12px;padding-top:calc(14px + env(safe-area-inset-top))}
+ .topbar{margin-bottom:24px;align-items:flex-start}.status{font-size:9px;padding:7px 9px;max-width:56%}
+ .brand{font-size:10px;letter-spacing:.08em}.brand-mark{width:31px;height:31px;border-radius:10px}
+ .intro{margin-bottom:16px}.eyebrow{font-size:9px}h1{font-size:29px}.intro-copy{font-size:11px;max-width:330px}
+ .stage{height:700px;min-height:700px;border-radius:22px}
+ .scene-copy{left:21px;top:55px;width:82%}
+ .scene-title{font-size:68px;margin-top:15px}
+ .scene-desc{font-size:10px;margin-top:14px;max-width:210px}
+ .scene-ruler{margin-top:18px}
+ .scene-foot{left:21px;bottom:17px;font-size:8px}
+ .floating-pill{top:16px;left:auto;right:15px;padding:8px 10px;font-size:9px}
+ .lens-pane{right:12px;left:12px;bottom:46px;width:auto;max-width:none;padding:15px;border-radius:22px}
+ .lens-brand{gap:8px}.lens-symbol{width:31px;height:31px;border-radius:10px}
+ .lens-name{font-size:11px}.lens-sub{font-size:8px}
+ .live-mark{font-size:8px;padding:5px 7px}
+ .lens-caption{margin:13px 0 7px;font-size:8px}
+ .menu-item{min-height:44px;padding:7px 9px;border-radius:12px;gap:9px}
+ .item-icon{width:26px;height:26px}.item-title{font-size:11px}.item-sub{font-size:8px;margin-top:3px}
+ .lens-bottom{font-size:8px}
+ .stage-note{right:10px;bottom:9px;font-size:8px}
+ .controls{padding:15px;border-radius:17px}
+ .control-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 16px}
+ .control label{font-size:10px}
+ .actions{gap:8px}.action-btn{font-size:10px;padding:10px 9px}
+ .notes{grid-template-columns:1fr;gap:8px}
+ .note{padding:11px 12px}.note p{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.35"/><path d="m4.5 7.8 7.5 4.4 7.5-4.4M12 12.2V20" stroke="currentColor" stroke-width="1.2"/><path d="m7 5 8 4.6" stroke="#f4d9a8" stroke-width="1.4"/></svg></span>知行 · MATERIAL STUDY</div>
+    <div class="status" id="engineStatus"><span class="status-dot"></span><span id="engineStatusText">正在检查图形能力…</span></div>
+  </header>
+
+  <section class="intro">
+    <div>
+      <p class="eyebrow">OPTICAL EXPERIMENT / 001</p>
+      <h1>Liquid Glass Lab</h1>
+      <p class="intro-copy">真实背景位移、边缘镜面高光与轻微色散的独立测试页。观察玻璃后方的细线和文字是否在边缘发生弯曲，而不只是变模糊。</p>
+    </div>
+    <div class="intro-side">REFRACTION<br>SPECULAR RIM<br>CHROMATIC DISPERSION</div>
+  </section>
+
+  <main>
+    <section class="stage" id="stage" aria-label="液态玻璃视觉测试舞台">
+      <div class="scene" aria-hidden="true">
+        <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div><div class="orb d"></div>
+        <div class="scene-rail"></div><div class="scene-index">LIGHT / TRANSMISSION</div>
+        <div class="scene-copy">
+          <div class="scene-kicker">LIGHT · MATERIAL · MOTION</div>
+          <div class="scene-title"><span>PURE</span><span>LIGHT</span></div>
+          <div class="scene-desc">Background detail is intentional: fine grid lines, typography and color boundaries make refraction easier to see.</div>
+          <div class="scene-ruler"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="scene-tag">TRANSPARENT / NOT FLAT</div>
+        <div class="scene-foot">FIELD TEST — GLASS / 01</div>
+      </div>
+
+      <div class="floating-pill">MATERIAL / LIVE TEST</div>
+
+      <aside class="lens-pane" id="lensPane" aria-label="液态玻璃样例菜单">
+        <div class="lens-header">
+          <div class="lens-brand">
+            <span class="lens-symbol"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5v-7Z" stroke="currentColor" stroke-width="1.4"/><path d="m4.5 8.5 7.5 4.3 7.5-4.3M12 12.8V20" stroke="currentColor" stroke-width="1.2"/></svg></span>
+            <div><div class="lens-name">知行 · 功能菜单</div><div class="lens-sub">LIQUID MATERIAL / 01</div></div>
+          </div>
+          <span class="live-mark">LIVE SURFACE</span>
+        </div>
+        <div class="lens-caption">NAVIGATION / DEMO ITEMS</div>
+        <div class="menu-items">
+          <button class="menu-item selected" type="button"><span class="item-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg></span><span class="item-copy"><span class="item-title">基础计算</span><span class="item-sub">Everyday calculation</span></span><span class="item-arrow">›</span></button>
+          <button class="menu-item" type="button"><span class="item-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5h14M5 12h14M5 19h14M9 2v6M15 9v6M11 16v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><span class="item-copy"><span class="item-title">方程求解</span><span class="item-sub">Equations & solutions</span></span><span class="item-arrow">›</span></button>
+          <button class="menu-item" type="button"><span class="item-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="m17 15 3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="item-copy"><span class="item-title">函数与绘图</span><span class="item-sub">Graph & analyze</span></span><span class="item-arrow">›</span></button>
+          <button class="menu-item" type="button"><span class="item-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.4"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><span class="item-copy"><span class="item-title">学习知识库</span><span class="item-sub">Knowledge library</span></span><span class="item-arrow">›</span></button>
+        </div>
+        <div class="lens-bottom"><span>EDGE RESPONSE <strong id="edgeReadout">22 px</strong></span><span>OPTIC / 1.0</span></div>
+      </aside>
+      <div class="stage-note">MOVE POINTER / ADJUST BELOW</div>
+    </section>
+
+    <section class="control-area" aria-label="折射效果调节">
+      <div class="controls">
+        <div class="control-head"><div><div class="control-title">光学参数</div><div class="control-caption">每项参数实时作用于样例玻璃面板</div></div><span class="eyebrow" style="margin:0">LIVE CONTROLS</span></div>
+        <div class="control-grid">
+          <div class="control"><label for="strength">折射强度 <output id="strengthOut">64</output></label><input id="strength" type="range" min="0" max="100" value="64"><div class="control-help">控制背景被弯折的幅度</div></div>
+          <div class="control"><label for="chroma">边缘色散 <output id="chromaOut">8</output></label><input id="chroma" type="range" min="0" max="18" value="8"><div class="control-help">减少可避免明显彩边</div></div>
+          <div class="control"><label for="frost">玻璃雾度 <output id="frostOut">17%</output></label><input id="frost" type="range" min="0" max="60" value="17"><div class="control-help">调节染色层，不代替折射</div></div>
+          <div class="control"><label for="rim">镜面高光 <output id="rimOut">85%</output></label><input id="rim" type="range" min="0" max="100" value="85"><div class="control-help">边缘亮度与局部反光</div></div>
+        </div>
+        <div class="status-box"><strong id="effectStatusTitle">正在初始化折射滤镜</strong><span id="effectStatusText">玻璃后方的格线应在边缘产生弯曲，面板中心尽量保持清晰。若只有模糊而没有弯曲，当前浏览器可能只启用了回退材质。</span></div>
+      </div>
+      <div class="actions">
+        <button class="action-btn primary" id="resetBtn" type="button">恢复默认参数</button>
+        <button class="action-btn" id="motionBtn" type="button" aria-pressed="true">背景动态：开启</button>
+        <button class="action-btn" id="contrastBtn" type="button" aria-pressed="false">高对比测试：关闭</button>
+      </div>
+    </section>
+
+    <section class="notes" aria-label="测试说明">
+      <article class="note"><strong>01 / 真折射判定</strong><p>盯着玻璃面板边缘后的细网格线。如果线条发生局部弯曲或错位，说明位移滤镜在工作；仅有模糊和高光不算真实折射。</p></article>
+      <article class="note"><strong>02 / 色散控制</strong><p>边缘彩色分离应当很轻微。把色散拉到 0 后仍应能看见折射；如果降低色散后效果完全消失，说明材质依赖彩边营造错觉。</p></article>
+      <article class="note"><strong>03 / 性能与兼容</strong><p>主玻璃只有一个真实折射实例，避免整页多个大型滤镜争抢 GPU。非 Chromium 内核会显示视觉回退，不会伪报完整折射。</p></article>
+    </section>
+  </main>
+  <footer class="footer"><span>知行计算器 · 独立视觉实验页，不修改主计算器</span><span>Web optical study · Not Apple native Liquid Glass</span></footer>
+</div>
+
+<svg aria-hidden="true" focusable="false" width="0" height="0" style="position:fixed;left:0;top:0;overflow:hidden">
+  <defs>
+    <filter id="zxLiquidFilter" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="-80" y="-80" width="640" height="800" color-interpolation-filters="sRGB">
+      <feImage id="zxDisplacementMap" x="-80" y="-80" width="640" height="800" preserveAspectRatio="none" result="edgeMap"/>
+      <feDisplacementMap id="zxDispR" in="SourceGraphic" in2="edgeMap" scale="-61" xChannelSelector="R" yChannelSelector="G" result="warpR"/>
+      <feColorMatrix in="warpR" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redOnly"/>
+      <feDisplacementMap id="zxDispG" in="SourceGraphic" in2="edgeMap" scale="-69" xChannelSelector="R" yChannelSelector="G" result="warpG"/>
+      <feColorMatrix in="warpG" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenOnly"/>
+      <feDisplacementMap id="zxDispB" in="SourceGraphic" in2="edgeMap" scale="-77" xChannelSelector="R" yChannelSelector="G" result="warpB"/>
+      <feColorMatrix in="warpB" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueOnly"/>
+      <feBlend in="redOnly" in2="greenOnly" mode="screen" result="redGreen"/>
+      <feBlend in="redGreen" in2="blueOnly" mode="screen" result="rgbWarp"/>
+      <feGaussianBlur in="rgbWarp" stdDeviation="0.08"/>
+    </filter>
+  </defs>
+</svg>
+
+<script>
+(function(){
+  'use strict';
+  var pane=document.getElementById('lensPane');
+  var mapImage=document.getElementById('zxDisplacementMap');
+  var filter=document.getElementById('zxLiquidFilter');
+  var canvas=document.createElement('canvas');
+  var ctx=canvas.getContext('2d');
+  var strength=document.getElementById('strength');
+  var chroma=document.getElementById('chroma');
+  var frost=document.getElementById('frost');
+  var rim=document.getElementById('rim');
+  var strengthOut=document.getElementById('strengthOut');
+  var chromaOut=document.getElementById('chromaOut');
+  var frostOut=document.getElementById('frostOut');
+  var rimOut=document.getElementById('rimOut');
+  var edgeReadout=document.getElementById('edgeReadout');
+  var effectTitle=document.getElementById('effectStatusTitle');
+  var effectText=document.getElementById('effectStatusText');
+  var lastMapKey='';
+  var frame=0;
+  var supportsLens=false;
+  var resizeObserver=null;
+  var isHighContrast=false;
+
+  function setMap(data){
+    mapImage.setAttribute('href',data);
+    mapImage.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href',data);
+  }
+  function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
+  function smoothstep(a,b,x){var t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)}
+  function makeMap(){
+    if(!ctx||!pane)return;
+    var rect=pane.getBoundingClientRect();
+    var width=Math.max(160,Math.round(rect.width));
+    var height=Math.max(200,Math.round(rect.height));
+    if(width<80||height<100)return;
+    var pad=Math.max(48,Math.round(Math.max(width,height)*.16));
+    var dpr=Math.min(1.5,window.devicePixelRatio||1);
+    var key=[width,height,pad,dpr,Math.round(Number(rim.value)/10)].join(':');
+    if(key===lastMapKey)return;
+    lastMapKey=key;
+    var fullW=width+2*pad,fullH=height+2*pad;
+    canvas.width=Math.round(fullW*dpr);
+    canvas.height=Math.round(fullH*dpr);
+    var image=ctx.createImageData(canvas.width,canvas.height);
+    var data=image.data;
+    var radius=Math.min(parseFloat(getComputedStyle(pane).borderTopLeftRadius)||24,width*.13,height*.1);
+    var depth=12+(Number(rim.value)/100)*22;
+    var amplitude=22+(Number(strength.value)/100)*35;
+    var cx=width/2,cy=height/2;
+    for(var py=0;py<canvas.height;py++){
+      var y=py/dpr-pad;
+      var qy=Math.abs(y-cy)-(height/2-radius);
+      var sy=y<cy?-1:1;
+      for(var px=0;px<canvas.width;px++){
+        var x=px/dpr-pad;
+        var qx=Math.abs(x-cx)-(width/2-radius);
+        var sx=x<cx?-1:1;
+        var ox=Math.max(qx,0),oy=Math.max(qy,0);
+        var sd=Math.hypot(ox,oy)+Math.min(Math.max(qx,qy),0)-radius;
+        var inside=-sd;
+        var weight=inside>0?1-smoothstep(0,depth,inside):0;
+        var nx=0,ny=0;
+        if(qx>0&&qy>0){
+          var len=Math.hypot(qx,qy)||1;
+          nx=sx*qx/len;ny=sy*qy/len;
+        }else if(qx>qy){nx=sx}else{ny=sy}
+        var k=(py*canvas.width+px)*4;
+        data[k]=clamp(128+nx*amplitude*weight,0,255);
+        data[k+1]=clamp(128+ny*amplitude*weight,0,255);
+        data[k+2]=128;
+        data[k+3]=255;
+      }
+    }
+    ctx.putImageData(image,0,0);
+    setMap(canvas.toDataURL('image/png'));
+    filter.setAttribute('x',-pad);
+    filter.setAttribute('y',-pad);
+    filter.setAttribute('width',fullW);
+    filter.setAttribute('height',fullH);
+    mapImage.setAttribute('x',-pad);
+    mapImage.setAttribute('y',-pad);
+    mapImage.setAttribute('width',fullW);
+    mapImage.setAttribute('height',fullH);
+  }
+  function scheduleMap(){
+    if(frame)cancelAnimationFrame(frame);
+    frame=requestAnimationFrame(function(){frame=0;makeMap()});
+  }
+  function update(){
+    var s=Number(strength.value);
+    var c=Number(chroma.value);
+    var f=Number(frost.value);
+    var r=Number(rim.value);
+    strengthOut.value=String(s);
+    chromaOut.value=String(c);
+    frostOut.value=String(f)+'%';
+    rimOut.value=String(r)+'%';
+    edgeReadout.textContent=Math.round(12+(r/100)*22)+' px';
+    document.documentElement.style.setProperty('--frost',(0.07+f/100*.34).toFixed(3));
+    document.documentElement.style.setProperty('--rim',(r/100).toFixed(2));
+    var base=-(s*.95);
+    document.getElementById('zxDispR').setAttribute('scale',base);
+    document.getElementById('zxDispG').setAttribute('scale',base+c*.55);
+    document.getElementById('zxDispB').setAttribute('scale',base+c*1.1);
+    lastMapKey='';
+    scheduleMap();
+    if(s===0&&supportsLens){
+      effectTitle.textContent='折射强度为 0';
+      effectText.textContent='这是对照组：真实位移已经关闭。把折射强度调高后，比较边缘网格的变化。';
+    }else if(supportsLens){
+      effectTitle.textContent='已启用 Chromium SVG 背景位移路径';
+      effectText.textContent='观察面板边缘的细网格线是否发生局部弯曲。滤镜路径已启用，但最终画面仍需以当前浏览器的实际渲染为准。';
+    }else{
+      effectTitle.textContent='当前为视觉回退模式';
+      effectText.textContent='当前浏览器内核未启用 backdrop-filter 的 SVG 位移路径，因此不会有可靠的任意背景折射；目前展示的是雾化、高光和反射的近似材质。';
+    }
+  }
+  function initCapability(){
+    var ua=navigator.userAgent||'';
+    var chromium=/(Chrome|Chromium|Edg|OPR|Brave|SamsungBrowser)\//i.test(ua)&&!/(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(ua);
+    supportsLens=chromium;
+    if(supportsLens){
+      document.documentElement.classList.add('full-lens');
+      document.getElementById('engineStatusText').textContent='Chromium · SVG 位移路径已启用';
+    }else{
+      document.getElementById('engineStatusText').textContent='兼容回退 · 无法保证真实折射';
+    }
+  }
+  [strength,chroma,frost,rim].forEach(function(el){el.addEventListener('input',update)});
+  document.getElementById('resetBtn').addEventListener('click',function(){
+    strength.value='64';chroma.value='8';frost.value='17';rim.value='85';
+    isHighContrast=false;
+    document.getElementById('contrastBtn').textContent='高对比测试：关闭';
+    document.getElementById('contrastBtn').setAttribute('aria-pressed','false');
+    document.getElementById('stage').classList.remove('high-contrast');
+    update();
+  });
+  document.getElementById('motionBtn').addEventListener('click',function(){
+    var off=document.body.classList.toggle('no-motion');
+    this.textContent='背景动态：'+(off?'关闭':'开启');
+    this.setAttribute('aria-pressed',off?'false':'true');
+  });
+  document.getElementById('contrastBtn').addEventListener('click',function(){
+    isHighContrast=!isHighContrast;
+    document.getElementById('stage').classList.toggle('high-contrast',isHighContrast);
+    this.textContent='高对比测试：'+(isHighContrast?'开启':'关闭');
+    this.setAttribute('aria-pressed',isHighContrast?'true':'false');
+  });
+  document.querySelectorAll('.menu-item').forEach(function(item){
+    item.addEventListener('click',function(){
+      document.querySelectorAll('.menu-item').forEach(function(other){other.classList.remove('selected')});
+      item.classList.add('selected');
+    });
+  });
+  pane.addEventListener('pointermove',function(e){
+    if(e.pointerType==='touch')return;
+    var rect=pane.getBoundingClientRect();
+    document.documentElement.style.setProperty('--pointer-x',((e.clientX-rect.left)/rect.width*100).toFixed(1)+'%');
+    document.documentElement.style.setProperty('--pointer-y',((e.clientY-rect.top)/rect.height*100).toFixed(1)+'%');
+  },{passive:true});
+  pane.addEventListener('pointerleave',function(){
+    document.documentElement.style.setProperty('--pointer-x','40%');
+    document.documentElement.style.setProperty('--pointer-y','0%');
+  },{passive:true});
+  var stage=document.getElementById('stage');
+  var contrastStyle=document.createElement('style');
+  contrastStyle.textContent='.stage.high-contrast .scene::before{opacity:1;background:repeating-linear-gradient(0deg,transparent 0 17px,#ffffffbb 18px,#111827 19px,transparent 21px),repeating-linear-gradient(90deg,transparent 0 21px,#ffffffb0 22px,#111827 23px,transparent 25px)}.stage.high-contrast .scene-copy{filter:drop-shadow(0 2px 5px #000)}';
+  document.head.appendChild(contrastStyle);
+  initCapability();
+  if(window.ResizeObserver){
+    resizeObserver=new ResizeObserver(function(){lastMapKey='';scheduleMap()});
+    resizeObserver.observe(pane);
+  }else{
+    window.addEventListener('resize',function(){lastMapKey='';scheduleMap()},{passive:true});
+  }
+  window.addEventListener('orientationchange',function(){lastMapKey='';scheduleMap()},{passive:true});
+  update();
+})();
+</script>
+</body>
+</html>
