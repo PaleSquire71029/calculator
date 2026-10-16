@@ -390,6 +390,7 @@ input[type=range]{display:block;width:100%;accent-color:#dfc18b;cursor:pointer}
     document.getElementById('contrastBtn').textContent='高对比测试：关闭';
     document.getElementById('contrastBtn').setAttribute('aria-pressed','false');
     document.getElementById('stage').classList.remove('high-contrast');
+    update.needsMap=true;
     update();
   });
   document.getElementById('motionBtn').addEventListener('click',function(){
