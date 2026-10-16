@@ -2365,8 +2365,74 @@ body.zx-lowpower-glass .view.is-active .view-card::after{
   }
 }
 </style>
+<style id="zx-liquid-glass-environment">
+/* Optical backdrop inspired by the original Lab: vivid but airy spheres behind a readable interface. */
+body.zx-lowpower-glass .zx-liquid-environment{
+  position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;isolation:isolate;
+}
+body.zx-lowpower-glass .zx-liquid-orb{
+  position:absolute;display:block;aspect-ratio:1/1;border-radius:50%;
+  opacity:.82;transform:translateZ(0);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.92),inset 0 -18px 38px rgba(71,117,183,.06),0 20px 60px rgba(81,129,188,.08);
+}
+body.zx-lowpower-glass .zx-liquid-orb::after{
+  content:"";position:absolute;inset:1px;border-radius:inherit;pointer-events:none;
+  border:1px solid rgba(255,255,255,.56);
+  background:linear-gradient(143deg,rgba(255,255,255,.38),transparent 27%,transparent 76%,rgba(255,255,255,.15));
+}
+body.zx-lowpower-glass .zx-liquid-orb-a{
+  width:clamp(260px,35vw,520px);left:-7.5vw;top:11vh;
+  background:
+    radial-gradient(ellipse at 32% 24%,rgba(255,255,255,.98) 0%,rgba(255,255,255,.5) 8%,transparent 24%),
+    radial-gradient(circle at 36% 31%,#e4f8ff 0%,#a6d8ff 19%,#82b9f7 37%,#799fe6 53%,rgba(127,158,232,.1) 70%,transparent 72%);
+}
+body.zx-lowpower-glass .zx-liquid-orb-b{
+  width:clamp(240px,31vw,470px);right:-6vw;top:-10vh;
+  background:
+    radial-gradient(ellipse at 32% 25%,rgba(255,255,255,.96) 0%,rgba(255,255,255,.48) 8%,transparent 24%),
+    radial-gradient(circle at 36% 32%,#fff2f0 0%,#f8c9dc 21%,#d7b9fb 41%,#a6aef0 57%,rgba(171,171,238,.08) 70%,transparent 72%);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),inset 0 -20px 40px rgba(121,92,188,.06),0 20px 60px rgba(157,112,205,.1);
+}
+body.zx-lowpower-glass .zx-liquid-orb-c{
+  width:clamp(250px,30vw,450px);right:16vw;bottom:-22vh;
+  background:
+    radial-gradient(ellipse at 32% 25%,rgba(255,255,255,.96) 0%,rgba(255,255,255,.48) 8%,transparent 25%),
+    radial-gradient(circle at 35% 31%,#ecfff9 0%,#b2f1e4 20%,#8cddda 40%,#82b6e2 56%,rgba(130,182,226,.06) 70%,transparent 72%);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),inset 0 -20px 40px rgba(79,155,173,.06),0 20px 60px rgba(82,158,180,.08);
+}
+body.zx-lowpower-glass .zx-liquid-orb-d{
+  width:clamp(170px,19vw,285px);left:38vw;bottom:9vh;
+  background:
+    radial-gradient(ellipse at 32% 25%,rgba(255,255,255,.99) 0%,rgba(255,255,255,.55) 8%,transparent 25%),
+    radial-gradient(circle at 38% 34%,#fff8e7 0%,#ffe7bb 22%,#f8c5b0 43%,#ebc0d8 59%,rgba(235,192,216,.03) 71%,transparent 72%);
+  opacity:.57;
+}
+body.zx-lowpower-glass .zx-header{z-index:50}
+body.zx-lowpower-glass .zx-layout{z-index:1}
+body.zx-lowpower-glass .view.is-active .view-card,
+body.zx-lowpower-glass .view.is-active>.glass-panel{
+  background:linear-gradient(145deg,rgba(255,255,255,.66),rgba(249,252,255,.51) 45%,rgba(243,247,255,.53))!important;
+}
+@media(max-width:900px){
+  body.zx-lowpower-glass .zx-liquid-orb-a{width:370px;left:-160px;top:10vh}
+  body.zx-lowpower-glass .zx-liquid-orb-b{width:320px;right:-155px;top:7vh}
+  body.zx-lowpower-glass .zx-liquid-orb-c{width:330px;right:-20px;bottom:-140px}
+  body.zx-lowpower-glass .zx-liquid-orb-d{width:210px;left:26vw;bottom:7vh}
+}
+@media(max-width:768px){
+  body.zx-lowpower-glass .zx-liquid-orb{opacity:.55}
+  body.zx-lowpower-glass .view.is-active .view-card,
+  body.zx-lowpower-glass .view.is-active>.glass-panel{
+    background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(247,251,255,.78),rgba(243,246,255,.76))!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  body.zx-lowpower-glass .zx-liquid-orb{transform:none!important}
+}
+</style>
 </head>
 <body class="text-slate-300 antialiased zx-lowpower-glass">
+<div class="zx-liquid-environment" aria-hidden="true"><span class="zx-liquid-orb zx-liquid-orb-a"></span><span class="zx-liquid-orb zx-liquid-orb-b"></span><span class="zx-liquid-orb zx-liquid-orb-c"></span><span class="zx-liquid-orb zx-liquid-orb-d"></span></div>
 
     <!-- ================= 顶栏 ================= -->
     <header class="zx-header">
