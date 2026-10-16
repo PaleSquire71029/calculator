@@ -4317,7 +4317,7 @@ html,body{color-scheme:light!important}
   const $=id=>document.getElementById(id);
   const panel=$('zx-ai-panel'), launch=$('zx-ai-launch'), input=$('zx-ai-input'), messagesEl=$('zx-ai-messages'), send=$('zx-ai-send'), status=$('zx-ai-status'), proxyInput=$('zx-ai-proxy');
   const state={messages:[],busy:false,proxy:''};
-  try{state.proxy=localStorage.getItem('zx-ai-proxy-url')||sessionStorage.getItem('zx-ai-proxy')||'';}catch(e){}
+  try{state.proxy=localStorage.getItem('zx-ai-proxy-url')||sessionStorage.getItem('zx-ai-proxy')||'https://zhixing-calculator-ai.xiaoshirong2023.workers.dev';}catch(e){state.proxy='https://zhixing-calculator-ai.xiaoshirong2023.workers.dev';}
   proxyInput.value=state.proxy;
   function endpoint(){
     const raw=proxyInput.value.trim();
