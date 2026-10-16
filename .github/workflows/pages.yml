@@ -6,6 +6,8 @@ on:
     paths:
       - "index.html"
       - "zhixing-calculator-mobile-menu-blur-1.html"
+      - "liquid-glass-test.html"
+      - "liquid-glass-calculator.html"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
