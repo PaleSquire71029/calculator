@@ -1477,6 +1477,122 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
   }
 }
 </style>
+<style id="zx-liquid-menu-20261016">
+/* iOS 26-inspired liquid glass, scoped to the navigation menu only. */
+.zx-menu.glass-panel{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  background:
+    radial-gradient(130% 80% at 0% 0%,rgba(255,255,255,.15),transparent 52%),
+    radial-gradient(100% 65% at 100% 12%,rgba(130,170,210,.11),transparent 58%),
+    linear-gradient(155deg,rgba(255,255,255,.105),rgba(255,255,255,.035) 45%,rgba(255,255,255,.065))!important;
+  border:1px solid rgba(255,255,255,.19)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 -1px 0 rgba(255,255,255,.045),0 18px 48px rgba(0,0,0,.23),0 3px 10px rgba(0,0,0,.12)!important;
+  -webkit-backdrop-filter:blur(30px) saturate(1.65);
+  backdrop-filter:blur(30px) saturate(1.65);
+  background-clip:padding-box;
+}
+.zx-menu.glass-panel::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto;
+  height:42%;
+  pointer-events:none;
+  z-index:-1;
+  border-radius:inherit;
+  background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.025) 55%,transparent);
+  opacity:.85;
+}
+.zx-menu.glass-panel::after{
+  content:"";
+  position:absolute;
+  inset:1px;
+  border-radius:inherit;
+  border:1px solid rgba(255,255,255,.045);
+  pointer-events:none;
+  z-index:2;
+}
+.zx-menu .zx-menu-title{
+  color:rgba(220,228,239,.66);
+  letter-spacing:.09em;
+  text-shadow:0 1px 8px rgba(0,0,0,.12);
+}
+.zx-menu .zx-menu-item{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  border:1px solid transparent;
+  border-radius:13px;
+  background:rgba(255,255,255,.018);
+  transition:background-color 220ms ease,border-color 220ms ease,box-shadow 220ms ease,color 220ms ease,transform 220ms cubic-bezier(.2,.75,.25,1);
+}
+.zx-menu .zx-menu-item::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  opacity:0;
+  background:linear-gradient(115deg,rgba(255,255,255,.18),rgba(255,255,255,.035) 42%,rgba(216,184,120,.09));
+  transition:opacity 220ms ease;
+}
+.zx-menu .zx-menu-item.is-active{
+  color:#f6e8c8!important;
+  border-color:rgba(255,255,255,.19);
+  background:linear-gradient(115deg,rgba(255,255,255,.16),rgba(255,255,255,.065) 52%,rgba(216,184,120,.10));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 5px 18px rgba(0,0,0,.12),0 0 18px rgba(216,184,120,.055);
+}
+.zx-menu .zx-menu-item.is-active::before{opacity:1}
+.zx-menu .zx-menu-item.is-active::after{
+  content:"";
+  position:absolute;
+  left:0;
+  top:23%;
+  bottom:23%;
+  width:2px;
+  border-radius:0 3px 3px 0;
+  background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(216,184,120,.8));
+  box-shadow:0 0 10px rgba(216,184,120,.5);
+}
+@media(hover:hover) and (pointer:fine){
+  .zx-menu .zx-menu-item:hover{
+    transform:translateX(2px);
+    border-color:rgba(255,255,255,.12);
+    background:rgba(255,255,255,.075);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.09);
+  }
+  .zx-menu .zx-menu-item:hover::before{opacity:.7}
+}
+html.light .zx-menu.glass-panel{
+  background:
+    radial-gradient(130% 80% at 0% 0%,rgba(255,255,255,.92),transparent 52%),
+    radial-gradient(100% 65% at 100% 12%,rgba(205,224,244,.45),transparent 58%),
+    linear-gradient(155deg,rgba(255,255,255,.84),rgba(245,248,252,.67) 48%,rgba(255,255,255,.78))!important;
+  border-color:rgba(255,255,255,.82)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.96),0 18px 48px rgba(45,60,80,.13),0 3px 10px rgba(45,60,80,.07)!important;
+  -webkit-backdrop-filter:blur(30px) saturate(1.45);
+  backdrop-filter:blur(30px) saturate(1.45);
+}
+html.light .zx-menu .zx-menu-title{color:rgba(52,65,82,.65)}
+html.light .zx-menu .zx-menu-item{color:#354153;background:rgba(255,255,255,.22)}
+html.light .zx-menu .zx-menu-item.is-active{
+  color:#77551d!important;
+  background:linear-gradient(115deg,rgba(255,255,255,.94),rgba(255,255,255,.62) 55%,rgba(230,199,142,.23));
+  border-color:rgba(255,255,255,.9);
+  box-shadow:inset 0 1px 0 #fff,0 5px 18px rgba(64,75,91,.09);
+}
+@media(prefers-reduced-transparency:reduce){
+  .zx-menu.glass-panel{
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+    background:rgba(25,30,39,.96)!important;
+  }
+  html.light .zx-menu.glass-panel{background:rgba(246,248,251,.97)!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .zx-menu .zx-menu-item,.zx-menu .zx-menu-item::before{transition:none!important}
+}
+</style>
 </head>
 <body class="text-slate-300 antialiased">
 
