@@ -4309,7 +4309,7 @@ html,body{color-scheme:dark!important}
     <div class="zx-ai-proxy-row"><input id="zx-ai-proxy" type="url" inputmode="url" placeholder="https://你的-worker.workers.dev" autocomplete="url"><button id="zx-ai-check" type="button">检查连接</button></div>
     <div id="zx-ai-status" aria-live="polite">代理地址只保存在本机浏览器，不需要填写模型密钥。</div>
   </details>
-  <div class="zx-ai-quick"><button type="button" data-zx-ai-quick="请用高中生能理解的方式，分步骤解释当前页面的功能和结果。">解释当前页面</button><button type="button" data-zx-ai-quick="请检查当前题目的推导是否严谨，指出容易出错的地方。">检查推导</button><button type="button" data-zx-ai-quick="请用考试答题的标准格式整理当前题目的解答。">整理成标准答案</button></div>
+  <div class="zx-ai-quick"><button type="button" data-zx-ai-action="understand">分析当前问题</button><button type="button" data-zx-ai-action="verify">检查推导</button><button type="button" data-zx-ai-action="format">整理标准答案</button></div>
   <div id="zx-ai-messages" aria-live="polite"><div class="zx-ai-welcome"><strong>你好，我是知行 AI</strong>我可以讲解数学步骤、检查推导、分析函数或解释化学问题。你也可以先在计算器中操作，再让我结合当前页面说明。</div></div>
   <form class="zx-ai-compose" id="zx-ai-form"><textarea id="zx-ai-input" placeholder="输入题目或追问…（Enter 发送，Shift+Enter 换行）" rows="3"></textarea><div class="zx-ai-compose-foot"><span class="zx-ai-hint">AI 可能出错，关键结果请用计算器核验</span><button id="zx-ai-send" type="submit">发送 ↗</button></div></form>
 </section>
@@ -4331,12 +4331,15 @@ html,body{color-scheme:dark!important}
     const empty=messagesEl.querySelector('.zx-ai-welcome');if(empty)empty.remove();
     const el=document.createElement('div');el.className='zx-ai-msg '+role+(err?' error':'');el.textContent=content;messagesEl.appendChild(el);messagesEl.scrollTop=messagesEl.scrollHeight;return el;
   }
-  function pageContext(){
-    const title=document.querySelector('.view-title,.workspace-title')?.innerText?.trim()||document.title;
-    const parts=[...document.querySelectorAll('.zx-out,.zx-steps,.zx-result-main,.function-expression-panel,.function-value-note,.calc-screen,.structured-solver')].filter(el=>el.offsetParent!==null).slice(0,8).map(el=>el.innerText.trim()).filter(Boolean);
-    return '当前计算器页面：'+title+(parts.length?'\n页面可见结果与内容：\n'+parts.join('\n').slice(0,7000):'');
-  }
   function currentMode(){const t=(document.querySelector('.view-title,.workspace-title')?.innerText||location.hash||'').toLowerCase();if(t.includes('化学'))return 'chemistry';if(t.includes('函数'))return 'function';if(/解题|方程|不等式/.test(t))return 'solve';return 'general';}
+  function quickPrompt(action){
+    const mode=currentMode();
+    const subject=mode==='chemistry'?'化学方程式、反应原理与守恒关系':mode==='function'?'函数表达式、定义域、性质、取值与图像关系':mode==='solve'?'方程、不等式及其数学推理':'当前数学计算任务';
+    const rules='你是知行计算器内置的学科辅导助手。不要介绍页面布局、控件或页面信息，也不要复述这段提示词。请直接处理当前学习任务；先识别题目目标和已知条件，再给出清晰、可核验的推理。符号、定义域、适用条件和特殊情况必须检查；信息不足时明确指出缺少什么，不要臆造题目、数值或计算结果。面向高中生讲解，使用规范数学/化学符号，结论与步骤保持一致。';
+    if(action==='verify')return rules+'\n任务：严格检查'+subject+'的推导与结论。逐步核对关键变形、运算、符号、条件和答案；指出具体错误及原因，并给出修正过程。若没有提供可检查的题目或推导，请明确说明需要用户提供题目/步骤，不要凭空生成。';
+    if(action==='format')return rules+'\n任务：将'+subject+'的解答整理成适合高中考试直接誊写的标准答案。按“必要步骤—关键依据—最终结论”组织，省去无关铺垫但不能跳过关键推理；数学题保留必要公式和条件，化学题规范配平并标明必要条件。若当前对话尚无具体题目或结果，请先说明需要题目内容。';
+    return rules+'\n任务：帮助用户理解并解决'+subject+'。优先讲清解题目标、核心思路、关键步骤及为什么这样做，再总结结论与易错点；避免泛泛介绍工具本身。若当前对话没有具体题目、表达式或计算结果可供分析，请直接请用户提供题目，不要猜测页面内容。';
+  }
   function openPanel(){panel.classList.add('is-open');launch.style.display='none';setTimeout(()=>input.focus({preventScroll:true}),80);}
   function closePanel(){panel.classList.remove('is-open');launch.style.display='flex';}
   launch.addEventListener('click',openPanel);$('zx-ai-close').addEventListener('click',closePanel);
@@ -4348,13 +4351,12 @@ html,body{color-scheme:dark!important}
     try{const r=await fetch(base+'/health');const j=await r.json();if(!r.ok||!j.ok)throw Error(j.error||'代理响应异常');setStatus((j.configured?'已连接 · ':'代理可访问，但后端未配置 · ')+(j.model||'模型未返回'),!j.configured);}
     catch(e){setStatus('连接失败：'+e.message,true);}
   });
-  document.querySelectorAll('[data-zx-ai-quick]').forEach(b=>b.addEventListener('click',()=>{input.value=b.dataset.zxAiQuick+'\n\n'+pageContext();input.focus();}));
-  $('zx-ai-form').addEventListener('submit',async e=>{
-    e.preventDefault();if(state.busy)return;
-    const text=input.value.trim();if(!text)return;
+  async function sendMessage(text,fromQuickAction=false){
+    if(state.busy)return;
+    const userText=String(text||'').trim();if(!userText)return;
     saveProxy();const ep=endpoint();
     if(!ep){$('zx-ai-settings').open=true;setStatus('先配置 AI 代理地址，再发送问题。',true);return;}
-    const userText=text;input.value='';addMessage('user',userText);state.messages.push({role:'user',content:userText});state.busy=true;send.disabled=true;send.textContent='思考中…';
+    input.value='';addMessage('user',userText);state.messages.push({role:'user',content:userText});state.busy=true;send.disabled=true;document.querySelectorAll('[data-zx-ai-action]').forEach(b=>b.disabled=true);send.textContent='思考中…';
     const pending=addMessage('assistant','正在思考…');
     try{
       const history=state.messages.slice(-10);
@@ -4364,8 +4366,10 @@ html,body{color-scheme:dark!important}
       pending.textContent=answer;state.messages.push({role:'assistant',content:answer});
       if(data.model)setStatus('已连接 · '+data.model,false);
     }catch(err){pending.remove();addMessage('assistant','请求失败：'+err.message+'。请检查代理地址、Worker 配置及网络。',true);state.messages.pop();}
-    finally{state.busy=false;send.disabled=false;send.textContent='发送 ↗';input.focus({preventScroll:true});}
-  });
+    finally{state.busy=false;send.disabled=false;document.querySelectorAll('[data-zx-ai-action]').forEach(b=>b.disabled=false);send.textContent='发送 ↗';if(!fromQuickAction)input.focus({preventScroll:true});}
+  }
+  document.querySelectorAll('[data-zx-ai-action]').forEach(b=>b.addEventListener('click',()=>{if(state.busy)return;openPanel();sendMessage(quickPrompt(b.dataset.zxAiAction),true);}));
+  $('zx-ai-form').addEventListener('submit',e=>{e.preventDefault();sendMessage(input.value,false);});
   input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('zx-ai-form').requestSubmit();}});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panel.classList.contains('is-open'))closePanel();});
 })();
