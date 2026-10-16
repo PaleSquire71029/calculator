@@ -1,0 +1,12 @@
+name = "zhixing-calculator-ai"
+main = "src/index.js"
+compatibility_date = "2026-10-16"
+workers_dev = true
+
+[vars]
+AI_BASE_URL = "https://api.deepseek.com/v1"
+AI_MODEL = "deepseek-chat"
+ALLOWED_ORIGINS = "https://c.zhixing.us.ci,https://zhixingjsq.pages.dev,https://palesquire71029.github.io"
+
+[observability]
+enabled = true
