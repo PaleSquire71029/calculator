@@ -1291,6 +1291,94 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
 
 
 
+<style id="zx-fit-flat-keypad-align-20261016">
+/* Scoped refinement: flatten the function workspace and align the mobile keypad tabs/grid. */
+@media (max-width:768px){
+  .view.solve-subview[data-view="fit"] .view-card{
+    padding:16px!important;
+    border-radius:18px!important;
+  }
+  .view.solve-subview[data-view="fit"] .structured-solver{
+    padding:0!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  .view.solve-subview[data-view="fit"] .structured-equation{
+    border:0!important;
+    border-left:2px solid var(--zx-gold)!important;
+    border-radius:0 8px 8px 0!important;
+    padding:10px 12px!important;
+    margin:10px 0 14px!important;
+  }
+  .view.solve-subview[data-view="fit"] .structured-point{
+    border:1px solid rgba(255,255,255,.08)!important;
+    border-radius:12px!important;
+    background:rgba(255,255,255,.025)!important;
+    box-shadow:none!important;
+  }
+  .view.solve-subview[data-view="fit"] .function-graph{
+    border-radius:12px!important;
+    box-shadow:none!important;
+  }
+  .zx-mobile-mathpad.is-visible{
+    box-sizing:border-box!important;
+    width:100%!important;
+    padding-left:max(12px,env(safe-area-inset-left))!important;
+    padding-right:max(12px,env(safe-area-inset-right))!important;
+  }
+  .zx-mobile-mathpad.is-visible .zx-mathpad-tabs{
+    box-sizing:border-box!important;
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    width:100%!important;
+    margin:0!important;
+    padding:6px 0 8px!important;
+    gap:6px!important;
+  }
+  .zx-mobile-mathpad.is-visible .zx-mathpad-tabs button{
+    box-sizing:border-box!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:100%!important;
+    min-width:0!important;
+    min-height:38px!important;
+    margin:0!important;
+    padding:6px 3px!important;
+    white-space:nowrap!important;
+    line-height:1.2!important;
+  }
+  .zx-mobile-mathpad.is-visible .zx-mobile-mathpad-grid{
+    box-sizing:border-box!important;
+    width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:6px!important;
+    align-items:stretch!important;
+  }
+  .zx-mobile-mathpad.is-visible .zx-mobile-mathpad-grid[hidden]{display:none!important}
+  .zx-mobile-mathpad.is-visible .zx-mobile-mathpad-grid button{
+    box-sizing:border-box!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:0 3px!important;
+    min-height:42px!important;
+    line-height:1.2!important;
+    justify-self:stretch!important;
+  }
+}
+@media(max-width:420px){
+  .zx-mobile-mathpad.is-visible .zx-mathpad-tabs{gap:5px!important}
+  .zx-mobile-mathpad.is-visible .zx-mathpad-tabs button{font-size:11px!important}
+  .zx-mobile-mathpad.is-visible .zx-mobile-mathpad-grid{gap:5px!important}
+}
+</style>
 </head>
 <body class="text-slate-300 antialiased">
 
