@@ -10,6 +10,8 @@ on:
   pull_request:
     paths:
       - "ai-proxy/**"
+      - "ai.html"
+      - "ai-calculator.html"
       - ".github/workflows/ai-proxy-tests.yml"
   workflow_dispatch:
 permissions:
