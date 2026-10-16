@@ -24,7 +24,7 @@ window.MathJax = {
 @font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:700;font-display:swap;src:url("./fonts/JetBrainsMono-700.woff2?v=20261016") format("woff2")}
 :root{color-scheme:light;--ink:#26334a;--muted:#7b879c;--line:#e5eaf2;--blue:#4778db;--pale:#edf3ff;--shadow:0 10px 32px rgba(49,74,119,.08)}
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;color:var(--ink);font-family:"Noto Sans SC",system-ui,-apple-system,"Microsoft YaHei",sans-serif}
+html,body{margin:0;min-height:100%;color:var(--ink);font-family:"JetBrains Mono","Noto Sans SC",system-ui,-apple-system,"Microsoft YaHei",sans-serif}
 body{background:radial-gradient(ellipse at 0 0,#eaf1ff 0,transparent 35%),#f7f9fc}
 button,input,textarea{font:inherit}
 .app{width:min(900px,100%);min-height:100dvh;margin:auto;display:flex;flex-direction:column;padding:0 18px}
@@ -32,6 +32,8 @@ button,input,textarea{font:inherit}
 .brand{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;letter-spacing:.01em}
 .logo{display:grid;place-items:center;width:34px;height:34px;border:1px solid #fff;border-radius:12px;background:linear-gradient(145deg,#fff,#e2ebff);color:#4778db;box-shadow:0 4px 14px #7898d51c;font-size:19px}
 .top-actions{display:flex;align-items:center;gap:8px}
+.model-status{margin:7px 0 0;padding:5px 9px;border:1px solid #dfe8f7;border-radius:999px;background:#f0f5ff;color:#5875a6;font-size:10px;line-height:1.4;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;width:max-content}
+.model-status[data-state="error"]{color:#a86a60;background:#fff5f1;border-color:#f3e1da}
 .link,.plain{border:1px solid var(--line);border-radius:999px;background:#ffffffb8;color:#5b6f91;text-decoration:none;padding:8px 12px;font-size:12px;white-space:nowrap;cursor:pointer}
 .settings{margin:10px 0 0}
 .settings summary{width:max-content;color:#7d8ba2;font-size:12px;cursor:pointer;padding:5px 2px}
@@ -96,6 +98,7 @@ textarea::placeholder{color:#9aa5b6}
   <div class="brand"><div class="logo" aria-hidden="true">✳</div><span>知行AI学习版</span></div>
   <div class="top-actions"><button class="plain" id="clearChat" type="button">新对话</button><a class="link" href="./index.html">返回计算器</a></div>
 </header>
+<div class="model-status" id="modelStatus" data-state="waiting" aria-live="polite">当前模型：等待连接</div>
 <details class="settings" id="settings">
   <summary>连接设置 <span id="health" class="health">· 等待配置</span></summary>
   <div class="settings-body">
@@ -176,11 +179,12 @@ function render(){
 }
 function setBusy(v){state.busy=v;$('send').disabled=v;$('send').innerHTML=v?'<span class="spinner"></span>':'↑';$('question').disabled=v;$('imageInput').disabled=v;}
 function endpoint(){const raw=$('proxyUrl').value.trim();if(!raw)return '';try{const u=new URL(raw);if(!['https:','http:'].includes(u.protocol))return '';if(u.protocol==='http:'&&u.hostname!=='localhost'&&u.hostname!=='127.0.0.1')return '';if(u.pathname.endsWith('/api/chat'))return u.toString();return u.toString().replace(/\/$/,'')+'/api/chat';}catch(e){return '';}}
+function setModelStatus(model,state){const el=$('modelStatus');if(model){el.textContent='当前模型：'+model;el.title='当前配置/返回的模型：'+model;el.dataset.state='ready';}else{el.textContent=state==='error'?'当前模型：暂时无法获取':state==='waiting'?'当前模型：等待连接':'当前模型：未连接';el.title=el.textContent;el.dataset.state=state||'waiting';}}
 async function checkProxy(){
- const ep=endpoint();if(!ep){$('health').textContent='· 未配置';return;}
+ const ep=endpoint();if(!ep){$('health').textContent='· 未配置';$('health').className='health';setModelStatus(null,'waiting');return;}
  $('health').textContent='· 检查中';
- try{const base=ep.replace(/\/api\/chat$/,'');const r=await fetch(base+'/health');const j=await r.json();$('health').textContent=j.configured?'· 已连接':'· 配置不完整';$('health').className='health'+(j.configured?'':' error');}
- catch(e){$('health').textContent='· 无法连接';$('health').className='health error';}
+ try{const base=ep.replace(/\/api\/chat$/,'');const r=await fetch(base+'/health');const j=await r.json();$('health').textContent=j.configured?'· 已连接':'· 配置不完整';$('health').className='health'+(j.configured?'':' error');if(j.model)setModelStatus(j.model,j.configured?'ready':'error');else setModelStatus(null,j.configured?'error':'waiting');}
+ catch(e){$('health').textContent='· 无法连接';$('health').className='health error';setModelStatus(null,'error');}
 }
 $('checkBtn').addEventListener('click',()=>{saveProxy();checkProxy();});
 function resizeImage(file){return new Promise((resolve,reject)=>{if(!file.type.startsWith('image/'))return reject(new Error('请选择图片文件。'));const img=new Image();const src=URL.createObjectURL(file);img.onload=()=>{const max=1600,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);URL.revokeObjectURL(src);resolve(canvas.toDataURL('image/jpeg',.82));};img.onerror=()=>{URL.revokeObjectURL(src);reject(new Error('图片读取失败，请换一张图片。'));};img.src=src;});}
@@ -256,6 +260,7 @@ async function send(){
   let data={};try{data=await response.json();}catch(e){}
   if(!response.ok)throw new Error(data.error||'请求失败（HTTP '+response.status+'）');
   if(typeof data.answer!=='string'||!data.answer.trim())throw new Error('模型没有返回文字答案。');
+  if(data.model)setModelStatus(data.model,'ready');
   state.messages.push({role:'assistant',text:data.answer});
  }catch(e){state.messages.push({role:'assistant',text:'请求未完成：'+(e.message||'网络错误')+'\n\n请检查代理地址、模型配置和网络后重试。'});}
  finally{setBusy(false);render();$('question').focus();}
