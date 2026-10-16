@@ -1854,7 +1854,7 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
 
     <footer class="max-w-[1180px] mx-auto px-4 pb-10 text-center">
         <p class="text-[11px] text-slate-500 font-light leading-relaxed">
-            知行计算器 · 全部计算在浏览器本地完成，不上传任何数据；历史记录保存在本机 localStorage 中，清空浏览器数据即会丢失。
+            知行计算器 · 普通计算在浏览器本地执行。只有点击 AI 分析/AI 扩展时，才会把当前工具必要的输入与结果发送给配置的 AI Worker；历史记录保存在本机 localStorage。
         </p>
         <p class="text-[11px] text-slate-600 font-light mt-2">
             计算引擎与主站完全一致 ·
@@ -4259,119 +4259,190 @@ function zxFnAdvance(f,xValue,rangeText){
     ;
 </script>
 
-<style id="zx-ai-edition">
-/* AI 版：深色液态玻璃，所有 AI 面板元素统一深色 */
-:root{color-scheme:dark!important}
-html,body{color-scheme:dark!important}
-#zx-ai-launch{position:fixed;z-index:99990;right:max(18px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px;padding:12px 17px;border:1px solid rgba(190,205,235,.17);border-radius:18px;background:rgba(27,31,43,.78);backdrop-filter:blur(24px) saturate(1.35);-webkit-backdrop-filter:blur(24px) saturate(1.35);box-shadow:0 10px 35px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.09);color:#e5ebf8;font:600 13px/1.2 var(--zx-font,system-ui);cursor:pointer}
-#zx-ai-launch .zx-ai-orb{width:27px;height:27px;display:grid;place-items:center;border:1px solid rgba(191,207,245,.17);border-radius:10px;background:linear-gradient(145deg,#30394e,#20283a);color:#a9c5ff;font-size:16px}
-#zx-ai-panel{position:fixed;z-index:99999;right:16px;bottom:16px;width:min(420px,calc(100vw - 24px));height:min(680px,calc(100dvh - 32px));display:none;flex-direction:column;overflow:hidden;border:1px solid rgba(193,207,235,.16);border-radius:25px;background:rgba(20,23,32,.94);backdrop-filter:blur(30px) saturate(1.35);-webkit-backdrop-filter:blur(30px) saturate(1.35);box-shadow:0 24px 80px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.06);color:#e2e8f4;font:14px/1.6 var(--zx-font,system-ui)}
-#zx-ai-panel.is-open{display:flex}
-.zx-ai-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;border-bottom:1px solid rgba(172,190,225,.12);background:rgba(39,44,58,.62)}
-.zx-ai-brand{display:flex;align-items:center;gap:10px;font-weight:750;color:#edf2fc}
-.zx-ai-brand-mark{display:grid;place-items:center;width:36px;height:36px;border:1px solid rgba(184,205,249,.17);border-radius:13px;background:linear-gradient(145deg,#323d55,#202a3d);box-shadow:0 3px 12px #0003;color:#aac7ff;font-size:17px}
-.zx-ai-head-actions{display:flex;gap:6px}
-.zx-ai-iconbtn{width:34px;height:34px;border:1px solid rgba(176,194,229,.15);border-radius:11px;background:rgba(43,49,64,.85);color:#bdc9df;cursor:pointer}
-.zx-ai-settings{padding:10px 14px;border-bottom:1px solid rgba(172,190,225,.1);display:grid;gap:7px;background:rgba(31,36,48,.55)}
-.zx-ai-settings summary{font-size:11px;color:#a0aec5;cursor:pointer}
-.zx-ai-proxy-row{display:flex;gap:7px}
-.zx-ai-proxy-row input{width:0;min-width:0;flex:1;padding:9px 10px;border:1px solid rgba(174,194,232,.17);border-radius:10px;background:rgba(15,18,26,.86);color:#e2e8f4;font-size:12px;outline:none}
-.zx-ai-proxy-row button,.zx-ai-quick button{border:1px solid rgba(174,194,232,.16);border-radius:10px;background:rgba(45,52,69,.8);color:#c2d2f1;padding:8px 10px;font-size:11px;cursor:pointer}
-#zx-ai-status{font-size:10px;color:#98a6bd}
-#zx-ai-status[data-state="error"]{color:#ffaaa2}
-.zx-ai-quick{display:flex;gap:7px;padding:10px 13px;overflow:auto;flex:none}
-.zx-ai-quick button{white-space:nowrap;background:rgba(41,48,64,.72)}
-#zx-ai-messages{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:14px;display:flex;flex-direction:column;gap:13px}
-.zx-ai-welcome{margin:auto;text-align:center;padding:22px 10px;color:#9aa8be;font-size:12px;line-height:1.9}
-.zx-ai-welcome strong{display:block;color:#edf2fc;font-size:17px;margin-bottom:4px}
-.zx-ai-msg{max-width:94%;padding:11px 13px;border:1px solid rgba(177,196,231,.13);border-radius:15px;background:rgba(43,49,63,.86);color:#e0e7f4;white-space:pre-wrap;overflow-wrap:anywhere;box-shadow:0 3px 12px rgba(0,0,0,.08)}
-.zx-ai-msg.user{align-self:flex-end;border-color:rgba(126,164,244,.24);background:linear-gradient(145deg,rgba(47,64,95,.96),rgba(36,48,73,.96));color:#e5edff}
-.zx-ai-msg.assistant{align-self:flex-start}
-.zx-ai-msg.error{border-color:rgba(238,143,134,.25);background:rgba(78,42,45,.7);color:#ffc2bb}
-.zx-ai-compose{padding:11px 12px max(12px,env(safe-area-inset-bottom));border-top:1px solid rgba(172,190,225,.12);background:rgba(31,36,48,.78)}
-#zx-ai-input{display:block;width:100%;min-height:70px;max-height:160px;resize:vertical;padding:11px 12px;border:1px solid rgba(174,194,232,.18);border-radius:14px;background:rgba(14,17,25,.86);color:#e5ebf8;font:13px/1.65 var(--zx-font,system-ui);outline:none}
-#zx-ai-input::placeholder,.zx-ai-proxy-row input::placeholder{color:#7f8ca3}
-#zx-ai-input:focus,.zx-ai-proxy-row input:focus{border-color:#789be0;box-shadow:0 0 0 3px rgba(109,145,213,.15)}
-.zx-ai-compose-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:9px}
-.zx-ai-hint{font-size:10px;color:#8997ad}
-#zx-ai-send{border:1px solid rgba(132,164,230,.3);border-radius:12px;background:linear-gradient(145deg,#344c77,#293d62);color:#e2ebff;padding:10px 17px;font-size:12px;font-weight:700;cursor:pointer}
-#zx-ai-send:disabled{opacity:.5;cursor:wait}
-@media(max-width:600px){#zx-ai-launch{right:12px;bottom:max(12px,env(safe-area-inset-bottom));padding:10px 13px}#zx-ai-panel{inset:0;width:100%;height:100dvh;max-height:100dvh;border-radius:0;border:0;padding-bottom:env(safe-area-inset-bottom)}.zx-ai-head{padding-top:max(13px,env(safe-area-inset-top))}}
+<style id="zx-ai-inline-edition">
+/* AI 分析结果直接出现在当前工具页中，不创建聊天窗口。 */
+.zx-ai-inline-actions{display:flex;flex:0 0 auto;align-items:center;gap:7px;margin-left:auto;padding-left:6px}
+.zx-ai-inline-actions button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:7px 11px;border:1px solid rgba(216,184,120,.3);border-radius:10px;background:rgba(216,184,120,.09);color:#efd9a6;font:600 11px/1.25 var(--zx-font,system-ui);white-space:nowrap;cursor:pointer;transition:background .16s,border-color .16s,transform .16s}
+.zx-ai-inline-actions button[data-zx-ai-action="extend"]{background:rgba(125,224,176,.08);border-color:rgba(125,224,176,.24);color:#a8e8c8}
+.zx-ai-inline-actions button:hover{background:rgba(216,184,120,.17);border-color:rgba(216,184,120,.56);transform:translateY(-1px)}
+.zx-ai-inline-actions button:disabled{opacity:.55;cursor:wait;transform:none}
+.zx-ai-result{margin:0 0 20px;padding:16px 17px;border:1px solid rgba(216,184,120,.25);border-radius:13px;background:linear-gradient(145deg,rgba(31,34,38,.97),rgba(18,21,25,.97));box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 9px 24px rgba(0,0,0,.2);color:#e8e6df}
+.zx-ai-result[hidden]{display:none!important}
+.zx-ai-result-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:10px;border-bottom:1px solid rgba(216,184,120,.16)}
+.zx-ai-result-title{display:flex;align-items:center;gap:8px;color:#f0d7a0;font-size:13px;font-weight:750}
+.zx-ai-result-title i{color:#d8b878}
+.zx-ai-result-head button,.zx-ai-result-footer button{border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.045);color:#aeb7c2;padding:6px 9px;font:11px var(--zx-font,system-ui);cursor:pointer}
+.zx-ai-result-status{padding:12px 0 0;color:#c4ad7e;font-size:12px;line-height:1.75}
+.zx-ai-result-status[data-state="error"]{color:#ffaaa2}
+.zx-ai-result-body{margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;color:#e1e5e9;font:13px/1.9 var(--zx-font,"Noto Sans SC",system-ui,sans-serif)}
+.zx-ai-result-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:13px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07);color:#7f8997;font-size:10px}
+.zx-ai-result-settings{flex-basis:100%;width:100%;color:#8e9bab}
+.zx-ai-result-settings summary{display:inline-block;margin-top:3px;cursor:pointer;font-size:10px}
+.zx-ai-proxy-row{display:flex;gap:7px;margin-top:8px}
+.zx-ai-proxy-row input{width:0;min-width:0;flex:1;padding:8px 10px;border:1px solid rgba(255,255,255,.13);border-radius:8px;background:#0c0f13;color:#e1e5e9;font:11px var(--zx-font,system-ui);outline:none}
+.zx-ai-proxy-row button{padding:8px 10px;border:1px solid rgba(216,184,120,.25);border-radius:8px;background:rgba(216,184,120,.08);color:#e6d2a4;font-size:11px;cursor:pointer}
+.zx-ai-proxy-row input:focus{border-color:#d8b878;outline:1px solid rgba(216,184,120,.25)}
+.view-head>.zx-ai-inline-actions{align-self:flex-start}
+@media(max-width:720px){
+ .view-head{flex-wrap:wrap}
+ .view-head>.zx-ai-inline-actions{width:100%;margin:7px 0 0;padding-left:0;justify-content:flex-start}
+ .zx-ai-inline-actions button{min-height:35px;flex:0 0 auto}
+ .zx-ai-result{padding:13px 12px;margin-bottom:15px}
+ .zx-ai-result-body{font-size:12px;line-height:1.85}
+ .zx-ai-result-footer{align-items:flex-start;flex-direction:column}
+}
 </style>
-<button id="zx-ai-launch" type="button" aria-label="打开知行 AI 助手"><span class="zx-ai-orb">✦</span><span>AI 解题助手</span></button>
-<section id="zx-ai-panel" role="dialog" aria-modal="false" aria-label="知行计算器 AI 助手">
-  <header class="zx-ai-head">
-    <div class="zx-ai-brand"><span class="zx-ai-brand-mark">✦</span><span>知行计算器 AI<small style="display:block;font-size:10px;font-weight:500;color:#8795aa">结合当前页面，辅助理解与推导</small></span></div>
-    <div class="zx-ai-head-actions"><button class="zx-ai-iconbtn" id="zx-ai-clear" type="button" title="清空对话">↺</button><button class="zx-ai-iconbtn" id="zx-ai-close" type="button" aria-label="关闭">×</button></div>
-  </header>
-  <details class="zx-ai-settings" id="zx-ai-settings">
-    <summary>连接设置 · 配置 AI 代理地址</summary>
-    <div class="zx-ai-proxy-row"><input id="zx-ai-proxy" type="url" inputmode="url" placeholder="https://你的-worker.workers.dev" autocomplete="url"><button id="zx-ai-check" type="button">检查连接</button></div>
-    <div id="zx-ai-status" aria-live="polite">代理地址只保存在本机浏览器，不需要填写模型密钥。</div>
-  </details>
-  <div class="zx-ai-quick"><button type="button" data-zx-ai-action="understand">分析当前问题</button><button type="button" data-zx-ai-action="verify">检查推导</button><button type="button" data-zx-ai-action="format">整理标准答案</button></div>
-  <div id="zx-ai-messages" aria-live="polite"><div class="zx-ai-welcome"><strong>你好，我是知行 AI</strong>我可以讲解数学步骤、检查推导、分析函数或解释化学问题。你也可以先在计算器中操作，再让我结合当前页面说明。</div></div>
-  <form class="zx-ai-compose" id="zx-ai-form"><textarea id="zx-ai-input" placeholder="输入题目或追问…（Enter 发送，Shift+Enter 换行）" rows="3"></textarea><div class="zx-ai-compose-foot"><span class="zx-ai-hint">AI 可能出错，关键结果请用计算器核验</span><button id="zx-ai-send" type="submit">发送 ↗</button></div></form>
-</section>
-<script>
+<script id="zx-ai-inline-controller">
 (function(){
+  'use strict';
+  const DEFAULT_PROXY='https://zhixing-calculator-ai.xiaoshirong2023.workers.dev';
+  const VIEW_TITLES={basic:'基础计算',equation:'方程求解',inequality:'不等式',fit:'函数分析与绘图',units:'单位换算',chemistry:'化学方程式配平',knowledge:'知识库',history:'历史记录'};
+  const ENABLED_VIEWS=['basic','equation','inequality','fit','units','chemistry'];
   const $=id=>document.getElementById(id);
-  const panel=$('zx-ai-panel'), launch=$('zx-ai-launch'), input=$('zx-ai-input'), messagesEl=$('zx-ai-messages'), send=$('zx-ai-send'), status=$('zx-ai-status'), proxyInput=$('zx-ai-proxy');
-  const state={messages:[],busy:false,proxy:''};
-  try{state.proxy=localStorage.getItem('zx-ai-proxy-url')||sessionStorage.getItem('zx-ai-proxy')||'https://zhixing-calculator-ai.xiaoshirong2023.workers.dev';}catch(e){state.proxy='https://zhixing-calculator-ai.xiaoshirong2023.workers.dev';}
-  proxyInput.value=state.proxy;
+  let busy=false;
+  function proxyValue(){
+    try{return localStorage.getItem('zx-ai-proxy-url')||sessionStorage.getItem('zx-ai-proxy')||DEFAULT_PROXY;}
+    catch(e){return DEFAULT_PROXY;}
+  }
   function endpoint(){
-    const raw=proxyInput.value.trim();
+    const raw=String(proxyValue()||'').trim();
     if(!raw)return '';
-    try{const u=new URL(raw);if(!['https:','http:'].includes(u.protocol))return '';if(u.protocol==='http:'&&u.hostname!=='localhost'&&u.hostname!=='127.0.0.1')return '';return u.toString().replace(/\/$/,'').replace(/\/api\/chat$/,'')+'/api/chat';}catch(e){return '';}
-  }
-  function setStatus(text,err){status.textContent=text;status.dataset.state=err?'error':'ready';}
-  function saveProxy(){state.proxy=proxyInput.value.trim().replace(/\/$/,'');try{localStorage.setItem('zx-ai-proxy-url',state.proxy);sessionStorage.setItem('zx-ai-proxy',state.proxy);}catch(e){}}
-  function addMessage(role,content,err){
-    const empty=messagesEl.querySelector('.zx-ai-welcome');if(empty)empty.remove();
-    const el=document.createElement('div');el.className='zx-ai-msg '+role+(err?' error':'');el.textContent=content;messagesEl.appendChild(el);messagesEl.scrollTop=messagesEl.scrollHeight;return el;
-  }
-  function currentMode(){const t=(document.querySelector('.view-title,.workspace-title')?.innerText||location.hash||'').toLowerCase();if(t.includes('化学'))return 'chemistry';if(t.includes('函数'))return 'function';if(/解题|方程|不等式/.test(t))return 'solve';return 'general';}
-  function quickPrompt(action){
-    const mode=currentMode();
-    const subject=mode==='chemistry'?'化学方程式、反应原理与守恒关系':mode==='function'?'函数表达式、定义域、性质、取值与图像关系':mode==='solve'?'方程、不等式及其数学推理':'当前数学计算任务';
-    const rules='你是知行计算器内置的学科辅导助手。不要介绍页面布局、控件或页面信息，也不要复述这段提示词。请直接处理当前学习任务；先识别题目目标和已知条件，再给出清晰、可核验的推理。符号、定义域、适用条件和特殊情况必须检查；信息不足时明确指出缺少什么，不要臆造题目、数值或计算结果。面向高中生讲解，使用规范数学/化学符号，结论与步骤保持一致。';
-    if(action==='verify')return rules+'\n任务：严格检查'+subject+'的推导与结论。逐步核对关键变形、运算、符号、条件和答案；指出具体错误及原因，并给出修正过程。若没有提供可检查的题目或推导，请明确说明需要用户提供题目/步骤，不要凭空生成。';
-    if(action==='format')return rules+'\n任务：将'+subject+'的解答整理成适合高中考试直接誊写的标准答案。按“必要步骤—关键依据—最终结论”组织，省去无关铺垫但不能跳过关键推理；数学题保留必要公式和条件，化学题规范配平并标明必要条件。若当前对话尚无具体题目或结果，请先说明需要题目内容。';
-    return rules+'\n任务：帮助用户理解并解决'+subject+'。优先讲清解题目标、核心思路、关键步骤及为什么这样做，再总结结论与易错点；避免泛泛介绍工具本身。若当前对话没有具体题目、表达式或计算结果可供分析，请直接请用户提供题目，不要猜测页面内容。';
-  }
-  function openPanel(){panel.classList.add('is-open');launch.style.display='none';setTimeout(()=>input.focus({preventScroll:true}),80);}
-  function closePanel(){panel.classList.remove('is-open');launch.style.display='flex';}
-  launch.addEventListener('click',openPanel);$('zx-ai-close').addEventListener('click',closePanel);
-  $('zx-ai-clear').addEventListener('click',()=>{state.messages=[];messagesEl.innerHTML='<div class="zx-ai-welcome"><strong>对话已清空</strong>继续输入问题即可开始新对话。</div>';});
-  proxyInput.addEventListener('change',()=>{saveProxy();});
-  $('zx-ai-check').addEventListener('click',async()=>{
-    saveProxy();const base=endpoint().replace(/\/api\/chat$/,'');if(!base){setStatus('请填写有效的 HTTPS Worker 地址。',true);return;}
-    setStatus('正在检查连接…',false);
-    try{const r=await fetch(base+'/health');const j=await r.json();if(!r.ok||!j.ok)throw Error(j.error||'代理响应异常');setStatus((j.configured?'已连接 · ':'代理可访问，但后端未配置 · ')+(j.model||'模型未返回'),!j.configured);}
-    catch(e){setStatus('连接失败：'+e.message,true);}
-  });
-  async function sendMessage(text,fromQuickAction=false){
-    if(state.busy)return;
-    const userText=String(text||'').trim();if(!userText)return;
-    saveProxy();const ep=endpoint();
-    if(!ep){$('zx-ai-settings').open=true;setStatus('先配置 AI 代理地址，再发送问题。',true);return;}
-    input.value='';addMessage('user',userText);state.messages.push({role:'user',content:userText});state.busy=true;send.disabled=true;document.querySelectorAll('[data-zx-ai-action]').forEach(b=>b.disabled=true);send.textContent='思考中…';
-    const pending=addMessage('assistant','正在思考…');
     try{
-      const history=state.messages.slice(-10);
-      const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:currentMode(),messages:history})});
-      const data=await response.json();if(!response.ok)throw Error(data.error||('请求失败（'+response.status+'）'));
-      const answer=String(data.answer||data.choices?.[0]?.message?.content||'模型没有返回文字结果');
-      pending.textContent=answer;state.messages.push({role:'assistant',content:answer});
-      if(data.model)setStatus('已连接 · '+data.model,false);
-    }catch(err){pending.remove();addMessage('assistant','请求失败：'+err.message+'。请检查代理地址、Worker 配置及网络。',true);state.messages.pop();}
-    finally{state.busy=false;send.disabled=false;document.querySelectorAll('[data-zx-ai-action]').forEach(b=>b.disabled=false);send.textContent='发送 ↗';if(!fromQuickAction)input.focus({preventScroll:true});}
+      const u=new URL(raw);
+      if(!['https:','http:'].includes(u.protocol))return '';
+      if(u.protocol==='http:'&&u.hostname!=='localhost'&&u.hostname!=='127.0.0.1')return '';
+      return u.toString().replace(/\/$/,'').replace(/\/api\/chat$/,'')+'/api/chat';
+    }catch(e){return '';}
   }
-  document.querySelectorAll('[data-zx-ai-action]').forEach(b=>b.addEventListener('click',()=>{if(state.busy)return;openPanel();sendMessage(quickPrompt(b.dataset.zxAiAction),true);}));
-  $('zx-ai-form').addEventListener('submit',e=>{e.preventDefault();sendMessage(input.value,false);});
-  input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('zx-ai-form').requestSubmit();}});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panel.classList.contains('is-open'))closePanel();});
+  function saveProxy(value){
+    const raw=String(value||'').trim().replace(/\/$/,'');
+    let url;
+    try{url=new URL(raw);if(!['https:','http:'].includes(url.protocol))throw new Error('bad url');if(url.protocol==='http:'&&url.hostname!=='localhost'&&url.hostname!=='127.0.0.1')throw new Error('https required');}
+    catch(e){return false;}
+    try{localStorage.setItem('zx-ai-proxy-url',raw);sessionStorage.setItem('zx-ai-proxy',raw);}catch(e){}
+    return true;
+  }
+  function makeResult(section){
+    let panel=section.querySelector('.zx-ai-result');
+    if(panel)return panel;
+    panel=document.createElement('section');
+    panel.className='zx-ai-result';
+    panel.hidden=true;
+    panel.setAttribute('aria-live','polite');
+    panel.innerHTML='<div class="zx-ai-result-head"><div class="zx-ai-result-title"><i aria-hidden="true">✦</i><span>知行 AI 分析</span></div><button type="button" data-zx-ai-hide>收起结果</button></div><div class="zx-ai-result-status" data-zx-ai-status>等待分析</div><pre class="zx-ai-result-body" data-zx-ai-answer hidden></pre><div class="zx-ai-result-footer"><span>仅发送当前工具的必要输入、结果与选项；不发送其他页面内容。</span><details class="zx-ai-result-settings"><summary>AI 服务设置</summary><div class="zx-ai-proxy-row"><input type="url" inputmode="url" data-zx-ai-proxy placeholder="https://你的-worker.workers.dev" aria-label="AI Worker 地址"><button type="button" data-zx-ai-save-proxy>保存地址</button></div></details></div>';
+    const head=section.querySelector('.view-head');
+    if(head)head.insertAdjacentElement('afterend',panel);
+    panel.querySelector('[data-zx-ai-hide]').addEventListener('click',()=>{panel.hidden=true;});
+    const proxyInput=panel.querySelector('[data-zx-ai-proxy]');
+    proxyInput.value=proxyValue();
+    panel.querySelector('[data-zx-ai-save-proxy]').addEventListener('click',()=>{
+      const stat=panel.querySelector('[data-zx-ai-status]');
+      if(!saveProxy(proxyInput.value)){stat.textContent='地址无效，请填写 HTTPS Worker 地址。';stat.dataset.state='error';return;}
+      document.querySelectorAll('[data-zx-ai-proxy]').forEach(el=>{el.value=proxyValue();});
+      stat.textContent='AI 服务地址已保存。';stat.dataset.state='ready';
+    });
+    return panel;
+  }
+  function textOf(node,max){
+    if(!node)return '';
+    const text=String(node.innerText||node.textContent||'').replace(/\u00a0/g,' ').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+    return text.slice(0,max||2400);
+  }
+  function visible(node){
+    if(!node||node.hidden||node.closest('[hidden]'))return false;
+    const style=window.getComputedStyle(node);
+    return style.display!=='none'&&style.visibility!=='hidden';
+  }
+  function inputLabel(el){
+    return el.getAttribute('aria-label')||el.getAttribute('data-math-field')||el.getAttribute('placeholder')||el.id||el.name||'输入项';
+  }
+  function collectContext(viewId,section){
+    const title=VIEW_TITLES[viewId]||textOf(section.querySelector('.view-title'),80)||'当前计算任务';
+    const inputLines=[];
+    const controls=Array.from(section.querySelectorAll('input,select,textarea'));
+    controls.forEach(el=>{
+      if(el.type==='hidden'||el.disabled||el.closest('[hidden]'))return;
+      const value=el.tagName==='SELECT'?(el.selectedOptions&&el.selectedOptions[0]?el.selectedOptions[0].textContent:el.value):String(el.value||'');
+      if(!value.trim())return;
+      inputLines.push(inputLabel(el)+' = '+value.trim().slice(0,600));
+    });
+    const selectionLines=[];
+    section.querySelectorAll('[data-fit].is-active,[data-fit-task].is-active,[data-fit-input-mode].is-active,[data-cat].is-active,[aria-pressed="true"]').forEach(el=>{
+      const text=textOf(el,100);
+      if(text)selectionLines.push(text);
+    });
+    const outputSelectors='.zx-out, .zx-steps, .function-expression-panel, .function-value-note, .function-graph-note, .zx-chem-candidate, .zx-chem-equation';
+    const outputLines=[];
+    section.querySelectorAll(outputSelectors).forEach(el=>{
+      if(!visible(el))return;
+      const text=textOf(el,1800);
+      if(text&&!outputLines.includes(text))outputLines.push(text);
+    });
+    let details=selectionLines.length?'当前选项：'+selectionLines.join('；'):'';
+    if(viewId==='fit'){
+      const graph=section.querySelector('.function-graph');
+      const graphText=graph?textOf(graph,500):'';
+      if(graphText)details+=(details?'\n':'')+'函数图像摘要：'+graphText;
+    }
+    const context={
+      title:title,
+      view:viewId,
+      inputs:(inputLines.join('\n')||'当前页面未找到非空输入'),
+      outputs:(outputLines.join('\n\n')||'当前页面未找到已显示的计算结果'),
+      details:(details||'用户点击了当前工具的 AI 分析入口；请仅依据提供的输入与输出推理。')
+    };
+    return context;
+  }
+  function setStatus(panel,text,error){
+    const el=panel.querySelector('[data-zx-ai-status]');
+    el.textContent=text;el.dataset.state=error?'error':'ready';
+  }
+  async function analyze(section,viewId,action,button){
+    if(busy)return;
+    const panel=makeResult(section);
+    panel.hidden=false;
+    const answerEl=panel.querySelector('[data-zx-ai-answer]');
+    answerEl.hidden=true;answerEl.textContent='';
+    setStatus(panel,action==='extend'?'AI 正在补充本地计算器未覆盖的分析……':'AI 正在检查输入、结果和关键条件……',false);
+    const allButtons=Array.from(document.querySelectorAll('[data-zx-ai-action]'));
+    busy=true;allButtons.forEach(b=>b.disabled=true);
+    try{
+      const ep=endpoint();
+      if(!ep)throw new Error('AI Worker 地址无效，请展开“AI 服务设置”重新配置。');
+      const context=collectContext(viewId,section);
+      const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'analysis',action:action,mode:viewId,context:context})});
+      let data={};try{data=await response.json();}catch(e){}
+      if(!response.ok)throw new Error(data.error||('请求失败（HTTP '+response.status+'）'));
+      if(typeof data.answer!=='string'||!data.answer.trim())throw new Error('AI 没有返回可显示的分析结果。');
+      setStatus(panel,(action==='extend'?'AI 扩展完成':'AI 分析完成')+(data.model?' · '+data.model:''),false);
+      answerEl.textContent=data.answer;answerEl.hidden=false;
+      panel.querySelector('[data-zx-ai-proxy]').value=proxyValue();
+    }catch(e){
+      setStatus(panel,'请求失败：'+(e&&e.message?e.message:'网络错误')+'。可展开“AI 服务设置”检查 Worker 地址或网络。',true);
+    }finally{
+      busy=false;allButtons.forEach(b=>b.disabled=false);
+    }
+  }
+  function init(){
+    document.querySelectorAll('.view[data-view]').forEach(section=>{
+      const viewId=section.getAttribute('data-view');
+      if(!ENABLED_VIEWS.includes(viewId)||!section.querySelector('.view-head'))return;
+      const head=section.querySelector('.view-head');
+      if(head.querySelector('.zx-ai-inline-actions'))return;
+      const actions=document.createElement('div');actions.className='zx-ai-inline-actions';
+      const makeButton=(action,label,title)=>{
+        const b=document.createElement('button');b.type='button';b.dataset.zxAiAction=action;b.textContent=label;b.title=title;
+        b.addEventListener('click',()=>analyze(section,viewId,action,b));
+        return b;
+      };
+      actions.appendChild(makeButton('analyze','✦ AI 分析','分析并核验当前输入与本地结果'));
+      actions.appendChild(makeButton('extend','✧ AI 扩展','尝试执行本地工具尚未覆盖的学科推理'));
+      head.appendChild(actions);
+      makeResult(section);
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else init();
 })();
 </script>
 
