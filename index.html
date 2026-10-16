@@ -1498,6 +1498,7 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
   -webkit-backdrop-filter:blur(18px) saturate(1.55) contrast(1.04);
   backdrop-filter:blur(18px) saturate(1.55) contrast(1.04);
   background-clip:padding-box;
+  border-radius:18px!important;
 }
 @supports (backdrop-filter:url(#zx-menu-liquid-filter)){
   .zx-menu.glass-panel{
@@ -1577,6 +1578,7 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
   box-shadow:0 0 9px rgba(193,220,255,.26);
   pointer-events:none;
 }
+@media(max-width:900px){.zx-menu.glass-panel{border-radius:22px!important}}
 @media(hover:hover) and (pointer:fine){
   .zx-menu .zx-menu-item:hover{
     border-color:rgba(255,255,255,.13);
@@ -4452,7 +4454,8 @@ function zxFnAdvance(f,xValue,rangeText){
     lastKey=key;
     canvas.width=w;canvas.height=h;
     var image=ctx.createImageData(w,h),data=image.data;
-    var radius=Math.min(23,w*.12,h*.07);
+    var cssRadius=parseFloat(getComputedStyle(menu).borderTopLeftRadius)||20;
+    var radius=Math.max(7,Math.min(w*.12,h*.07,cssRadius*w/rect.width));
     var depth=Math.max(7,Math.min(17,w*.055));
     var cx=w/2,cy=h/2,innerX=w/2-radius,innerY=h/2-radius;
     for(var y=0;y<h;y++){
