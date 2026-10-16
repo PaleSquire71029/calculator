@@ -78,6 +78,47 @@ test("forwards a valid request to the OpenAI-compatible endpoint", async () => {
   }
 });
 
+test("structured AI analysis uses the shared Worker prompt template", async () => {
+  const originalFetch = globalThis.fetch;
+  let sentBody;
+  globalThis.fetch = async (url, init) => {
+    sentBody = JSON.parse(init.body);
+    return new Response(JSON.stringify({
+      model: "vision-model",
+      choices: [{ message: { content: "【核心结论】x=2 或 x=3。\\n【关键信息】二次方程。\\n【推导与依据】因式分解。\\n【核验与限制】代回成立。\\n【AI扩展能力】可继续讨论参数。 " } }]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    const response = await worker.fetch(req({
+      task: "analysis",
+      action: "extend",
+      mode: "equation",
+      context: { title: "方程求解", view: "equation", inputs: "x^2-5x+6=0", outputs: "x=2 或 x=3", details: "本地已完成求解" }
+    }, "198.51.100.15"), env);
+    assert.equal(response.status, 200);
+    assert.match((await response.json()).answer, /核心结论/);
+    assert.equal(sentBody.messages[0].role, "system");
+    assert.match(sentBody.messages[0].content, /AI扩展能力/);
+    assert.match(sentBody.messages[0].content, /增根风险/);
+    assert.equal(sentBody.messages[1].role, "user");
+    assert.match(sentBody.messages[1].content, /x\^2-5x\+6=0/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("structured AI analysis rejects missing or oversized context", async () => {
+  const missing = await worker.fetch(req({
+    task: "analysis", action: "analyze", mode: "basic", context: {}
+  }, "198.51.100.16"), env);
+  assert.equal(missing.status, 400);
+  const tooLarge = await worker.fetch(req({
+    task: "analysis", action: "analyze", mode: "basic",
+    context: { title: "基础计算", inputs: "x".repeat(12001) }
+  }, "198.51.100.17"), env);
+  assert.equal(tooLarge.status, 400);
+});
+
 test("AI frontend inline JavaScript parses without syntax errors", () => {
   const html = readFileSync(new URL("../ai.html", import.meta.url), "utf8");
   const start = html.lastIndexOf("<script>");
