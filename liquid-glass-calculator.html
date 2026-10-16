@@ -2066,6 +2066,7 @@ body.zx-lowpower-glass button,body.zx-lowpower-glass a{touch-action:manipulation
   body.zx-lowpower-glass .zx-chem-keyrow{gap:6px}
 }
 @media(max-width:768px){
+  body.zx-lowpower-glass{background-attachment:scroll!important}
   body.zx-lowpower-glass .zx-header{-webkit-backdrop-filter:blur(6px) saturate(1.08);backdrop-filter:blur(6px) saturate(1.08)}
   body.zx-lowpower-glass .zx-layout{padding:14px 12px calc(34px + env(safe-area-inset-bottom))}
   body.zx-lowpower-glass .workspace-intro{padding-bottom:15px;margin-bottom:14px}
@@ -3635,7 +3636,7 @@ function zxEvalArithmetic(src) {
             document.querySelectorAll('.zx-menu-item').forEach(function (btn) {
                 btn.classList.toggle('is-active', btn.getAttribute('data-go') === view);
             });
-            document.title = VIEW_TITLES[view] + ' | 知行计算器';
+            document.title = VIEW_TITLES[view] + ' | 知行计算器 · Liquid Glass';
             try {
                 if (location.hash !== '#' + view) history.replaceState(null, '', '#' + view);
             } catch (e) { /* 某些本地环境不允许改 hash，忽略 */ }
@@ -4933,7 +4934,7 @@ function zxFnAdvance(f,xValue,rangeText){
     var rect=pane.getBoundingClientRect();
     var width=Math.round(rect.width),height=Math.round(rect.height);
     if(width<100||height<100)return;
-    var dpr=window.matchMedia('(max-width:700px)').matches?.20:.30;
+    var dpr=window.matchMedia('(max-width:700px)').matches ? 0.20 : 0.30;
     var pad=Math.max(22,Math.round(Math.max(width,height)*.08));
     var key=[width,height,dpr].join(':');
     if(key===lastKey)return;
@@ -5033,7 +5034,7 @@ function zxFnAdvance(f,xValue,rangeText){
     var enabled=!body.classList.contains('zx-glass-off');
     button.setAttribute('aria-pressed',enabled?'true':'false');
     button.title=enabled?'当前使用低功耗玻璃材质，点击关闭':'玻璃效果已关闭，点击启用低功耗玻璃';
-    if(label)label.textContent=enabled?'玻璃 · 低功耗':'玻璃 · 关闭';
+    if(label)label.textContent=enabled?(document.documentElement.classList.contains('zx-optics-ready')?'玻璃 · 折射':'玻璃 · 低功耗'):'玻璃 · 关闭';
   }
   button.addEventListener('click',function(){
     body.classList.toggle('zx-glass-off');
