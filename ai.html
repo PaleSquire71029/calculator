@@ -180,6 +180,7 @@ async function send(){
 }
 $('send').addEventListener('click',send);
 $('question').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
+window.addEventListener('load',()=>typeset($('chat')));
 checkProxy();
 })();
 </script>
