@@ -2121,6 +2121,250 @@ body.zx-lowpower-glass button,body.zx-lowpower-glass a{touch-action:manipulation
   }
 }
 </style>
+<style id="zx-liquid-glass-design-refinement">
+/* Visual refinement: use the optical stage from the test page, but translate it to a bright material palette.
+   Apple HIG principle: distinct translucent navigation/control layer; keep content readable and avoid dark slabs. */
+body.zx-lowpower-glass{
+  color:#233c58!important;
+  background:
+    radial-gradient(ellipse 39rem 32rem at 6% 7%,rgba(88,174,255,.52),transparent 70%),
+    radial-gradient(ellipse 35rem 31rem at 77% 5%,rgba(194,151,255,.43),transparent 69%),
+    radial-gradient(ellipse 30rem 31rem at 95% 52%,rgba(255,157,143,.34),transparent 70%),
+    radial-gradient(ellipse 34rem 29rem at 31% 94%,rgba(105,220,197,.32),transparent 70%),
+    radial-gradient(ellipse 25rem 24rem at 47% 45%,rgba(255,255,255,.7),transparent 72%),
+    linear-gradient(135deg,#f7fbff 0%,#eff6ff 34%,#f7f1ff 66%,#fff5f1 100%)!important;
+  background-attachment:fixed!important;
+}
+body.zx-lowpower-glass::before{
+  opacity:.24!important;
+  background-image:
+    linear-gradient(rgba(92,142,199,.12) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(92,142,199,.12) 1px,transparent 1px),
+    radial-gradient(ellipse at 20% 6%,rgba(255,255,255,.9),transparent 36rem)!important;
+  background-size:72px 72px,72px 72px,auto!important;
+  mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.36) 42%,transparent 82%)!important;
+}
+body.zx-lowpower-glass::after{
+  height:2px!important;
+  opacity:.95!important;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.98) 18%,rgba(136,190,242,.85) 42%,rgba(219,174,251,.72) 68%,rgba(255,197,178,.75) 85%,transparent)!important;
+}
+body.zx-lowpower-glass .zx-header{
+  background:linear-gradient(105deg,rgba(255,255,255,.69),rgba(245,250,255,.53) 42%,rgba(255,248,255,.58))!important;
+  border-bottom-color:rgba(255,255,255,.95)!important;
+  box-shadow:0 8px 28px rgba(77,119,172,.09),inset 0 1px 0 rgba(255,255,255,.98)!important;
+}
+body.zx-lowpower-glass .zx-menu{
+  background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(239,247,255,.59) 52%,rgba(249,241,255,.58))!important;
+  border-color:rgba(255,255,255,.98)!important;
+  box-shadow:0 18px 46px rgba(74,113,167,.14),inset 0 1.5px 0 #fff,inset 0 -1px 0 rgba(145,180,222,.18)!important;
+}
+body.zx-lowpower-glass .zx-brand-mark,
+body.zx-lowpower-glass .zx-back,
+body.zx-lowpower-glass .zx-icon-btn,
+body.zx-lowpower-glass .zx-glass-toggle{
+  border-color:rgba(255,255,255,.98)!important;
+  box-shadow:inset 0 1px 0 #fff,0 5px 14px rgba(78,120,177,.09)!important;
+}
+body.zx-lowpower-glass .zx-glass-toggle{
+  background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(211,231,255,.64))!important;
+}
+body.zx-lowpower-glass .zx-menu-item.is-active{
+  background:linear-gradient(105deg,rgba(255,255,255,.96),rgba(214,234,255,.7) 60%,rgba(241,227,255,.58))!important;
+  border-color:rgba(255,255,255,.99)!important;
+  box-shadow:inset 0 1px 0 #fff,0 5px 15px rgba(89,131,187,.1)!important;
+}
+body.zx-lowpower-glass .workspace-intro{border-bottom-color:rgba(255,255,255,.75)!important}
+body.zx-lowpower-glass .workspace-eyebrow{color:#6389b4!important}
+body.zx-lowpower-glass .workspace-title{color:#263f5b!important}
+body.zx-lowpower-glass .workspace-copy{color:#607b98!important}
+body.zx-lowpower-glass .workspace-status{
+  background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(221,244,237,.58))!important;
+  border-color:rgba(255,255,255,.98)!important;color:#427d70!important;
+}
+
+/* The working surface is a brighter, text-safe material; the optical rim is concentrated here. */
+body.zx-lowpower-glass .view.is-active .view-card,
+body.zx-lowpower-glass .view.is-active>.glass-panel{
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.76),rgba(249,252,255,.61) 45%,rgba(243,247,255,.6))!important;
+  border-color:rgba(255,255,255,.98)!important;
+  box-shadow:
+    0 24px 58px rgba(76,112,164,.13),
+    0 3px 10px rgba(94,126,170,.035),
+    inset 0 1.5px 0 rgba(255,255,255,.99),
+    inset 0 -1px 0 rgba(132,174,222,.22),
+    inset 1px 0 0 rgba(255,255,255,.72),
+    inset -1px 0 0 rgba(255,255,255,.48)!important;
+}
+body.zx-lowpower-glass .view.is-active .view-card::before{
+  left:16px!important;right:16px!important;height:1.5px!important;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,1) 16%,rgba(143,194,244,.92) 40%,rgba(218,179,246,.78) 64%,rgba(255,206,187,.7) 84%,transparent)!important;
+}
+body.zx-lowpower-glass .view.is-active .view-card::after{
+  background:
+    radial-gradient(ellipse at var(--zx-glass-x,24%) var(--zx-glass-y,0%),rgba(255,255,255,.7),transparent 42%),
+    linear-gradient(132deg,rgba(255,255,255,.23),transparent 21%,transparent 69%,rgba(255,255,255,.24))!important;
+  opacity:.72!important;
+}
+body.zx-lowpower-glass .view-head{border-bottom-color:rgba(113,153,202,.19)!important}
+body.zx-lowpower-glass .view-head-mark{
+  background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(218,236,255,.76))!important;
+  border-color:rgba(255,255,255,.98)!important;
+  box-shadow:inset 0 1px 0 #fff,0 7px 18px rgba(83,129,185,.12)!important;
+}
+body.zx-lowpower-glass .view-title{color:#2c4664!important}
+body.zx-lowpower-glass .view-sub{color:#6c819a!important}
+body.zx-lowpower-glass .zx-field,
+body.zx-lowpower-glass .structured-field,
+body.zx-lowpower-glass .structured-select,
+body.zx-lowpower-glass .structured-select select,
+body.zx-lowpower-glass .structured-field input{
+  background:linear-gradient(145deg,rgba(255,255,255,.93),rgba(242,248,255,.78))!important;
+  border-color:rgba(140,176,219,.43)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.98),0 2px 5px rgba(88,126,177,.025)!important;
+}
+body.zx-lowpower-glass .calc-screen{
+  background:
+    radial-gradient(ellipse at 3% 0%,rgba(255,255,255,.96),transparent 70%),
+    linear-gradient(130deg,rgba(255,255,255,.82),rgba(216,234,255,.66) 60%,rgba(242,229,255,.5))!important;
+  border-color:rgba(255,255,255,.99)!important;
+  box-shadow:inset 0 1.5px 0 #fff,inset 0 -1px rgba(124,166,215,.22),0 7px 20px rgba(80,121,176,.06)!important;
+}
+body.zx-lowpower-glass .calc-input{color:#1e3856!important;text-shadow:0 1px rgba(255,255,255,.5)}
+body.zx-lowpower-glass .calc-key{
+  background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(222,237,255,.72))!important;
+  border-color:rgba(255,255,255,.99)!important;
+  box-shadow:inset 0 1px 0 #fff,0 4px 10px rgba(68,112,168,.08)!important;
+}
+body.zx-lowpower-glass .calc-key.is-fn{
+  background:linear-gradient(145deg,rgba(238,247,255,.98),rgba(203,226,252,.78))!important;
+  color:#547697!important;
+}
+body.zx-lowpower-glass .calc-key.is-op{
+  color:#81633c!important;
+  background:linear-gradient(145deg,rgba(255,251,239,.98),rgba(242,224,190,.72))!important;
+  box-shadow:inset 0 1px 0 #fff,0 4px 10px rgba(159,126,73,.07)!important;
+}
+body.zx-lowpower-glass .calc-key.is-eq{
+  color:#fff!important;
+  background:linear-gradient(145deg,#82b7ed 0%,#6599d6 54%,#7b9bd6 100%)!important;
+  border-color:rgba(255,255,255,.99)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.76),0 6px 16px rgba(83,139,204,.25)!important;
+}
+body.zx-lowpower-glass .zx-out{
+  background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(229,241,255,.68))!important;
+  border-color:rgba(255,255,255,.97)!important;
+  box-shadow:inset 0 1px 0 #fff,0 7px 20px rgba(81,119,174,.055)!important;
+}
+body.zx-lowpower-glass .zx-out-row{border-bottom-color:rgba(112,153,202,.2)!important}
+body.zx-lowpower-glass .zx-out-k{color:#6e85a0!important}
+body.zx-lowpower-glass .zx-out-v{color:#365473!important}
+body.zx-lowpower-glass .zx-out-v.is-big{color:#203d5d!important}
+body.zx-lowpower-glass .zx-btn,
+body.zx-lowpower-glass .zx-chip,
+body.zx-lowpower-glass .zx-eg{
+  border-color:rgba(255,255,255,.98)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(222,237,255,.7))!important;
+  box-shadow:inset 0 1px 0 #fff,0 4px 10px rgba(77,118,174,.065)!important;
+}
+body.zx-lowpower-glass .zx-btn.is-gold,
+body.zx-lowpower-glass .zx-chip.is-active{
+  color:#795b2d!important;background:linear-gradient(145deg,#fffbed,#f1ddad)!important;
+}
+body.zx-lowpower-glass .solve-mode-tabs,
+body.zx-lowpower-glass .structured-mode-tabs{
+  background:rgba(211,231,253,.57)!important;border-color:rgba(255,255,255,.92)!important;
+}
+body.zx-lowpower-glass .solve-mode-tab.is-active{
+  background:linear-gradient(145deg,#fff,rgba(218,236,255,.86))!important;
+  border-color:rgba(255,255,255,.99)!important;
+  box-shadow:inset 0 1px #fff,0 4px 11px rgba(79,121,179,.09)!important;
+}
+body.zx-lowpower-glass .solve-keypad-wrap{
+  background:linear-gradient(145deg,rgba(243,249,255,.87),rgba(218,235,254,.65))!important;
+  border-color:rgba(255,255,255,.95)!important;
+  box-shadow:inset 0 1px #fff!important;
+}
+body.zx-lowpower-glass .solve-keypad button,
+body.zx-lowpower-glass .zx-mobile-mathpad-grid button,
+body.zx-lowpower-glass .zx-mathpad-tabs button,
+body.zx-lowpower-glass .zx-chem-keyrow button,
+body.zx-lowpower-glass .zx-chem-tabs button{
+  background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(217,233,253,.78))!important;
+  border-color:rgba(255,255,255,.99)!important;
+  box-shadow:inset 0 1px #fff,0 4px 9px rgba(70,115,172,.075)!important;
+}
+body.zx-lowpower-glass .zx-mobile-mathpad{
+  background:linear-gradient(120deg,rgba(250,253,255,.96),rgba(231,242,255,.89),rgba(250,241,255,.88))!important;
+  border-top-color:rgba(255,255,255,.99)!important;
+  box-shadow:0 -12px 36px rgba(64,107,166,.17),inset 0 1px #fff!important;
+}
+body.zx-lowpower-glass .zx-chem-keyboard{
+  background:linear-gradient(145deg,rgba(247,251,255,.88),rgba(222,237,255,.72))!important;
+  border-color:rgba(255,255,255,.98)!important;
+}
+body.zx-lowpower-glass .zx-chem-keyrow button:active{
+  background:linear-gradient(145deg,#fff5df,#f0ddaf)!important;
+}
+body.zx-lowpower-glass .structured-equation,
+body.zx-lowpower-glass .structured-point,
+body.zx-lowpower-glass .function-graph{
+  background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(229,241,255,.68))!important;
+  border-color:rgba(255,255,255,.96)!important;
+}
+body.zx-lowpower-glass .function-graph svg path{stroke:#4c8ed8!important}
+body.zx-lowpower-glass .knowledge-standalone-link{
+  background:linear-gradient(112deg,rgba(255,255,255,.88),rgba(218,236,255,.71),rgba(245,228,255,.66))!important;
+  border-color:rgba(255,255,255,.98)!important;
+  box-shadow:inset 0 1px #fff,0 8px 20px rgba(80,120,175,.06)!important;
+}
+body.zx-lowpower-glass .knowledge-standalone-link>span:first-child{
+  background:linear-gradient(145deg,#fff,#d4e8ff)!important;color:#648dba!important;
+}
+body.zx-lowpower-glass .knowledge-standalone-link strong{color:#344f6e!important}
+body.zx-lowpower-glass .knowledge-standalone-link div span{color:#7488a0!important}
+body.zx-lowpower-glass .knowledge-standalone-link a{flex:none}
+body.zx-lowpower-glass .zx-error{color:#b13c52!important}
+body.zx-lowpower-glass .zx-empty,
+body.zx-lowpower-glass .function-graph-note,
+body.zx-lowpower-glass .structured-hint{color:#71859d!important}
+body.zx-lowpower-glass footer{color:#778da7!important}
+
+/* Single moving specular highlight, pointer-only; no continuously animated effects. */
+body.zx-lowpower-glass .view.is-active .view-card::after{
+  background:
+    radial-gradient(ellipse at var(--zx-glass-x,24%) var(--zx-glass-y,0%),rgba(255,255,255,.62),transparent 39%),
+    linear-gradient(132deg,rgba(255,255,255,.22),transparent 21%,transparent 69%,rgba(255,255,255,.22))!important;
+}
+@media(hover:hover) and (pointer:fine){
+  body.zx-lowpower-glass .zx-menu-item:hover{background:rgba(255,255,255,.7)!important}
+}
+@media(max-width:900px){
+  body.zx-lowpower-glass .zx-menu{
+    background:linear-gradient(145deg,rgba(255,255,255,.9),rgba(232,243,255,.84),rgba(248,237,255,.83))!important;
+  }
+}
+@media(max-width:768px){
+  body.zx-lowpower-glass{background-attachment:scroll!important}
+  body.zx-lowpower-glass .view.is-active .view-card,
+  body.zx-lowpower-glass .view.is-active>.glass-panel{
+    background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(247,251,255,.77),rgba(243,246,255,.74))!important;
+    box-shadow:0 15px 34px rgba(74,112,165,.10),inset 0 1px #fff,inset 0 -1px rgba(137,180,229,.16)!important;
+  }
+  body.zx-lowpower-glass .zx-header{-webkit-backdrop-filter:blur(6px) saturate(1.1);backdrop-filter:blur(6px) saturate(1.1)}
+}
+@media(prefers-reduced-transparency:reduce), (prefers-contrast:more){
+  body.zx-lowpower-glass .zx-header,
+  body.zx-lowpower-glass .zx-menu,
+  body.zx-lowpower-glass .view.is-active .view-card,
+  body.zx-lowpower-glass .view.is-active>.glass-panel,
+  body.zx-lowpower-glass .zx-mobile-mathpad{
+    -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+    background:rgba(250,252,255,.98)!important;
+  }
+}
+</style>
 </head>
 <body class="text-slate-300 antialiased zx-lowpower-glass">
 
@@ -2470,7 +2714,7 @@ body.zx-lowpower-glass button,body.zx-lowpower-glass a{touch-action:manipulation
                 </div>
             </section>
 
-<section class="view" data-view="knowledge"><div class="glass-panel view-card"><div class="view-head"><div class="view-head-mark knowledge-mark"><svg viewBox="0 0 64 64" width="42" height="42" fill="none" aria-hidden="true"><path d="M8 13Q21 9 32 17Q43 9 56 13V49Q43 45 32 53Q21 45 8 49Z" stroke="currentColor" stroke-width="3"/><path d="M32 17V53M15 24h12M15 32h12M38 24h12M38 32h12" stroke="currentColor" stroke-width="2.5"/></svg></div><div><div class="view-title">知行知识库</div><div class="view-sub">知识点、公式解析、教材章节与化学方程式已统一迁移至独立页面，计算器仅保留入口。</div></div></div><div class="knowledge-standalone-link" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:16px 0;padding:18px;border:1px solid #3b4a5d;border-radius:16px;background:linear-gradient(110deg,#182432,#171d29)"><div style="display:flex;align-items:center;gap:12px;min-width:0"><span style="display:grid;place-items:center;width:46px;height:46px;flex:0 0 46px;border-radius:13px;background:#203a42;color:#8de0d0"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 5.5Q7.5 3 12 6q4.5-3 9-0.5v13Q16.5 16 12 19q-4.5-3-9-0.5zM12 6v13"/></svg></span><div><strong style="display:block;color:#e6d2a4;font-size:16px">知行知识库 · 独立学习空间</strong><span style="display:block;color:#aebbd0;font-size:12px;margin-top:4px">初高中数学、化学知识卡、详细解析、教材章节目录与方程式速查</span></div></div><a class="zx-btn" href="https://k.zhixing.us.ci" style="text-decoration:none;white-space:nowrap">进入知行知识库 ↗</a></div></div></section>
+<section class="view" data-view="knowledge"><div class="glass-panel view-card"><div class="view-head"><div class="view-head-mark knowledge-mark"><svg viewBox="0 0 64 64" width="42" height="42" fill="none" aria-hidden="true"><path d="M8 13Q21 9 32 17Q43 9 56 13V49Q43 45 32 53Q21 45 8 49Z" stroke="currentColor" stroke-width="3"/><path d="M32 17V53M15 24h12M15 32h12M38 24h12M38 32h12" stroke="currentColor" stroke-width="2.5"/></svg></div><div><div class="view-title">知行知识库</div><div class="view-sub">知识点、公式解析、教材章节与化学方程式已统一迁移至独立页面，计算器仅保留入口。</div></div></div><div class="knowledge-standalone-link" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:16px 0;padding:18px;border:1px solid rgba(255,255,255,.86);border-radius:20px;background:linear-gradient(110deg,rgba(255,255,255,.78),rgba(224,238,255,.52))"><div style="display:flex;align-items:center;gap:12px;min-width:0"><span style="display:grid;place-items:center;width:46px;height:46px;flex:0 0 46px;border-radius:15px;background:linear-gradient(145deg,#ffffff,#d8eaff);color:#648dba"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 5.5Q7.5 3 12 6q4.5-3 9-0.5v13Q16.5 16 12 19q-4.5-3-9-0.5zM12 6v13"/></svg></span><div><strong style="display:block;color:#344f6e;font-size:16px">知行知识库 · 独立学习空间</strong><span style="display:block;color:#7488a0;font-size:12px;margin-top:4px">初高中数学、化学知识卡、详细解析、教材章节目录与方程式速查</span></div></div><a class="zx-btn" href="https://k.zhixing.us.ci" style="text-decoration:none;white-space:nowrap">进入知行知识库 ↗</a></div></div></section>
             <section class="view" data-view="history">
                 <div class="glass-panel view-card">
                     <div class="view-head">
@@ -4366,7 +4610,7 @@ function zxEvalArithmetic(src) {
                 prev=p;
             });
             if(!d){host.innerHTML='<div class="function-graph-empty">函数值超出当前绘图窗口，请尝试其他显示区间。</div>';return;}
-            host.innerHTML='<div class="function-graph-head"><span>函数图像</span><small>显示区间：'+zxFmtNum(xMin,4)+' ≤ x ≤ '+zxFmtNum(xMax,4)+' · 数值采样图</small></div><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="函数图像，纵轴按当前区间内采样值自动缩放"><defs><clipPath id="zxGraphClip"><rect x="'+L+'" y="'+T+'" width="'+plotW+'" height="'+plotH+'"/></clipPath></defs>'+grid+'<path d="'+d+'" clip-path="url(#zxGraphClip)" fill="none" stroke="#91a0ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="function-graph-note">图像为数值采样结果；不连续点附近可能留白，不能单凭图像判定精确渐近线或定义域。</div>';
+            host.innerHTML='<div class="function-graph-head"><span>函数图像</span><small>显示区间：'+zxFmtNum(xMin,4)+' ≤ x ≤ '+zxFmtNum(xMax,4)+' · 数值采样图</small></div><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="函数图像，纵轴按当前区间内采样值自动缩放"><defs><clipPath id="zxGraphClip"><rect x="'+L+'" y="'+T+'" width="'+plotW+'" height="'+plotH+'"/></clipPath></defs>'+grid+'<path d="'+d+'" clip-path="url(#zxGraphClip)" fill="none" stroke="#4C8ED8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="function-graph-note">图像为数值采样结果；不连续点附近可能留白，不能单凭图像判定精确渐近线或定义域。</div>';
         }
         function zxAnalyzeFunctionCoefficients(kind,c) {
             if(Object.keys(c||{}).some(function(k){return !Number.isFinite(c[k]);}))return {ok:false,error:'系数必须是有效数字'};
@@ -5041,6 +5285,35 @@ function zxFnAdvance(f,xValue,rangeText){
     sync();
   });
   sync();
+})();
+</script>
+<script id="zx-liquid-glass-specular-follow">
+(function(){
+  'use strict';
+  if(!window.matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+  var pending=false,lastX=24,lastY=0,target=null,frame=0;
+  function attach(){
+    target=document.querySelector('.view.is-active>.view-card');
+  }
+  function apply(){
+    frame=0;
+    if(!target||!target.isConnected)attach();
+    if(!target)return;
+    target.style.setProperty('--zx-glass-x',lastX+'%');
+    target.style.setProperty('--zx-glass-y',lastY+'%');
+  }
+  document.addEventListener('pointermove',function(e){
+    if(e.pointerType==='touch')return;
+    if(!target||!target.isConnected)attach();
+    if(!target)return;
+    var r=target.getBoundingClientRect();
+    if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)return;
+    lastX=Math.max(0,Math.min(100,(e.clientX-r.left)/Math.max(r.width,1)*100));
+    lastY=Math.max(0,Math.min(100,(e.clientY-r.top)/Math.max(r.height,1)*100));
+    if(!frame)frame=requestAnimationFrame(apply);
+  },{passive:true});
+  document.querySelectorAll('.zx-menu-item').forEach(function(el){el.addEventListener('click',function(){target=null;attach()})});
+  attach();
 })();
 </script>
 </body>
