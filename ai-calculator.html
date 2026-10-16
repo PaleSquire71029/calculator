@@ -4297,6 +4297,14 @@ function zxFnAdvance(f,xValue,rangeText){
   'use strict';
   const DEFAULT_PROXY='https://zhixing-calculator-ai.xiaoshirong2023.workers.dev';
   const VIEW_TITLES={basic:'基础计算',equation:'方程求解',inequality:'不等式',fit:'函数分析与绘图',units:'单位换算',chemistry:'化学方程式配平',knowledge:'知识库',history:'历史记录'};
+  const EXTEND_ACTIONS={
+    basic:{label:'✧ AI 化简/推导',title:'补充符号化简、因式分解与相关推导'},
+    equation:{label:'✧ AI 解复杂方程',title:'尝试求解本地暂未覆盖的复杂方程'},
+    inequality:{label:'✧ AI 扩展求解',title:'尝试处理高次、分式或复杂不等式'},
+    fit:{label:'✧ AI 深度函数分析',title:'补充函数性质、极值、反函数与参数讨论'},
+    units:{label:'✧ AI 复合换算',title:'处理扩展单位、复合单位与量纲分析'},
+    chemistry:{label:'✧ AI 预测反应',title:'预测可能产物、条件、现象、配平和离子方程式'}
+  };
   const ENABLED_VIEWS=['basic','equation','inequality','fit','units','chemistry'];
   const $=id=>document.getElementById(id);
   let busy=false;
@@ -4436,7 +4444,8 @@ function zxFnAdvance(f,xValue,rangeText){
         return b;
       };
       actions.appendChild(makeButton('analyze','✦ AI 分析','分析并核验当前输入与本地结果'));
-      actions.appendChild(makeButton('extend','✧ AI 扩展','尝试执行本地工具尚未覆盖的学科推理'));
+      const extend=EXTEND_ACTIONS[viewId]||{label:'✧ AI 扩展',title:'尝试执行本地工具尚未覆盖的学科推理'};
+      actions.appendChild(makeButton('extend',extend.label,extend.title));
       head.appendChild(actions);
       makeResult(section);
     });
