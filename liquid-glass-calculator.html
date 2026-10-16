@@ -2430,6 +2430,70 @@ body.zx-lowpower-glass .view.is-active>.glass-panel{
   body.zx-lowpower-glass .zx-liquid-orb{transform:none!important}
 }
 </style>
+<style id="zx-force-light-only-final">
+/* LIGHT ONLY: final override over every legacy stylesheet. No dark surfaces or dark theme option. */
+html,html.light,html.light body{color-scheme:light!important;background:#f5f9ff!important}
+html.light body.zx-lowpower-glass{
+ --zx-bg:#f5f9ff!important;--zx-panel:rgba(255,255,255,.72)!important;
+ --zx-panel-raised:rgba(255,255,255,.82)!important;--zx-panel-soft:rgba(237,246,255,.72)!important;
+ --zx-line:rgba(255,255,255,.96)!important;--zx-line-soft:rgba(117,159,210,.2)!important;
+ --zx-text:#29445f!important;--zx-muted:#657f9c!important;--zx-dim:#8da1b7!important;
+ --zx-gold:#6d9ed7!important;--zx-gold-soft:rgba(109,158,215,.16)!important;
+ --zx-green:#398a79!important;--zx-red:#b74e64!important;
+ background-color:#f5f9ff!important;color:#29445f!important;
+}
+html.light body.zx-lowpower-glass :is(.view-card,.glass-panel,.workspace-intro,.zx-header,.zx-menu,
+.zx-out,.zx-steps,.zx-process,.zx-unit-table,.zx-hist-item,.function-expression-panel,
+.function-graph,.function-graph-head,.structured-equation,.structured-point,.solve-mode-tabs,
+.structured-mode-tabs,.solve-keypad-wrap,.zx-chem-keyboard,.zx-chem-tools,.zx-chem-keyrow,
+.zx-mobile-mathpad,.zx-mobile-mathpad-grid,.zx-chem-tabs,.zx-chem-symbols,.zx-chem-keyrow button,
+.zx-chem-tabs button,.zx-chem-symbols button,.solve-keypad button,.zx-mobile-mathpad-grid button,
+.zx-mathpad-tabs button,.structured-examples button,.function-task-tabs button,
+.zx-field,.structured-field,.structured-select,.structured-select select,
+.function-expression-field,.function-expression-field input,.calc-screen,.calc-key,
+.zx-btn,.zx-chip,.zx-eg,.solve-mode-tab,.zx-icon-btn,.zx-back,.zx-glass-toggle,
+.zx-menu-item,.zx-menu-item.is-active,.zx-result-head,.zx-step-badge,.zx-unit-table th,
+.zx-unit-table td,.zx-mobile-menu-toggle,#chemKeyboard,.zx-chem-ime-inline){
+ color:#35516e!important;
+ background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(226,239,255,.76),rgba(244,234,255,.62))!important;
+ border-color:rgba(255,255,255,.98)!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.98),0 5px 15px rgba(82,123,177,.075)!important;
+}
+html.light body.zx-lowpower-glass :is(.view-card,.glass-panel){
+ background:linear-gradient(145deg,rgba(255,255,255,.69),rgba(246,251,255,.55),rgba(240,245,255,.55))!important;
+}
+html.light body.zx-lowpower-glass :is(.zx-header,.zx-menu,.zx-mobile-mathpad,#chemKeyboard,.zx-chem-keyboard){
+ background:linear-gradient(145deg,rgba(255,255,255,.91),rgba(231,243,255,.84),rgba(247,237,255,.82))!important;
+}
+html.light body.zx-lowpower-glass :is(input,textarea,select,.calc-input,.function-expression-field input){
+ color:#233f5d!important;background:rgba(255,255,255,.94)!important;
+ border-color:rgba(126,164,207,.42)!important;
+}
+html.light body.zx-lowpower-glass :is(.calc-key.is-eq,.zx-btn.is-go,[data-value="DONE"]){
+ color:#fff!important;background:linear-gradient(135deg,#79b1ec,#6696d4)!important;
+ border-color:rgba(255,255,255,.99)!important;
+}
+html.light body.zx-lowpower-glass :is(.calc-key.is-op,.zx-btn.is-gold,.zx-chip.is-active,.solve-mode-tab.is-active,
+.structured-mode-tabs button.is-active,.zx-chem-tabs button[aria-selected="true"]){
+ color:#45668b!important;background:linear-gradient(135deg,#fffdf4,#f7e9c9)!important;
+ border-color:rgba(255,255,255,.99)!important;
+}
+html.light body.zx-lowpower-glass :is(.zx-error,.is-error){color:#b33e57!important}
+html.light body.zx-lowpower-glass :is(.workspace-title,.view-title,.calc-input,.calc-input *,
+.zx-out-v,.zx-out-v.is-big,.zx-result-main,.zx-process-title,.structured-equation,
+.zx-hist-in,.zx-hist-out,.zx-unit-table td,.zx-unit-table th){color:#29445f!important}
+html.light body.zx-lowpower-glass :is(.workspace-copy,.view-sub,.zx-out-k,.zx-muted,.zx-hist-meta,
+.zx-empty,.function-graph-note,.structured-hint,.calc-hint,footer){color:#70869f!important}
+html.light body.zx-lowpower-glass .zx-chem-tools{background:rgba(246,250,255,.97)!important}
+html.light body.zx-lowpower-glass .zx-chem-keyrow button:active{background:linear-gradient(135deg,#fffdf4,#f2dfb5)!important}
+html.light body.zx-lowpower-glass ::-webkit-scrollbar-track{background:rgba(232,241,252,.8)!important}
+html.light body.zx-lowpower-glass ::-webkit-scrollbar-thumb{background:rgba(134,166,204,.5)!important;border-color:rgba(245,249,255,.9)!important}
+html.light body.zx-lowpower-glass ::selection{background:rgba(111,166,226,.3)!important;color:#233f5d!important}
+html.light body.zx-lowpower-glass .zx-liquid-orb{opacity:.9}
+@media(max-width:768px){
+ html.light body.zx-lowpower-glass :is(.view-card,.glass-panel){background:linear-gradient(145deg,rgba(255,255,255,.9),rgba(245,250,255,.82),rgba(242,246,255,.8))!important}
+}
+</style>
 </head>
 <body class="text-slate-300 antialiased zx-lowpower-glass">
 <div class="zx-liquid-environment" aria-hidden="true"><span class="zx-liquid-orb zx-liquid-orb-a"></span><span class="zx-liquid-orb zx-liquid-orb-b"></span><span class="zx-liquid-orb zx-liquid-orb-c"></span><span class="zx-liquid-orb zx-liquid-orb-d"></span></div>
