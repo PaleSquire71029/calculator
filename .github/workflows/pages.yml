@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "index.html"
+      - "ai.html"
       - "zhixing-calculator-mobile-menu-blur-1.html"
       - "liquid-glass-test.html"
       - "liquid-glass-calculator.html"
