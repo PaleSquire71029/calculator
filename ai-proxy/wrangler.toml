@@ -4,8 +4,8 @@ compatibility_date = "2026-10-16"
 workers_dev = true
 
 [vars]
-AI_BASE_URL = "https://api.deepseek.com/v1"
-AI_MODEL = "deepseek-chat"
+AI_BASE_URL = "https://api.openai.com/v1"
+AI_MODEL = "gpt-6-astra"
 ALLOWED_ORIGINS = "https://c.zhixing.us.ci,https://zhixingjsq.pages.dev,https://palesquire71029.github.io"
 
 [observability]
