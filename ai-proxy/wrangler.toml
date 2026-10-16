@@ -5,7 +5,7 @@ workers_dev = true
 
 [vars]
 AI_BASE_URL = "https://api.a6api.com/v1"
-AI_MODEL = "gpt6-luna"
+AI_MODEL = "gpt-6-luna"
 ALLOWED_ORIGINS = "https://c.zhixing.us.ci,https://zhixingjsq.pages.dev,https://palesquire71029.github.io"
 
 [observability]
