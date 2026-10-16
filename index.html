@@ -1379,6 +1379,104 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
   .zx-mobile-mathpad.is-visible .zx-mobile-mathpad-grid{gap:5px!important}
 }
 </style>
+<style id="zx-advanced-motion-20261016">
+/* Refined motion system: cinematic but restrained, with no layout-affecting transforms on the page shell. */
+:root{
+  --zx-motion-fast:160ms;
+  --zx-motion-mid:260ms;
+  --zx-motion-slow:520ms;
+  --zx-motion-ease:cubic-bezier(.2,.75,.25,1);
+}
+@keyframes zx-view-enter{
+  from{opacity:0;translate:0 9px;filter:blur(2px)}
+  to{opacity:1;translate:0 0;filter:blur(0)}
+}
+@keyframes zx-panel-enter{
+  from{opacity:0;translate:0 12px;scale:.992}
+  to{opacity:1;translate:0 0;scale:1}
+}
+@keyframes zx-soft-glow{
+  0%,100%{box-shadow:0 0 0 rgba(216,184,120,0)}
+  50%{box-shadow:0 0 22px rgba(216,184,120,.12)}
+}
+@keyframes zx-key-pop{
+  0%{scale:1}
+  45%{scale:.955}
+  100%{scale:1}
+}
+@keyframes zx-line-sweep{
+  from{background-position:100% 0}
+  to{background-position:-100% 0}
+}
+.view.is-active{
+  animation:zx-view-enter var(--zx-motion-mid) var(--zx-motion-ease) both;
+}
+.view.is-active .view-card,
+.view.is-active>.glass-panel{
+  animation:zx-panel-enter 360ms var(--zx-motion-ease) both;
+}
+.view.is-active .view-card .view-head{
+  animation:zx-view-enter 420ms var(--zx-motion-ease) both;
+}
+.view-card,.glass-panel,.zx-out,.function-graph,.structured-point{
+  transition:border-color var(--zx-motion-mid) ease,background-color var(--zx-motion-mid) ease,box-shadow var(--zx-motion-mid) ease;
+}
+@media(hover:hover) and (pointer:fine){
+  .view-card:hover,.glass-panel:hover{
+    border-color:rgba(216,184,120,.22);
+    box-shadow:0 14px 36px rgba(0,0,0,.14),0 0 0 1px rgba(216,184,120,.035);
+  }
+  .zx-btn,.zx-chip,.solve-keypad button,.calc-key,.zx-mobile-mathpad-grid button,.zx-mathpad-tabs button{
+    transition:transform var(--zx-motion-fast) var(--zx-motion-ease),border-color var(--zx-motion-fast) ease,background-color var(--zx-motion-fast) ease,box-shadow var(--zx-motion-fast) ease,color var(--zx-motion-fast) ease;
+  }
+  .zx-btn:hover,.zx-chip:hover,.solve-keypad button:hover,.calc-key:hover,.zx-mobile-mathpad-grid button:hover,.zx-mathpad-tabs button:hover{
+    transform:translateY(-1px);
+    border-color:rgba(216,184,120,.48);
+    box-shadow:0 5px 14px rgba(0,0,0,.16);
+  }
+}
+.zx-btn:active,.zx-chip:active,.solve-keypad button:active,.calc-key:active,.zx-mobile-mathpad-grid button:active,.zx-mathpad-tabs button:active{
+  animation:zx-key-pop 180ms ease-out;
+}
+.view.is-active input:focus,.view.is-active select:focus,.view.is-active textarea:focus{
+  outline:none;
+  border-color:rgba(216,184,120,.82)!important;
+  box-shadow:0 0 0 3px rgba(216,184,120,.10),0 0 20px rgba(216,184,120,.07);
+  transition:border-color var(--zx-motion-fast) ease,box-shadow var(--zx-motion-fast) ease;
+}
+.view.is-active .function-graph:not(:empty){
+  animation:zx-panel-enter 420ms var(--zx-motion-ease) both;
+}
+.view.is-active .zx-out:not(:empty){
+  animation:zx-view-enter 300ms var(--zx-motion-ease) both;
+}
+.zx-mobile-mathpad.is-visible{
+  animation:zx-panel-enter 240ms var(--zx-motion-ease) both;
+}
+.zx-mobile-mathpad.is-visible .zx-mathpad-tabs button.is-active{
+  box-shadow:inset 0 -2px 0 rgba(216,184,120,.9);
+  transition:background-color var(--zx-motion-fast) ease,box-shadow var(--zx-motion-fast) ease;
+}
+.zx-mobile-mathpad.is-visible .zx-mobile-mathpad-grid:not([hidden]) button{
+  animation:zx-view-enter 220ms var(--zx-motion-ease) both;
+}
+.zx-mobile-mathpad.is-visible .zx-mobile-mathpad-grid:not([hidden]) button:nth-child(2n){animation-delay:18ms}
+.zx-mobile-mathpad.is-visible .zx-mobile-mathpad-grid:not([hidden]) button:nth-child(3n){animation-delay:32ms}
+@media(max-width:768px){
+  .view.is-active{animation-duration:220ms}
+  .view.is-active .view-card,.view.is-active>.glass-panel{animation-duration:260ms}
+  .zx-mobile-mathpad.is-visible .zx-mobile-mathpad-grid button{animation:none!important}
+  .view-card,.glass-panel{transition:border-color 200ms ease,background-color 200ms ease}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    scroll-behavior:auto!important;
+    transition-duration:.01ms!important;
+  }
+}
+</style>
 </head>
 <body class="text-slate-300 antialiased">
 
