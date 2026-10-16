@@ -86,7 +86,7 @@ export default {
     }
     const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/health") {
-      return json({ ok: true, configured: Boolean(env.AI_API_KEY && env.AI_BASE_URL && env.AI_MODEL) }, 200, cors);
+      return json({ ok: true, configured: Boolean(env.AI_API_KEY && env.AI_BASE_URL && env.AI_MODEL), model: env.AI_MODEL || null }, 200, cors);
     }
     if (url.pathname !== "/api/chat" || request.method !== "POST") return json({ error: "Not found" }, 404, cors);
     if (!origin || !allowed.includes(origin)) return json({ error: "该网站来源未获授权，请检查 Worker 的 ALLOWED_ORIGINS 配置。" }, 403, cors);
