@@ -121,9 +121,11 @@ test("structured AI analysis rejects missing or oversized context", async () => 
 
 test("calculator inline AI analysis script parses and chat panel is removed", () => {
   const html = readFileSync(new URL("../ai-calculator.html", import.meta.url), "utf8");
-  const match = html.match(/<script id="zx-ai-inline-controller">([\\s\\S]*?)<\\/script>/);
-  assert.ok(match, "inline calculator AI controller must exist");
-  assert.doesNotThrow(() => new Script(match[1]));
+  const opening = '<script id="zx-ai-inline-controller">';
+  const start = html.indexOf(opening);
+  const end = html.indexOf("</script>", start + opening.length);
+  assert.ok(start >= 0 && end > start, "inline calculator AI controller must exist");
+  assert.doesNotThrow(() => new Script(html.slice(start + opening.length, end)));
   assert.doesNotMatch(html, /id="zx-ai-panel"|id="zx-ai-launch"|zx-ai-compose/);
   assert.match(html, /data-zx-ai-action/);
 });
