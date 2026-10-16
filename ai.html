@@ -137,10 +137,11 @@ textarea::placeholder{color:#9aa5b6}
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
+const DEFAULT_PROXY='https://zhixing-calculator-ai.xiaoshirong2023.workers.dev';
 const state={messages:[],images:[],files:[],busy:false,proxy:''};
-try{state.proxy=sessionStorage.getItem('zx-ai-proxy')||'';}catch(e){}
+try{state.proxy=localStorage.getItem('zx-ai-proxy-url')||sessionStorage.getItem('zx-ai-proxy')||DEFAULT_PROXY;}catch(e){state.proxy=DEFAULT_PROXY;}
 $('proxyUrl').value=state.proxy;
-function saveProxy(){state.proxy=$('proxyUrl').value.trim().replace(/\/$/,'');try{sessionStorage.setItem('zx-ai-proxy',state.proxy);}catch(e){}}
+function saveProxy(){state.proxy=$('proxyUrl').value.trim().replace(/\/$/,'');try{localStorage.setItem('zx-ai-proxy-url',state.proxy);sessionStorage.setItem('zx-ai-proxy',state.proxy);}catch(e){}}
 $('proxyUrl').addEventListener('change',()=>{saveProxy();checkProxy();});
 const attachmentMenu=$('attachmentMenu'),attachmentBtn=$('attachmentBtn');
 function closeAttachmentMenu(){attachmentMenu.hidden=true;attachmentBtn.setAttribute('aria-expanded','false');}
