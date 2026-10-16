@@ -66,11 +66,11 @@
 /* 字体工具类跟随页内字体切换（Tailwind CDN 的样式运行时注入，故用 !important 保证优先级） */
 .font-sans,.font-serif,.font-mono{font-family:var(--zx-font) !important}
     
-.solve-mode-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45rem;margin:.25rem 0 1rem}.solve-mode-tab{min-height:2.65rem;border:1px solid rgba(255,255,255,.1);border-radius:.7rem;background:rgba(255,255,255,.035);color:#94A3B8;font-size:.8rem;font-weight:650}.solve-mode-tab.is-active{color:#08090C;background:var(--zx-gold);border-color:var(--zx-gold)}.solve-subview{display:none;margin-top:1rem}.solve-subview.is-active{display:block;animation:viewIn .2s var(--zx-ease)}.solve-keypad-wrap{border:1px solid rgba(255,255,255,.08);border-radius:.85rem;padding:.75rem;background:rgba(239,246,255,0.76)}.solve-keypad-title{display:flex;justify-content:space-between;gap:.6rem;margin-bottom:.6rem;font-size:.66rem;color:#94A3B8}.solve-keypad-title b{color:var(--zx-gold)}.solve-keypad{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.4rem}.solve-keypad button{min-width:0;min-height:2.4rem;border-radius:.55rem;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.055);color:#304460;font:600 .9rem var(--zx-mono);touch-action:manipulation;user-select:none;-webkit-user-select:none}.solve-keypad button.key-action{color:var(--zx-gold);background:rgba(216,184,120,.08);font-family:var(--zx-font);font-size:.72rem}.solve-keypad button.key-next{grid-column:span 3}html.light .solve-mode-tab{color:#64748B;background:rgba(239,246,255,0.76)}html.light .solve-mode-tab.is-active{color:#304460;background:#8E6D35}html.light .solve-keypad button{color:#302A20;border-color:rgba(239,246,255,0.25);background:rgba(239,246,255,0.76)}@media(min-width:769px){.solve-keypad-wrap{display:none}}@media(max-width:420px){.solve-mode-tab{font-size:.72rem}.solve-keypad{gap:.3rem}.solve-keypad button{min-height:2.3rem}.solve-keypad-title{font-size:.6rem}}
+.solve-mode-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45rem;margin:.25rem 0 1rem}.solve-mode-tab{min-height:2.65rem;border:1px solid rgba(255,255,255,.1);border-radius:.7rem;background:rgba(255,255,255,.035);color:#94A3B8;font-size:.8rem;font-weight:650}.solve-mode-tab.is-active{color:#304460;background:var(--zx-gold);border-color:var(--zx-gold)}.solve-subview{display:none;margin-top:1rem}.solve-subview.is-active{display:block;animation:viewIn .2s var(--zx-ease)}.solve-keypad-wrap{border:1px solid rgba(255,255,255,.08);border-radius:.85rem;padding:.75rem;background:rgba(239,246,255,0.76)}.solve-keypad-title{display:flex;justify-content:space-between;gap:.6rem;margin-bottom:.6rem;font-size:.66rem;color:#94A3B8}.solve-keypad-title b{color:var(--zx-gold)}.solve-keypad{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.4rem}.solve-keypad button{min-width:0;min-height:2.4rem;border-radius:.55rem;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.055);color:#304460;font:600 .9rem var(--zx-mono);touch-action:manipulation;user-select:none;-webkit-user-select:none}.solve-keypad button.key-action{color:var(--zx-gold);background:rgba(216,184,120,.08);font-family:var(--zx-font);font-size:.72rem}.solve-keypad button.key-next{grid-column:span 3}html.light .solve-mode-tab{color:#64748B;background:rgba(239,246,255,0.76)}html.light .solve-mode-tab.is-active{color:#304460;background:#8E6D35}html.light .solve-keypad button{color:#302A20;border-color:rgba(239,246,255,0.25);background:rgba(239,246,255,0.76)}@media(min-width:769px){.solve-keypad-wrap{display:none}}@media(max-width:420px){.solve-mode-tab{font-size:.72rem}.solve-keypad{gap:.3rem}.solve-keypad button{min-height:2.3rem}.solve-keypad-title{font-size:.6rem}}
 
 .zx-legacy-solver-input{display:none!important}[hidden]{display:none!important}.zx-svg{width:1em;height:1em;fill:currentColor;display:inline-block;vertical-align:-.125em;flex:none}.zx-menu-item>.zx-svg{width:17px;height:17px;flex:none;color:#737e8b;transition:color .18s}.zx-menu-item:hover>.zx-svg,.zx-menu-item.is-active>.zx-svg{color:var(--zx-gold)}html.light .zx-menu-item.is-active>.zx-svg{color:#997630}.structured-solver{margin-top:.65rem}.structured-top{display:flex;gap:.65rem;align-items:end;flex-wrap:wrap;margin-bottom:.7rem}.structured-select{display:flex;flex-direction:column;gap:.35rem;flex:1;min-width:135px}.structured-select span,.structured-field span{font-size:.68rem;color:#94A3B8;font-weight:650}.structured-select select{width:100%;min-height:2.65rem;border-radius:.65rem;border:1px solid rgba(255,255,255,.12);background:#ecf3fa;color:#304460;padding:0 .65rem;font-size:.78rem}.structured-equation{font-family:var(--zx-mono);font-size:.88rem;color:var(--zx-gold);padding:.65rem .8rem;border-radius:.65rem;background:rgba(216,184,120,.07);margin-bottom:.65rem}.structured-coefficients{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem}.structured-field{display:flex;flex-direction:column;gap:.35rem;min-width:0}.structured-field input{width:100%;min-width:0;height:2.8rem;border-radius:.65rem;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);color:#304460;padding:0 .7rem;font-family:var(--zx-mono);font-size:1rem}.structured-hint{margin-top:.6rem;font-size:.68rem;line-height:1.5;color:#94A3B8}.structured-examples{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.65rem}.structured-points{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}.structured-point{padding:.65rem;border:1px solid rgba(255,255,255,.08);border-radius:.7rem;background:rgba(255,255,255,.025);display:grid;grid-template-columns:1fr 1fr;gap:.45rem}.structured-point>b{grid-column:1/-1;font-size:.7rem;color:var(--zx-gold)}.structured-form-title{font-size:.75rem;color:#94A3B8}.html.light .structured-select select{background:#fff;color:#302A20;border-color:rgba(239,246,255,0.25)}html.light .structured-field input{background:#fff;color:#302A20;border-color:rgba(239,246,255,0.25)}html.light .structured-equation{color:#8E6D35;background:rgba(142,109,53,.08)}@media(max-width:420px){.structured-coefficients{gap:.4rem}.structured-field input{padding:0 .5rem}.structured-points{gap:.4rem}.structured-point{padding:.5rem;gap:.35rem}.structured-select{min-width:120px}}
 
-.structured-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.7rem}.structured-mode-tabs button{min-height:2.4rem;border-radius:.6rem;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);color:#94A3B8;font-size:.7rem;font-weight:650}.structured-mode-tabs button.is-active{background:var(--zx-gold);color:#08090C;border-color:transparent}html.light .structured-mode-tabs button{color:#64748B}html.light .structured-mode-tabs button.is-active{color:#304460;background:#8E6D35}
+.structured-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.7rem}.structured-mode-tabs button{min-height:2.4rem;border-radius:.6rem;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);color:#94A3B8;font-size:.7rem;font-weight:650}.structured-mode-tabs button.is-active{background:var(--zx-gold);color:#304460;border-color:transparent}html.light .structured-mode-tabs button{color:#64748B}html.light .structured-mode-tabs button.is-active{color:#304460;background:#8E6D35}
 /* Mobile solver workspace rebuild: compact, predictable, task-first layout */
 @media(max-width:768px){
   .view.solve-subview .view-card{padding:14px!important}
@@ -168,7 +168,7 @@
 @media(max-width:768px){
   .zx-mobile-mathpad-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
   .zx-mobile-mathpad-grid[data-pad-panel="numbers"] button[data-value="NEXT"]{font-size:12px}
-  .zx-mobile-mathpad-grid[data-pad-panel="numbers"] button[data-value="DONE"]{background:#8be5b9;border-color:#8be5b9;color:#101712;font-weight:700}
+  .zx-mobile-mathpad-grid[data-pad-panel="numbers"] button[data-value="DONE"]{background:#8be5b9;border-color:#8be5b9;color:#174c3c;font-weight:700}
   .view.solve-subview .solve-keypad-wrap{display:none!important}
   .view.is-active input[data-math-field],.view.is-active input[data-custom-expression]{cursor:pointer}
 }
@@ -341,12 +341,12 @@ textarea.zx-field,textarea.structured-field{resize:vertical}
 .zx-btn:active,.calc-key:active{transform:translateY(1px)}
 .zx-btn.is-gold{border-color:rgba(216,184,120,.43);color:#765b2c;background:rgba(216,184,120,.11)}
 .zx-btn.is-gold:hover{background:rgba(216,184,120,.18)}
-.zx-btn.is-go{border-color:#6ec99d;color:#07140d;background:#80dfb0;font-weight:700}
-.zx-btn.is-go:hover{background:#a0edc6;color:#07140d}
+.zx-btn.is-go{border-color:#6ec99d;color:#174c3c;background:#80dfb0;font-weight:700}
+.zx-btn.is-go:hover{background:#a0edc6;color:#174c3c}
 .zx-btn.is-danger:hover{color:#b4233b;border-color:rgba(255,140,140,.4);background:rgba(255,140,140,.08)}
 .zx-chip{padding:6px 9px;border:1px solid #eff5fb;border-radius:8px;color:#9ca6b2;background:#ecf3fa;font:inherit;font-size:10px;cursor:pointer;transition:all .16s}
 .zx-chip:hover{color:var(--zx-gold);border-color:rgba(216,184,120,.42)}
-.zx-chip.is-active{color:#15120c;border-color:var(--zx-gold);background:var(--zx-gold);font-weight:700}
+.zx-chip.is-active{color:#765b2c;border-color:var(--zx-gold);background:var(--zx-gold);font-weight:700}
 .zx-eg{display:inline-flex;align-items:center;margin:4px 5px 0 0;padding:5px 8px;border:1px solid #eff5fb;border-radius:7px;color:#304460;background:#edf3fa;font-size:10px;cursor:pointer}
 .zx-eg:hover{color:var(--zx-gold);border-color:rgba(216,184,120,.4)}
 .zx-error{color:#b4233b;font-size:12px;line-height:1.7}
@@ -364,7 +364,7 @@ textarea.zx-field,textarea.structured-field{resize:vertical}
 .calc-key.is-fn{color:#304460;background:#ecf3fa}
 .calc-key.is-op{color:#765b2c;border-color:rgba(216,184,120,.2);background:rgba(216,184,120,.07)}
 .calc-key.is-op:hover{background:rgba(216,184,120,.15)}
-.calc-key.is-eq{color:#17130b;border-color:#e3c98e;background:linear-gradient(135deg,#e4cc96,#c9a660);font-size:16px}
+.calc-key.is-eq{color:#765b2c;border-color:#e3c98e;background:linear-gradient(135deg,#e4cc96,#c9a660);font-size:16px}
 .calc-key.is-eq:hover{filter:brightness(1.06)}
 .zx-out{overflow:hidden;border:1px solid #eef5fb;border-radius:13px;background:#ecf3fa}
 .zx-out-row{display:grid;grid-template-columns:minmax(60px, .34fr) minmax(0,1fr);gap:15px;align-items:start;padding:13px 15px;border-bottom:1px solid rgba(255,255,255,.055)}
@@ -648,7 +648,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
   .zx-mobile-mathpad-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
   .zx-mobile-mathpad-grid button{min-width:0;min-height:42px;border:1px solid #eff5fb;border-radius:9px;background:#edf3fa;color:#304460;font:inherit;font-size:15px;touch-action:manipulation}
   .zx-mobile-mathpad-grid button[data-value="DEL"],.zx-mobile-mathpad-grid button[data-value="NEXT"]{color:#765b2c}
-  .zx-mobile-mathpad-grid button[data-value="DONE"]{background:#8be5b9;border-color:#8be5b9;color:#101712;font-weight:700}
+  .zx-mobile-mathpad-grid button[data-value="DONE"]{background:#8be5b9;border-color:#8be5b9;color:#174c3c;font-weight:700}
   body.zx-mathpad-open{padding-bottom:260px}
   html.light .zx-mobile-mathpad.is-visible{background:rgba(248,247,243,.98);border-color:#d7d4cb}
   html.light .zx-mobile-mathpad-head{color:#353a42}
@@ -778,10 +778,7 @@ html.kb-open .zx-menu.is-mobile-open{display:none}
    本层只负责「设计语言」：描边、发光、HUD 角标、扫描线网格、科技排版、
    触控与响应式补强。
 
-   配色：**单色金** —— 回到原版（近黑底 #0b0d10 + 金 #d8b878）。
-   此前按「多用几种颜色」做过的 8 区多色（Dracula / Synthwave '84 / Tokyo Night
-   取色），已按用户要求整体退回原版配色。原本会重绘基础层控件的章节也已删除，
-   让原版的控件样式直接生效：
+   配色：浅色珍珠白与冰蓝为基础，暖金作为少量强调色；此层仅保留玻璃高光、柔和边缘与交互细节，不定义深色主题。
      · 删 0   兜底 Tailwind 色      → 原版 Tailwind 配色本来就是金
      · 删 4   按钮                  → 原版按钮本色（透明底+金描边 / 金实底）
      · 删 6   按键                  → 原版：运算符金、函数键中性灰、等号金
@@ -843,7 +840,7 @@ body::after{
   background:linear-gradient(90deg,transparent,rgba(216,184,120,.25) 5%,#d8b878 22%,#d8b878 48%,#d8b878 72%,rgba(216,184,120,.25) 94%,transparent);
   box-shadow:0 0 12px rgba(216,184,120,.6),0 0 34px rgba(216,184,120,.35);
 }
-::selection{background:rgba(var(--zx-cyan-rgb),.28);color:#0b0d10}
+::selection{background:rgba(var(--zx-cyan-rgb),.28);color:#304460}
 :focus-visible{outline:2px solid var(--zx-cyan);outline-offset:3px}
 ::-webkit-scrollbar{width:9px;height:9px}
 ::-webkit-scrollbar-track{background:#ecf3f9}
@@ -1207,8 +1204,8 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
 
 /* ── 16. 选中态：统一「浅金字 + 半透明金底」（替掉原版的近黑字）────────
    原版基础层把这两处选中态做成「金色实底 + 近黑字」：
-     .structured-mode-tabs button.is-active{color:#08090C;background:var(--zx-gold)}
-     .zx-chip.is-active{color:#15120c;background:var(--zx-gold)}
+     .structured-mode-tabs button.is-active{color:#304460;background:var(--zx-gold)}
+     .zx-chip.is-active{color:#765b2c;background:var(--zx-gold)}
    与同族 .solve-mode-tab.is-active / .function-task-tabs button.is-active 已有的
    「深底 + 浅金字 + 金细线」写法不一致，点完看着像文字坏了。这里统一成后者。
    本层在基础层之后、选择器权重相同 ⇒ 后到者生效；仍加 !important 防被内联样式压掉。 */
@@ -1514,7 +1511,7 @@ body.zx-lowpower-glass:not(.zx-glass-off) .calc-key.is-fn{
   border-color:rgba(216,184,120,.23)!important;
 }
 body.zx-lowpower-glass:not(.zx-glass-off) .calc-key.is-eq{
-  background:linear-gradient(145deg,#f0d7a4,#c6a15e)!important;color:#17130d!important;
+  background:linear-gradient(145deg,#f0d7a4,#c6a15e)!important;color:#765b2c!important;
   border-color:rgba(255,244,218,.65)!important;box-shadow:inset 0 1px rgba(255,255,255,.65)!important;
 }
 body.zx-lowpower-glass:not(.zx-glass-off) .zx-btn,
@@ -4206,7 +4203,7 @@ function zxEvalArithmetic(src) {
         /* ==================================================================
            七、主题
            ==================================================================
-           页面固定为浅色，仅使用珍珠白、冰蓝与淡紫浅色材质；不启用深色主题。 */
+           页面只使用珍珠白、冰蓝、淡紫与柔和暖色材质；主题固定为浅色。 */
 
         /* ==================================================================
            七、界面 1：基础计算
