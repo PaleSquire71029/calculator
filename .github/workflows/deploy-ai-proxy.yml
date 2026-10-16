@@ -33,10 +33,17 @@ jobs:
         run: npm test
         working-directory: ai-proxy
 
+      - name: Verify Cloudflare authentication
+        run: npx --yes wrangler@4 whoami
+        working-directory: ai-proxy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: ai-proxy
-          command: deploy --log-level debug
+          command: deploy
