@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>知行计算器 · 低功耗液态玻璃版</title>
+    <title>知行计算器 · Liquid Glass</title>
     <link rel="canonical" href="https://c.zhixing.us.ci/liquid-glass-calculator.html">
     <meta name="description" content="知行计算器：基础计算、方程与不等式求解、函数工具箱、单位换算与计算历史。纯前端本地计算，与知行导航同一套设计风格。">
-    <meta name="theme-color" content="#08090C">
-    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#eef5ff">
+    <meta name="color-scheme" content="light">
 
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
 
@@ -1595,6 +1595,531 @@ body.zx-lowpower-glass:not(.zx-glass-off) .zx-mobile-mathpad.is-visible .zx-mobi
   }
 }
 </style>
+<style id="zx-liquid-glass-light-redesign">
+/* ZHIXING LIQUID GLASS — light pearl material system
+   The original calculators and event handlers remain untouched.
+   Only one active surface may use the optional single-pass SVG displacement filter. */
+:root{
+  color-scheme:light;
+  --zx-bg:#edf3fb;
+  --zx-panel:rgba(255,255,255,.46);
+  --zx-panel-raised:rgba(255,255,255,.67);
+  --zx-panel-soft:rgba(247,250,255,.62);
+  --zx-line:rgba(255,255,255,.78);
+  --zx-line-soft:rgba(101,129,165,.15);
+  --zx-text:#26364a;
+  --zx-muted:#677b93;
+  --zx-dim:#91a0b2;
+  --zx-gold:#b28c4a;
+  --zx-gold-soft:rgba(210,175,112,.14);
+  --zx-green:#277b61;
+  --zx-red:#b94d58;
+  --zx-radius:22px;
+  --zx-ease:cubic-bezier(.2,.75,.25,1);
+}
+html,html.light{background:#edf3fb!important;color-scheme:light!important;scroll-behavior:smooth}
+body.zx-lowpower-glass{
+  min-height:100vh;
+  color:#26364a!important;
+  background:
+    radial-gradient(ellipse at 8% 4%,rgba(164,211,255,.62),transparent 33rem),
+    radial-gradient(ellipse at 88% 8%,rgba(222,198,255,.48),transparent 31rem),
+    radial-gradient(ellipse at 75% 76%,rgba(255,215,194,.36),transparent 34rem),
+    radial-gradient(ellipse at 16% 88%,rgba(198,233,228,.4),transparent 31rem),
+    linear-gradient(145deg,#eff5fc 0%,#eaf1fb 48%,#f8f7fc 100%)!important;
+  background-attachment:fixed!important;
+  font-family:"Noto Sans SC",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:0;
+  line-height:1.58;
+  overflow-x:clip;
+}
+body.zx-lowpower-glass::before{
+  position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.54;
+  background-image:
+    linear-gradient(rgba(91,122,164,.09) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(91,122,164,.09) 1px,transparent 1px),
+    radial-gradient(circle at 16% 12%,rgba(255,255,255,.88),transparent 23rem);
+  background-size:54px 54px,54px 54px,auto;
+  mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.65) 46%,transparent 92%);
+  opacity:.38;
+}
+body.zx-lowpower-glass::after{
+  position:fixed;top:0;left:0;right:0;height:1px;z-index:70;pointer-events:none;
+  content:"";opacity:.72;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.95) 20%,rgba(148,187,226,.55) 52%,rgba(255,255,255,.72) 78%,transparent);
+}
+body.zx-lowpower-glass .zx-header,
+body.zx-lowpower-glass .zx-layout{position:relative;z-index:1}
+body.zx-lowpower-glass .font-sans,
+body.zx-lowpower-glass .font-serif{font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important}
+body.zx-lowpower-glass .font-mono,
+body.zx-lowpower-glass .calc-input,
+body.zx-lowpower-glass .calc-key,
+body.zx-lowpower-glass .structured-field input,
+body.zx-lowpower-glass .zx-out-v{font-family:"JetBrains Mono","Noto Sans SC",ui-monospace,monospace!important}
+body.zx-lowpower-glass .text-white{color:#26364a!important}
+body.zx-lowpower-glass .text-slate-300,
+body.zx-lowpower-glass .text-slate-400,
+body.zx-lowpower-glass .text-slate-500{color:#62758d!important}
+body.zx-lowpower-glass .text-slate-600,
+body.zx-lowpower-glass .text-slate-700{color:#8190a3!important}
+body.zx-lowpower-glass .text-gray-100,
+body.zx-lowpower-glass .text-gray-200{color:#34465a!important}
+body.zx-lowpower-glass .text-yellow-400,
+body.zx-lowpower-glass .text-amber-300{color:#987235!important}
+body.zx-lowpower-glass .zx-header{
+  position:sticky!important;top:0;z-index:50;
+  color:#26364a!important;
+  background:rgba(248,251,255,.62)!important;
+  border-bottom:1px solid rgba(255,255,255,.88)!important;
+  box-shadow:0 7px 24px rgba(76,106,147,.08),inset 0 1px rgba(255,255,255,.9)!important;
+  -webkit-backdrop-filter:blur(10px) saturate(1.14);
+  backdrop-filter:blur(10px) saturate(1.14);
+}
+body.zx-lowpower-glass .zx-header-inner{
+  max-width:1540px;min-height:72px;padding-inline:clamp(14px,3vw,42px);gap:14px;
+}
+body.zx-lowpower-glass .zx-brand{gap:11px}
+body.zx-lowpower-glass .zx-brand-mark{
+  width:42px;height:42px;border-radius:15px;
+  color:#5078a5!important;
+  border:1px solid rgba(255,255,255,.92)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(212,230,252,.56))!important;
+  box-shadow:inset 0 1px 0 #fff,0 5px 15px rgba(87,121,164,.12)!important;
+}
+body.zx-lowpower-glass .zx-brand .text-sm{color:#26364a!important;font-size:14px!important;font-weight:750!important;letter-spacing:.015em}
+body.zx-lowpower-glass .zx-brand .text-\[10px\]{color:#788aa0!important}
+body.zx-lowpower-glass .zx-back,
+body.zx-lowpower-glass .zx-icon-btn{
+  color:#506780!important;
+  border:1px solid rgba(255,255,255,.88)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.74),rgba(235,243,253,.48))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.94),0 4px 12px rgba(78,110,151,.06)!important;
+}
+body.zx-lowpower-glass .zx-back:hover,
+body.zx-lowpower-glass .zx-icon-btn:hover{
+  color:#365f8f!important;border-color:#fff!important;background:rgba(255,255,255,.88)!important;
+}
+body.zx-lowpower-glass .zx-glass-toggle{
+  width:auto;min-width:0;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:0 12px;border-radius:12px;white-space:nowrap;font-size:10px;font-weight:700;
+  color:#4e6b8b!important;border-color:rgba(255,255,255,.92)!important;
+  background:linear-gradient(140deg,rgba(255,255,255,.88),rgba(218,234,252,.58))!important;
+}
+body.zx-lowpower-glass .zx-glass-toggle[aria-pressed="true"]{color:#52789c!important}
+body.zx-lowpower-glass .zx-glass-toggle-icon{width:16px;height:16px;flex:none}
+body.zx-lowpower-glass .zx-layout{
+  max-width:1540px;
+  grid-template-columns:238px minmax(0,1fr);
+  gap:25px;
+  padding:28px clamp(14px,3vw,42px) 58px;
+}
+body.zx-lowpower-glass .zx-layout>main{min-width:0}
+body.zx-lowpower-glass .zx-menu{
+  position:sticky;top:92px;padding:13px;
+  border:1px solid rgba(255,255,255,.88)!important;
+  border-radius:23px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.58),rgba(244,248,255,.43))!important;
+  box-shadow:0 16px 42px rgba(81,112,154,.09),inset 0 1px 0 rgba(255,255,255,.96),inset 0 -1px 0 rgba(163,191,225,.13)!important;
+  -webkit-backdrop-filter:blur(9px) saturate(1.12);
+  backdrop-filter:blur(9px) saturate(1.12);
+}
+body.zx-lowpower-glass .zx-menu-group+.zx-menu-group{
+  border-top:1px solid rgba(116,145,181,.15)!important;
+}
+body.zx-lowpower-glass .zx-menu-title{
+  color:#8a9ab0!important;font-size:9px;letter-spacing:.18em;font-weight:800;
+}
+body.zx-lowpower-glass .zx-menu-item{
+  min-height:43px;margin:3px 0;padding:10px 11px;
+  color:#5f738c!important;border:1px solid transparent!important;border-radius:13px!important;
+  background:transparent!important;font-family:"Noto Sans SC",sans-serif!important;
+  font-size:12px;font-weight:550;transition:background .14s,border-color .14s,color .14s;
+}
+body.zx-lowpower-glass .zx-menu-item>i,
+body.zx-lowpower-glass .zx-menu-item>.zx-svg{color:#8aa0b9!important}
+body.zx-lowpower-glass .zx-menu-item:hover{
+  color:#324f70!important;background:rgba(255,255,255,.46)!important;border-color:rgba(255,255,255,.8)!important;
+}
+body.zx-lowpower-glass .zx-menu-item.is-active{
+  color:#335b83!important;border-color:rgba(255,255,255,.92)!important;
+  background:linear-gradient(105deg,rgba(255,255,255,.9),rgba(221,235,252,.58))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.95),0 4px 13px rgba(79,117,163,.08)!important;
+}
+body.zx-lowpower-glass .zx-menu-item.is-active>i,
+body.zx-lowpower-glass .zx-menu-item.is-active>.zx-svg{color:#6b91b8!important}
+body.zx-lowpower-glass .zx-count{
+  color:#69819d!important;border-color:rgba(147,174,207,.35)!important;background:rgba(255,255,255,.58)!important;
+}
+body.zx-lowpower-glass .workspace-intro{
+  align-items:flex-end;margin:0 0 20px;padding:8px 3px 21px;
+  border-bottom:1px solid rgba(255,255,255,.78)!important;
+}
+body.zx-lowpower-glass .workspace-eyebrow{color:#7b91ab!important;font-size:9px;letter-spacing:.19em}
+body.zx-lowpower-glass .workspace-eyebrow::before{background:linear-gradient(90deg,#a3c7ec,#d9b6cf)!important}
+body.zx-lowpower-glass .workspace-title{
+  color:#2b3e54!important;font-family:"Noto Sans SC",sans-serif!important;
+  font-size:clamp(23px,2.7vw,34px);font-weight:730;letter-spacing:-.045em;
+}
+body.zx-lowpower-glass .workspace-copy{color:#6f8197!important;font-size:12px;line-height:1.82}
+body.zx-lowpower-glass .workspace-status{
+  color:#537b76!important;border:1px solid rgba(255,255,255,.86)!important;
+  background:rgba(255,255,255,.48)!important;border-radius:99px!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.9)!important;font-size:10px;
+}
+body.zx-lowpower-glass .workspace-status::before{background:#78bca7;box-shadow:0 0 0 4px rgba(120,188,167,.13)}
+body.zx-lowpower-glass .view{min-width:0}
+body.zx-lowpower-glass .view.is-active{animation:none!important}
+body.zx-lowpower-glass .view.is-active .view-card,
+body.zx-lowpower-glass .view.is-active>.glass-panel{
+  position:relative;isolation:isolate;overflow:hidden;
+  padding:clamp(17px,2.2vw,30px);
+  border:1px solid rgba(255,255,255,.91)!important;
+  border-radius:27px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.57),rgba(246,250,255,.42))!important;
+  color:#2c4057!important;
+  box-shadow:0 18px 44px rgba(71,105,149,.095),inset 0 1px 0 rgba(255,255,255,.98),inset 0 -1px 0 rgba(159,187,221,.17)!important;
+  -webkit-backdrop-filter:blur(8px) saturate(1.13);
+  backdrop-filter:blur(8px) saturate(1.13);
+  animation:none!important;filter:none!important;
+}
+body.zx-lowpower-glass .view.is-active .view-card::before{
+  position:absolute;top:0;left:22px;right:22px;height:1px;content:"";pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.98) 20%,rgba(170,204,240,.78) 50%,rgba(249,223,228,.68) 76%,transparent)!important;
+  opacity:1!important;
+}
+body.zx-lowpower-glass .view.is-active .view-card::after{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(133deg,rgba(255,255,255,.2),transparent 19%,transparent 78%,rgba(255,255,255,.13));
+  opacity:.64;
+}
+body.zx-lowpower-glass .view.is-active .view-card>*{position:relative;z-index:1}
+body.zx-lowpower-glass .view-head{
+  align-items:flex-start;gap:15px;margin-bottom:23px;padding-bottom:19px;
+  border-bottom:1px solid rgba(128,158,196,.18)!important;
+}
+body.zx-lowpower-glass .view-head-mark{
+  width:46px;height:46px;flex:0 0 46px;border-radius:16px!important;
+  color:#5a81a9!important;border:1px solid rgba(255,255,255,.9)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(215,232,251,.61))!important;
+  box-shadow:inset 0 1px 0 #fff,0 6px 15px rgba(100,138,182,.1)!important;
+}
+body.zx-lowpower-glass .view-title{color:#2d4056!important;font-size:18px;font-weight:750;letter-spacing:-.025em}
+body.zx-lowpower-glass .view-sub{color:#74859a!important;font-size:11px;line-height:1.85}
+body.zx-lowpower-glass .zx-label,
+body.zx-lowpower-glass .solve-keypad-title{color:#71849c!important;font-size:10px;font-weight:700;letter-spacing:.065em}
+body.zx-lowpower-glass .zx-label::before{background:#8eb4dd!important}
+body.zx-lowpower-glass .zx-field,
+body.zx-lowpower-glass .structured-field,
+body.zx-lowpower-glass .structured-select,
+body.zx-lowpower-glass input,
+body.zx-lowpower-glass select,
+body.zx-lowpower-glass textarea{
+  color:#263b53;
+}
+body.zx-lowpower-glass .zx-field,
+body.zx-lowpower-glass .structured-field,
+body.zx-lowpower-glass .structured-select,
+body.zx-lowpower-glass .structured-select select,
+body.zx-lowpower-glass .structured-field input{
+  border:1px solid rgba(156,181,212,.43)!important;border-radius:12px!important;
+  background:rgba(255,255,255,.67)!important;color:#263b53!important;
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.92)!important;
+}
+body.zx-lowpower-glass input::placeholder,
+body.zx-lowpower-glass textarea::placeholder{color:#9baabd!important;opacity:1}
+body.zx-lowpower-glass .zx-field:focus,
+body.zx-lowpower-glass .structured-field:focus,
+body.zx-lowpower-glass .structured-select:focus,
+body.zx-lowpower-glass .structured-field input:focus{
+  border-color:rgba(94,145,203,.72)!important;
+  box-shadow:0 0 0 3px rgba(119,169,224,.15),inset 0 1px rgba(255,255,255,.9)!important;
+  background:rgba(255,255,255,.9)!important;
+}
+body.zx-lowpower-glass .structured-select span,
+body.zx-lowpower-glass .structured-field span{color:#7588a0!important}
+body.zx-lowpower-glass .structured-equation{
+  color:#486e96!important;border:1px solid rgba(255,255,255,.85)!important;border-radius:12px!important;
+  background:linear-gradient(115deg,rgba(255,255,255,.7),rgba(217,234,253,.47))!important;
+}
+body.zx-lowpower-glass .structured-hint,
+body.zx-lowpower-glass .function-value-note{color:#7c8ca1!important}
+body.zx-lowpower-glass .calc-screen{
+  min-height:108px;padding:18px 18px;margin-bottom:13px;
+  border:1px solid rgba(255,255,255,.92)!important;border-radius:20px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.73),rgba(221,236,253,.42))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.97),inset 0 -1px 0 rgba(158,186,220,.16),0 5px 18px rgba(98,133,177,.045)!important;
+}
+body.zx-lowpower-glass .calc-input{
+  color:#233a54!important;font-size:clamp(23px,2.5vw,31px);font-weight:550;caret-color:#5f94c7;
+}
+body.zx-lowpower-glass .calc-hint{color:#8798ad!important;font-size:10px}
+body.zx-lowpower-glass .calc-hint.is-ok{color:#377f69!important}
+body.zx-lowpower-glass .calc-hint.is-err,
+body.zx-lowpower-glass .zx-error{color:#b64959!important}
+body.zx-lowpower-glass .calc-pad{gap:8px}
+body.zx-lowpower-glass .calc-key{
+  min-height:49px;border:1px solid rgba(255,255,255,.92)!important;border-radius:15px!important;
+  color:#455d78!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.8),rgba(226,237,251,.49))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.96),0 3px 9px rgba(80,112,153,.055)!important;
+  font-size:15px;font-weight:650;transition:background .14s,border-color .14s,box-shadow .14s;
+}
+body.zx-lowpower-glass .calc-key.is-fn{
+  color:#68839f!important;background:linear-gradient(145deg,rgba(235,244,255,.9),rgba(204,225,248,.56))!important;
+}
+body.zx-lowpower-glass .calc-key.is-op{
+  color:#7c6a4e!important;border-color:rgba(255,255,255,.94)!important;
+  background:linear-gradient(145deg,rgba(255,250,239,.94),rgba(239,222,190,.46))!important;
+}
+body.zx-lowpower-glass .calc-key.is-eq{
+  color:#fff!important;border-color:rgba(255,255,255,.92)!important;
+  background:linear-gradient(140deg,#8fbce9,#7fa7d7)!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.7),0 5px 14px rgba(100,146,201,.2)!important;
+}
+body.zx-lowpower-glass .calc-key:active,
+body.zx-lowpower-glass .zx-btn:active,
+body.zx-lowpower-glass .zx-chip:active{transform:translateY(1px)}
+body.zx-lowpower-glass .zx-out{
+  border:1px solid rgba(255,255,255,.9)!important;border-radius:18px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.74),rgba(234,242,253,.48))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.95),0 5px 16px rgba(88,121,163,.045)!important;
+}
+body.zx-lowpower-glass .zx-out-row{border-bottom:1px solid rgba(119,151,190,.16)!important;padding:14px 15px}
+body.zx-lowpower-glass .zx-out-k{color:#8091a6!important}
+body.zx-lowpower-glass .zx-out-v{color:#3c526c!important}
+body.zx-lowpower-glass .zx-out-v.is-gold{color:#99763e!important}
+body.zx-lowpower-glass .zx-out-v.is-big{color:#263c55!important}
+body.zx-lowpower-glass .zx-btn,
+body.zx-lowpower-glass .zx-chip,
+body.zx-lowpower-glass .zx-eg{
+  color:#56708d!important;border:1px solid rgba(255,255,255,.9)!important;border-radius:11px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(227,238,252,.49))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.92),0 3px 10px rgba(80,112,153,.04)!important;
+  font-family:"Noto Sans SC",sans-serif!important;font-size:11px;font-weight:600;
+}
+body.zx-lowpower-glass .zx-btn.is-gold,
+body.zx-lowpower-glass .zx-chip.is-active{
+  color:#765b2c!important;border-color:rgba(255,255,255,.94)!important;
+  background:linear-gradient(145deg,rgba(255,250,236,.95),rgba(237,218,177,.64))!important;
+}
+body.zx-lowpower-glass .zx-btn.is-go{
+  color:#286b58!important;border-color:rgba(255,255,255,.9)!important;background:linear-gradient(145deg,#e1f7ed,#a9e0cd)!important;
+}
+body.zx-lowpower-glass .zx-chip:hover,
+body.zx-lowpower-glass .zx-btn:hover,
+body.zx-lowpower-glass .zx-eg:hover{color:#345f8b!important;background:rgba(255,255,255,.91)!important}
+body.zx-lowpower-glass .solve-mode-tabs,
+body.zx-lowpower-glass .structured-mode-tabs{
+  border:1px solid rgba(255,255,255,.86)!important;border-radius:15px!important;
+  background:rgba(222,234,249,.43)!important;padding:5px;
+}
+body.zx-lowpower-glass .solve-mode-tab{
+  color:#73859a!important;border-radius:11px!important;background:transparent!important;
+}
+body.zx-lowpower-glass .solve-mode-tab.is-active{
+  color:#3b5f83!important;border:1px solid rgba(255,255,255,.9)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.95),rgba(213,231,252,.68))!important;
+  box-shadow:0 3px 9px rgba(86,121,164,.07),inset 0 1px #fff!important;
+}
+body.zx-lowpower-glass .solve-keypad-wrap{
+  border:1px solid rgba(255,255,255,.88)!important;border-radius:18px!important;
+  background:rgba(233,241,252,.5)!important;
+}
+body.zx-lowpower-glass .solve-keypad-title b{color:#678bb2!important}
+body.zx-lowpower-glass .solve-keypad button,
+body.zx-lowpower-glass .zx-mobile-mathpad-grid button,
+body.zx-lowpower-glass .zx-mathpad-tabs button{
+  color:#4e6884!important;border:1px solid rgba(255,255,255,.92)!important;border-radius:12px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(219,233,251,.56))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.96),0 3px 8px rgba(80,112,153,.05)!important;
+}
+body.zx-lowpower-glass .solve-keypad button.key-action,
+body.zx-lowpower-glass .zx-mathpad-tabs button.is-active{
+  color:#81663c!important;background:linear-gradient(145deg,#fff9ea,#f0dfbb)!important;
+}
+body.zx-lowpower-glass .zx-mobile-mathpad{
+  color:#334c66!important;border-top:1px solid rgba(255,255,255,.88)!important;
+  background:rgba(239,246,255,.86)!important;
+  box-shadow:0 -10px 35px rgba(68,101,146,.15),inset 0 1px #fff!important;
+  -webkit-backdrop-filter:blur(9px) saturate(1.12);backdrop-filter:blur(9px) saturate(1.12);
+}
+body.zx-lowpower-glass .zx-mobile-mathpad-head{color:#617a95!important}
+body.zx-lowpower-glass .zx-mathpad-tabs{background:transparent!important}
+body.zx-lowpower-glass .zx-mathpad-tabs button.is-active{
+  color:#416a94!important;background:rgba(255,255,255,.91)!important;
+  box-shadow:inset 0 -2px #7faee0,0 3px 8px rgba(80,112,153,.06)!important;
+}
+body.zx-lowpower-glass .zx-chem-keyboard{
+  border:1px solid rgba(255,255,255,.9)!important;border-radius:18px!important;
+  background:linear-gradient(145deg,rgba(245,249,255,.8),rgba(221,235,252,.62))!important;
+  box-shadow:inset 0 1px #fff!important;
+}
+body.zx-lowpower-glass .zx-chem-keyrow button,
+body.zx-lowpower-glass .zx-chem-tabs button,
+body.zx-lowpower-glass .zx-chem-search button{
+  color:#4e6782!important;border:1px solid rgba(255,255,255,.96)!important;border-radius:11px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(217,232,251,.58))!important;
+  box-shadow:inset 0 1px #fff,0 3px 8px rgba(82,114,155,.045)!important;
+}
+body.zx-lowpower-glass .zx-chem-tabs button[aria-selected="true"]{
+  color:#3e6790!important;background:linear-gradient(145deg,#fff,#d9eafe)!important;border-color:#fff!important;
+}
+body.zx-lowpower-glass [data-view="chemistry"] .view-head-mark{
+  border:1px solid rgba(255,255,255,.92)!important;border-radius:17px!important;
+  color:#648ab3!important;background:linear-gradient(145deg,#fff,#d5e8fc)!important;
+  box-shadow:inset 0 1px #fff,0 7px 16px rgba(83,121,169,.1)!important;
+}
+body.zx-lowpower-glass .function-point-workbench,
+body.zx-lowpower-glass .structured-point,
+body.zx-lowpower-glass .function-value-row,
+body.zx-lowpower-glass .function-graph,
+body.zx-lowpower-glass .function-graph-head,
+body.zx-lowpower-glass .unit-table-wrap,
+body.zx-lowpower-glass .history-item,
+body.zx-lowpower-glass .hist-item,
+body.zx-lowpower-glass .zx-empty{
+  color:#425a74!important;
+}
+body.zx-lowpower-glass .structured-point,
+body.zx-lowpower-glass .function-point-workbench{
+  border-color:rgba(255,255,255,.86)!important;background:rgba(255,255,255,.44)!important;
+  border-radius:15px!important;box-shadow:inset 0 1px #fff!important;
+}
+body.zx-lowpower-glass .function-graph{
+  overflow:hidden;border:1px solid rgba(255,255,255,.92)!important;border-radius:18px!important;
+  background:rgba(255,255,255,.6)!important;box-shadow:inset 0 1px #fff!important;
+}
+body.zx-lowpower-glass .function-graph svg{max-width:100%;height:auto}
+body.zx-lowpower-glass table{
+  color:#425a74!important;border-color:rgba(127,158,196,.22)!important;
+}
+body.zx-lowpower-glass th{
+  color:#566f8d!important;background:rgba(222,235,251,.7)!important;border-color:rgba(127,158,196,.2)!important;
+}
+body.zx-lowpower-glass td{
+  color:#4a6079!important;border-color:rgba(127,158,196,.18)!important;
+}
+body.zx-lowpower-glass #histFilter .zx-chip.is-active{
+  color:#3f6388!important;background:linear-gradient(145deg,#fff,#d8eafe)!important;
+}
+body.zx-lowpower-glass #histList>*,body.zx-lowpower-glass .history-row{
+  border-color:rgba(255,255,255,.86)!important;background:rgba(255,255,255,.54)!important;color:#405770!important;
+}
+body.zx-lowpower-glass .knowledge-standalone-link{
+  border-color:rgba(255,255,255,.9)!important;border-radius:17px!important;background:rgba(255,255,255,.58)!important;
+}
+body.zx-lowpower-glass footer{color:#8495aa!important}
+body.zx-lowpower-glass .zx-graph-wrap,
+body.zx-lowpower-glass .graph-panel{background:rgba(255,255,255,.48)!important;border-color:rgba(255,255,255,.9)!important}
+body.zx-lowpower-glass .zx-mobile-menu-toggle.is-open .zx-hamburger span{background:#58718e!important}
+body.zx-lowpower-glass [hidden]{display:none!important}
+
+/* Lens target: exactly one active calculator pane; all other surfaces use cheap blur only. */
+html.zx-optics-ready body.zx-lowpower-glass:not(.zx-glass-off) .view.is-active>.view-card{
+  -webkit-backdrop-filter:url(#zxCalcLiquidFilter);
+  backdrop-filter:url(#zxCalcLiquidFilter);
+}
+body.zx-lowpower-glass.zx-glass-off .zx-header{
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(249,251,255,.97)!important;
+}
+body.zx-lowpower-glass.zx-glass-off .zx-menu{
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(247,250,255,.97)!important;
+}
+body.zx-lowpower-glass.zx-glass-off .view.is-active .view-card,
+body.zx-lowpower-glass.zx-glass-off .view.is-active>.glass-panel{
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+  background:rgba(248,251,255,.95)!important;
+}
+body.zx-lowpower-glass.zx-glass-off .zx-mobile-mathpad{
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(245,249,255,.98)!important;
+}
+
+/* Keep focus, active selection and touch sizes crisp without layout motion. */
+body.zx-lowpower-glass :focus-visible{outline:2px solid rgba(90,145,202,.65)!important;outline-offset:2px}
+body.zx-lowpower-glass button,body.zx-lowpower-glass a{touch-action:manipulation}
+@media(hover:hover) and (pointer:fine){
+  body.zx-lowpower-glass .zx-btn:hover,
+  body.zx-lowpower-glass .calc-key:hover,
+  body.zx-lowpower-glass .solve-keypad button:hover,
+  body.zx-lowpower-glass .zx-chem-keyrow button:hover{
+    transform:translateY(-1px);
+    box-shadow:inset 0 1px #fff,0 6px 13px rgba(83,119,164,.1)!important;
+  }
+}
+@media(max-width:900px){
+  body.zx-lowpower-glass .zx-layout{grid-template-columns:minmax(0,1fr);gap:0;padding-top:20px}
+  body.zx-lowpower-glass .zx-menu{
+    top:calc(72px + env(safe-area-inset-top));left:12px;right:12px;
+    max-height:calc(100dvh - 88px - env(safe-area-inset-top));
+    overflow:auto;overscroll-behavior:contain;
+    border-radius:22px!important;
+    box-shadow:0 22px 50px rgba(64,94,135,.2),inset 0 1px #fff!important;
+    -webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15);
+  }
+  body.zx-lowpower-glass .zx-menu.is-mobile-open{display:block}
+  body.zx-lowpower-glass .workspace-intro{align-items:flex-start}
+  body.zx-lowpower-glass .workspace-status{display:none}
+  body.zx-lowpower-glass .view.is-active .view-card,
+  body.zx-lowpower-glass .view.is-active>.glass-panel{border-radius:23px!important}
+  body.zx-lowpower-glass .zx-chem-keyrow{gap:6px}
+}
+@media(max-width:768px){
+  body.zx-lowpower-glass .zx-header{-webkit-backdrop-filter:blur(6px) saturate(1.08);backdrop-filter:blur(6px) saturate(1.08)}
+  body.zx-lowpower-glass .zx-layout{padding:14px 12px calc(34px + env(safe-area-inset-bottom))}
+  body.zx-lowpower-glass .workspace-intro{padding-bottom:15px;margin-bottom:14px}
+  body.zx-lowpower-glass .workspace-title{font-size:clamp(22px,6vw,29px);line-height:1.36}
+  body.zx-lowpower-glass .workspace-copy{font-size:11px;line-height:1.75;margin-top:6px}
+  body.zx-lowpower-glass .view.is-active .view-card,
+  body.zx-lowpower-glass .view.is-active>.glass-panel{padding:15px!important}
+  body.zx-lowpower-glass .view-head{gap:11px;margin-bottom:15px;padding-bottom:14px}
+  body.zx-lowpower-glass .view-head-mark{width:40px;height:40px;flex-basis:40px;border-radius:14px!important}
+  body.zx-lowpower-glass .view-title{font-size:16px}
+  body.zx-lowpower-glass .view-sub{font-size:11px;line-height:1.7}
+  body.zx-lowpower-glass .calc-screen{padding:15px;min-height:94px;border-radius:17px!important}
+  body.zx-lowpower-glass .calc-key{min-height:45px;border-radius:13px!important}
+  body.zx-lowpower-glass .zx-out-row{gap:9px;padding:12px}
+  body.zx-lowpower-glass .zx-out-k{font-size:10px}
+  body.zx-lowpower-glass .zx-out-v{font-size:11px}
+  body.zx-lowpower-glass .zx-btn{min-height:39px}
+  body.zx-lowpower-glass .zx-mobile-mathpad.is-visible{border-top:1px solid rgba(255,255,255,.96)!important}
+  body.zx-lowpower-glass .view.solve-subview .solve-keypad-wrap{
+    position:sticky!important;bottom:max(5px,env(safe-area-inset-bottom))!important;
+    background:rgba(239,246,255,.94)!important;
+    box-shadow:0 -8px 24px rgba(67,100,145,.13)!important;
+    -webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);
+  }
+}
+@media(max-width:600px){
+  body.zx-lowpower-glass .zx-header-inner{min-height:62px;padding:0 11px;gap:7px}
+  body.zx-lowpower-glass .zx-brand{gap:7px}
+  body.zx-lowpower-glass .zx-brand-mark{width:35px;height:35px;border-radius:12px}
+  body.zx-lowpower-glass .zx-brand .text-sm{font-size:12px!important}
+  body.zx-lowpower-glass .zx-brand .text-\[10px\]{font-size:9px!important}
+  body.zx-lowpower-glass .zx-glass-toggle{min-height:35px;padding:0 7px;gap:5px;font-size:9px}
+  body.zx-lowpower-glass .zx-glass-toggle-icon{width:14px;height:14px}
+  body.zx-lowpower-glass .zx-mobile-menu-toggle{width:35px;height:35px}
+  body.zx-lowpower-glass .zx-layout{padding-left:10px;padding-right:10px}
+  body.zx-lowpower-glass .calc-pad{gap:6px}
+  body.zx-lowpower-glass .calc-key{min-height:43px;font-size:14px}
+  body.zx-lowpower-glass .structured-coefficients{gap:7px!important}
+  body.zx-lowpower-glass .zx-chem-keyrow{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:5px}
+  body.zx-lowpower-glass .zx-chem-keyrow button{min-height:40px;font-size:14px}
+}
+@media(max-width:360px){
+  body.zx-lowpower-glass .zx-brand .text-sm{font-size:11px!important}
+  body.zx-lowpower-glass .zx-brand .text-\[10px\]{display:none!important}
+  body.zx-lowpower-glass .zx-glass-toggle span{display:none}
+  body.zx-lowpower-glass .zx-glass-toggle{width:35px;padding:0}
+  body.zx-lowpower-glass .calc-key{min-height:40px}
+}
+@media(prefers-reduced-motion:reduce){
+  body.zx-lowpower-glass *,body.zx-lowpower-glass *::before,body.zx-lowpower-glass *::after{
+    animation:none!important;transition:none!important;scroll-behavior:auto!important;
+  }
+}
+</style>
 </head>
 <body class="text-slate-300 antialiased zx-lowpower-glass">
 
@@ -1613,7 +2138,7 @@ body.zx-lowpower-glass:not(.zx-glass-off) .zx-mobile-mathpad.is-visible .zx-mobi
                 <a href="https://11.hongye71.dpdns.org/#/workbench/tools" class="zx-back hidden md:inline-flex" title="回到主站的效率工作台">
                     <i class="fa-solid fa-toolbox"></i>效率工作台
                 </a>
-                <button id="zxGlassModeToggle" type="button" class="zx-icon-btn zx-glass-toggle" aria-pressed="true" title="切换低功耗玻璃材质"><svg class="zx-glass-toggle-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.5"/><path d="m4.5 7.8 7.5 4.4 7.5-4.4M12 12.2V20" stroke="currentColor" stroke-width="1.3"/></svg><span>玻璃 · 低功耗</span></button>
+                <button id="zxGlassModeToggle" type="button" class="zx-icon-btn zx-glass-toggle" aria-pressed="true" title="切换低功耗玻璃材质"><svg class="zx-glass-toggle-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.5"/><path d="m4.5 7.8 7.5 4.4 7.5-4.4M12 12.2V20" stroke="currentColor" stroke-width="1.3"/></svg><span>玻璃 · 折射</span></button>
                 <button id="mobileMenuToggle" type="button" class="zx-icon-btn zx-mobile-menu-toggle" aria-expanded="false" aria-controls="mobileFunctionMenu" title="打开功能菜单">
                     <span class="zx-hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
                     <span class="sr-only">功能菜单</span>
@@ -1653,7 +2178,7 @@ body.zx-lowpower-glass:not(.zx-glass-off) .zx-mobile-mathpad.is-visible .zx-mobi
         <main class="min-w-0">
             <section class="workspace-intro" aria-label="计算工作台">
                 <div>
-                    <div class="workspace-eyebrow">ZHIXING · MATH WORKSPACE</div>
+                    <div class="workspace-eyebrow">ZHIXING · LIQUID GLASS WORKSPACE</div>
                     <h1 class="workspace-title">让每一步计算，都清晰可循。</h1>
                     <p class="workspace-copy">从快速运算到方程、函数与单位换算。输入、推导、结果与历史记录在同一工作区完成。</p>
                 </div>
@@ -4375,6 +4900,127 @@ function zxFnAdvance(f,xValue,rangeText){
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
         else boot();
     ;
+</script>
+<svg id="zxCalcGlassDefs" aria-hidden="true" focusable="false" width="0" height="0" style="position:fixed;left:0;top:0;width:0;height:0;overflow:hidden">
+  <defs>
+    <filter id="zxCalcLiquidFilter" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="-36" y="-36" width="640" height="900" color-interpolation-filters="sRGB">
+      <feImage id="zxCalcDisplacementMap" x="-36" y="-36" width="640" height="900" preserveAspectRatio="none" result="edgeMap"/>
+      <feDisplacementMap id="zxCalcDisplace" in="SourceGraphic" in2="edgeMap" scale="-26" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+<script id="zx-calc-lowpower-optics">
+(function(){
+  'use strict';
+  var root=document.documentElement,body=document.body;
+  var pane=null,frame=0,lastKey='';
+  var filter=document.getElementById('zxCalcLiquidFilter');
+  var mapImage=document.getElementById('zxCalcDisplacementMap');
+  var canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+  var button=document.getElementById('zxGlassModeToggle');
+  var label=button?button.querySelector('span'):null;
+  var resizeObserver=null,mutationObserver=null;
+  var strength=38,rim=58;
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+  function smoothstep(a,b,x){var t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)}
+  function setMap(data){
+    mapImage.setAttribute('href',data);
+    mapImage.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href',data);
+  }
+  function getPane(){return document.querySelector('.view.is-active>.view-card')}
+  function buildMap(){
+    if(!ctx||!pane||body.classList.contains('zx-glass-off'))return;
+    var rect=pane.getBoundingClientRect();
+    var width=Math.round(rect.width),height=Math.round(rect.height);
+    if(width<100||height<100)return;
+    var dpr=window.matchMedia('(max-width:700px)').matches?.20:.30;
+    var pad=Math.max(22,Math.round(Math.max(width,height)*.08));
+    var key=[width,height,dpr].join(':');
+    if(key===lastKey)return;
+    lastKey=key;
+    var fullW=width+pad*2,fullH=height+pad*2;
+    canvas.width=Math.max(24,Math.round(fullW*dpr));
+    canvas.height=Math.max(24,Math.round(fullH*dpr));
+    var image=ctx.createImageData(canvas.width,canvas.height),data=image.data;
+    var radius=Math.min(parseFloat(getComputedStyle(pane).borderTopLeftRadius)||22,width*.12,height*.1);
+    var depth=5+(rim/100)*8,amplitude=5+(strength/100)*9;
+    var cx=width/2,cy=height/2;
+    for(var py=0;py<canvas.height;py++){
+      var y=py/dpr-pad,qy=Math.abs(y-cy)-(height/2-radius),sy=y<cy?-1:1;
+      for(var px=0;px<canvas.width;px++){
+        var x=px/dpr-pad,qx=Math.abs(x-cx)-(width/2-radius),sx=x<cx?-1:1;
+        var ox=Math.max(qx,0),oy=Math.max(qy,0);
+        var sd=Math.hypot(ox,oy)+Math.min(Math.max(qx,qy),0)-radius;
+        var inside=-sd,weight=inside>0?1-smoothstep(0,depth,inside):0,nx=0,ny=0;
+        if(qx>0&&qy>0){var len=Math.hypot(qx,qy)||1;nx=sx*qx/len;ny=sy*qy/len}
+        else if(qx>qy)nx=sx;else ny=sy;
+        var k=(py*canvas.width+px)*4;
+        data[k]=clamp(128+nx*amplitude*weight,0,255);
+        data[k+1]=clamp(128+ny*amplitude*weight,0,255);
+        data[k+2]=128;data[k+3]=255;
+      }
+    }
+    ctx.putImageData(image,0,0);
+    var url;
+    try{url=canvas.toDataURL('image/webp',.62)}catch(e){url=canvas.toDataURL('image/png')}
+    setMap(url);
+    filter.setAttribute('x',-pad);filter.setAttribute('y',-pad);
+    filter.setAttribute('width',fullW);filter.setAttribute('height',fullH);
+    mapImage.setAttribute('x',-pad);mapImage.setAttribute('y',-pad);
+    mapImage.setAttribute('width',fullW);mapImage.setAttribute('height',fullH);
+  }
+  function schedule(){
+    if(frame||body.classList.contains('zx-glass-off'))return;
+    frame=requestAnimationFrame(function(){frame=0;buildMap()});
+  }
+  function attachPane(){
+    var next=getPane();
+    if(next===pane){schedule();return}
+    if(resizeObserver&&pane)resizeObserver.unobserve(pane);
+    pane=next;lastKey='';
+    if(resizeObserver&&pane)resizeObserver.observe(pane);
+    schedule();
+  }
+  function sync(){
+    var enabled=!body.classList.contains('zx-glass-off');
+    if(button){
+      button.setAttribute('aria-pressed',enabled?'true':'false');
+      button.title=enabled?'点击关闭液态玻璃材质':'点击启用低功耗液态玻璃材质';
+      if(label)label.textContent=enabled?(root.classList.contains('zx-optics-ready')?'玻璃 · 折射':'玻璃 · 低功耗'):'玻璃 · 关闭';
+    }
+    if(enabled){lastKey='';attachPane()}
+  }
+  function init(){
+    var ua=navigator.userAgent||'';
+    var chromium=/(Chrome|Chromium|Edg|OPR|Brave|SamsungBrowser)\//i.test(ua)&&!/(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(ua);
+    var cssFilterSupport=false;
+    try{var test=document.createElement('div');test.style.backdropFilter='url(#zxCalcLiquidFilter)';cssFilterSupport=!!test.style.backdropFilter}catch(e){}
+    if(chromium&&cssFilterSupport&&ctx)root.classList.add('zx-optics-ready');
+    else root.classList.remove('zx-optics-ready');
+    if(window.ResizeObserver){
+      resizeObserver=new ResizeObserver(function(){lastKey='';schedule()});
+    }else{
+      window.addEventListener('resize',function(){lastKey='';schedule()},{passive:true});
+    }
+    if(window.MutationObserver){
+      mutationObserver=new MutationObserver(function(records){
+        for(var i=0;i<records.length;i++){
+          if(records[i].target&&records[i].target.matches&&records[i].target.matches('.view')){
+            attachPane();break;
+          }
+        }
+      });
+      document.querySelectorAll('.view').forEach(function(el){mutationObserver.observe(el,{attributes:true,attributeFilter:['class']})});
+    }
+    window.addEventListener('resize',function(){lastKey='';schedule()},{passive:true});
+    window.addEventListener('orientationchange',function(){lastKey='';schedule()},{passive:true});
+    if(button)button.addEventListener('click',sync);
+    attachPane();sync();
+    document.querySelectorAll('.zx-menu-item').forEach(function(el){el.addEventListener('click',function(){lastKey='';attachPane()})});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
+})();
 </script>
 <script id="zx-liquid-glass-toggle">
 (function(){
