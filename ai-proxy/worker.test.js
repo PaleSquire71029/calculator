@@ -27,7 +27,7 @@ const userMessage = { role: "user", content: "解方程 x+2=5" };
 test("health endpoint does not expose secret values", async () => {
   const response = await worker.fetch(new Request("https://worker.example.test/health", { headers: { Origin: origin } }), env);
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { ok: true, configured: true });
+  assert.deepEqual(await response.json(), { ok: true, configured: true, model: "vision-model" });
 });
 
 test("rejects unapproved origins", async () => {
