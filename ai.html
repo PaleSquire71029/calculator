@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f6f8fc">
 <meta name="color-scheme" content="light">
-<meta name="description" content="知行 AI：简洁的通用 AI 对话，支持数学公式渲染与图片提问。">
-<title>知行 AI | 知行计算器</title>
+<meta name="description" content="知行AI学习版：支持文字、图片、拍照和文档提问的 AI 学习助手。">
+<title>知行AI学习版 | 知行计算器</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <script>
 window.MathJax = {
@@ -68,7 +68,7 @@ textarea::placeholder{color:#9aa5b6}
 .btn{height:36px;padding:0 12px;border:1px solid var(--line);border-radius:11px;background:white;color:#657895;font-size:12px;cursor:pointer;white-space:nowrap}
 .btn.send{width:39px;padding:0;border-color:#4778db;background:#4778db;color:white;font-size:18px;box-shadow:0 4px 10px #4778db35}
 .btn:disabled{opacity:.55;cursor:wait}
-#imageInput{display:none}
+#imageInput,#fileInput{display:none}
 .preview{display:none;align-items:center;gap:9px;margin:7px 0;padding:7px;border-radius:11px;background:#f1f5fc}
 .preview img{width:48px;height:48px;object-fit:cover;border-radius:7px}
 .preview span{font-size:12px;flex:1;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -83,7 +83,7 @@ textarea::placeholder{color:#9aa5b6}
 <body>
 <div class="app">
 <header class="top">
-  <div class="brand"><div class="logo" aria-hidden="true">✳</div><span>知行 AI</span></div>
+  <div class="brand"><div class="logo" aria-hidden="true">✳</div><span>知行AI学习版</span></div>
   <div class="top-actions"><button class="plain" id="clearChat" type="button">新对话</button><a class="link" href="./index.html">返回计算器</a></div>
 </header>
 <details class="settings" id="settings">
@@ -95,14 +95,18 @@ textarea::placeholder{color:#9aa5b6}
   </div>
 </details>
 <main class="chat" id="chat" aria-live="polite">
-  <div class="welcome"><div class="welcome-mark">✳</div><h1>有什么可以帮你？</h1><p>直接提问、追问，或上传题目图片。</p></div>
+  <div class="welcome"><div class="welcome-mark">✳</div><h1>有什么可以帮你？</h1><p>直接提问、连续追问，也可以上传图片、拍照或添加学习资料。</p></div>
 </main>
 <div class="composer-wrap">
   <div class="composer">
-    <div class="preview" id="preview"><img id="previewImg" alt="待发送图片"><span id="previewName">已选择图片</span><button class="btn" id="removeImage" type="button">移除</button></div>
+    <div class="preview" id="preview"><img id="previewImg" alt="待发送图片"><span id="previewName">已选择附件</span><button class="btn" id="removeImage" type="button">清除</button></div>
+    <div class="tiny" id="fileSummary" style="display:none;margin:4px 2px 8px;white-space:pre-wrap;overflow-wrap:anywhere"></div>
     <textarea id="question" rows="2" placeholder="给知行 AI 发送消息……" aria-label="消息内容"></textarea>
     <div class="composer-bottom">
-      <div class="actions"><label class="btn" for="imageInput">＋ 图片</label><input id="imageInput" type="file" accept="image/*" capture="environment"><span class="tiny" id="hint">Enter 发送 · Shift+Enter 换行</span></div>
+      <div class="actions"><label class="btn" for="imageInput">图片</label><input id="imageInput" type="file" accept="image/*" multiple>
+      <label class="btn" for="cameraInput">拍照</label><input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none">
+      <label class="btn" for="fileInput">文件</label><input id="fileInput" type="file" accept=".pdf,.txt,.md,.csv,.json,.docx,.html,.xml,.log,.js,.py,.java,.c,.cpp,.h,.css,.yaml,.yml" multiple style="display:none">
+      <span class="tiny" id="hint">Enter 发送 · Shift+Enter 换行</span></div>
       <button class="btn send" id="send" type="button" aria-label="发送消息">↑</button>
     </div>
   </div>
@@ -113,7 +117,7 @@ textarea::placeholder{color:#9aa5b6}
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
-const state={messages:[],image:null,busy:false,proxy:''};
+const state={messages:[],images:[],files:[],busy:false,proxy:''};
 try{state.proxy=sessionStorage.getItem('zx-ai-proxy')||'';}catch(e){}
 $('proxyUrl').value=state.proxy;
 function saveProxy(){state.proxy=$('proxyUrl').value.trim().replace(/\/$/,'');try{sessionStorage.setItem('zx-ai-proxy',state.proxy);}catch(e){}}
@@ -140,7 +144,7 @@ function render(){
   const node=document.createElement('article');node.className='msg '+m.role;
   const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=m.role==='user'?'你':'知';
   const content=document.createElement('div');content.className='content';content.innerHTML=formatText(m.text||'');
-  if(m.imageData){const im=document.createElement('img');im.src=m.imageData;im.alt='你发送的图片';content.appendChild(im);}
+  (m.images|| (m.imageData?[m.imageData]:[])).forEach(src=>{const im=document.createElement('img');im.src=src;im.alt='你发送的图片';content.appendChild(im);});
   node.append(avatar,content);host.appendChild(node);
   typeset(content);
  });
@@ -156,19 +160,73 @@ async function checkProxy(){
 }
 $('checkBtn').addEventListener('click',()=>{saveProxy();checkProxy();});
 function resizeImage(file){return new Promise((resolve,reject)=>{if(!file.type.startsWith('image/'))return reject(new Error('请选择图片文件。'));const img=new Image();const src=URL.createObjectURL(file);img.onload=()=>{const max=1600,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);URL.revokeObjectURL(src);resolve(canvas.toDataURL('image/jpeg',.82));};img.onerror=()=>{URL.revokeObjectURL(src);reject(new Error('图片读取失败，请换一张图片。'));};img.src=src;});}
-$('imageInput').addEventListener('change',async()=>{const file=$('imageInput').files&&$('imageInput').files[0];if(!file)return;try{const data=await resizeImage(file);state.image={data,name:file.name||'图片'};$('previewImg').src=data;$('previewName').textContent=state.image.name+' · 已压缩';$('preview').style.display='flex';if(!$('question').value.trim())$('question').value='请看看这张图片并帮我分析。';autoResize();}catch(e){alert(e.message||'无法处理图片');}finally{$('imageInput').value='';}});
-$('removeImage').addEventListener('click',()=>{state.image=null;$('preview').style.display='none';$('previewImg').removeAttribute('src');});
-$('clearChat').addEventListener('click',()=>{if(state.busy)return;state.messages=[];state.image=null;$('preview').style.display='none';$('question').value='';autoResize();render();});
+function updateAttachments(){
+ $('preview').style.display=state.images.length?'flex':'none';
+ if(state.images.length){$('previewImg').src=state.images[0].data;$('previewName').textContent=state.images.length>1?state.images[0].name+' 等 '+state.images.length+' 张图片':state.images[0].name+' · 已压缩';}
+ else $('previewImg').removeAttribute('src');
+ $('fileSummary').style.display=state.files.length?'block':'none';
+ $('fileSummary').textContent=state.files.map(x=>'📄 '+x.name+'（已读取 '+x.text.length+' 字符）').join('；');
+}
+async function handleImages(files){
+ for(const file of files){if(state.images.length>=4){alert('一次最多添加 4 张图片。');break;}try{const data=await resizeImage(file);state.images.push({data,name:file.name||'图片'});}catch(e){alert((file.name||'图片')+'：'+(e.message||'无法处理图片'));}}
+ updateAttachments();if(state.images.length&&!$('question').value.trim())$('question').value='请看看这些图片并帮我分析。';autoResize();
+}
+$('imageInput').addEventListener('change',async()=>{const files=Array.from($('imageInput').files||[]);if(files.length)await handleImages(files);$('imageInput').value='';});
+$('cameraInput').addEventListener('change',async()=>{const files=Array.from($('cameraInput').files||[]);if(files.length)await handleImages(files);$('cameraInput').value='';});
+async function loadScript(src){
+ return new Promise((resolve,reject)=>{const existing=Array.from(document.scripts).find(s=>s.src===src);if(existing){if(existing.dataset.loaded==='1')return resolve();existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true});return;}
+ const s=document.createElement('script');s.src=src;s.onload=()=>{s.dataset.loaded='1';resolve();};s.onerror=()=>reject(new Error('读取组件加载失败，请检查网络后重试。'));document.head.appendChild(s);});
+}
+async function readDocument(file){
+ const ext=(file.name.split('.').pop()||'').toLowerCase();
+ if(file.size>12*1024*1024)throw new Error('文件超过 12 MB，请先压缩或拆分。');
+ if(['txt','md','csv','json','html','xml','log','js','py','java','c','cpp','h','css','yaml','yml'].includes(ext)){
+  const text=await file.text();return text.slice(0,80000);
+ }
+ if(ext==='pdf'){
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+  const pdfjs=window.pdfjsLib;if(!pdfjs)throw new Error('PDF 解析组件未能加载。');
+  pdfjs.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const pdf=await pdfjs.getDocument({data:await file.arrayBuffer()}).promise;let out='';
+  for(let p=1;p<=Math.min(pdf.numPages,80);p++){const page=await pdf.getPage(p);const tc=await page.getTextContent();out+='\n[第 '+p+' 页]\n'+tc.items.map(i=>i.str||'').join(' ');if(out.length>=80000)break;}
+  return out.slice(0,80000);
+ }
+ if(ext==='docx'){
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js');
+  if(!window.mammoth)throw new Error('DOCX 解析组件未能加载。');
+  const result=await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});return result.value.slice(0,80000);
+ }
+ throw new Error('暂不支持该文件格式，请上传 PDF、DOCX 或文本类文件。');
+}
+$('fileInput').addEventListener('change',async()=>{
+ const files=Array.from($('fileInput').files||[]);
+ for(const file of files){
+  if(state.files.length>=3){alert('一次最多添加 3 个文档。');break;}
+  try{$('hint').textContent='正在读取 '+file.name+'…';const text=await readDocument(file);state.files.push({name:file.name,text});}
+  catch(e){alert(file.name+'：'+(e.message||'读取失败'));}
+ }
+ $('hint').textContent='Enter 发送 · Shift+Enter 换行';updateAttachments();
+ if(state.files.length&&!$('question').value.trim())$('question').value='请阅读我上传的资料，并帮我总结重点。';autoResize();$('fileInput').value='';
+});
+$('removeImage').addEventListener('click',()=>{state.images=[];state.files=[];updateAttachments();});
+$('clearChat').addEventListener('click',()=>{if(state.busy)return;state.messages=[];state.images=[];state.files=[];updateAttachments();$('question').value='';autoResize();render();});
 function autoResize(){const t=$('question');t.style.height='auto';t.style.height=Math.min(t.scrollHeight,180)+'px';}
 $('question').addEventListener('input',autoResize);
 async function send(){
  if(state.busy)return;
- const text=$('question').value.trim();if(!text&&!state.image){$('question').focus();return;}
+ const text=$('question').value.trim();if(!text&&!state.images.length&&!state.files.length){$('question').focus();return;}
  saveProxy();const ep=endpoint();if(!ep){$('settings').open=true;$('health').textContent='· 请先配置代理地址';$('health').className='health error';$('proxyUrl').focus();return;}
- const image=state.image;const visibleText=text||(image?'请看看这张图片并帮我分析。':'');
- state.messages.push({role:'user',text:visibleText,imageData:image?image.data:null});
- const apiMessages=state.messages.map((m,i)=>({role:m.role,content:m.role==='user'&&i===state.messages.length-1&&image?[{type:'text',text:m.text},{type:'image_url',image_url:{url:image.data}}]:m.text}));
- $('question').value='';autoResize();state.image=null;$('preview').style.display='none';render();setBusy(true);
+ const images=state.images.slice(),files=state.files.slice();
+ let visibleText=text||(images.length?'请看看这些图片并帮我分析。':'请阅读我上传的资料，并帮我总结重点。');
+ if(files.length)visibleText+='\n\n【附件资料】\n'+files.map(f=>'文件：'+f.name+'\n'+f.text).join('\n\n---\n\n');
+ state.messages.push({role:'user',text:visibleText,images:images.map(x=>x.data)});
+ const apiMessages=state.messages.map(m=>{
+  if(m.role==='user'&&m.images&&m.images.length){
+   return {role:m.role,content:[{type:'text',text:m.text},...m.images.map(src=>({type:'image_url',image_url:{url:src}}))]};
+  }
+  return {role:m.role,content:m.text};
+ });
+ $('question').value='';autoResize();state.images=[];state.files=[];updateAttachments();render();setBusy(true);
  try{
   const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'general',messages:apiMessages})});
   let data={};try{data=await response.json();}catch(e){}
