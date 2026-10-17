@@ -168,6 +168,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
   let activePromptScope = "analysisBase";
   let toastTimer = 0;
   let models = [];
+  let recentRowsData = [];
+  let settingsDirty = false;
   function workerUrl() {
     const raw = ($("workerUrl").value || localStorage.getItem(WORKER_KEY) || DEFAULT_WORKER).trim();
     if (!raw) return "";
@@ -302,25 +304,42 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     $("statFailed").textContent = Number(stats.failedRequests || 0).toLocaleString();
     $("statPrompt").textContent = Number(stats.promptTokens || 0).toLocaleString();
     $("statCompletion").textContent = Number(stats.completionTokens || 0).toLocaleString();
-    const rows = Array.isArray(stats.recent) ? stats.recent : [];
-    $("recentRows").replaceChildren();
+    recentRowsData = Array.isArray(stats.recent) ? stats.recent : [];
+    renderRecentRows();
+  }
+  function renderRecentRows() {
+    const rows = recentRowsData.filter(item => {
+      const mode = $("recordFilter").value;
+      if (mode === "ok" && !item.ok) return false;
+      if (mode === "fail" && item.ok) return false;
+      const q = $("recordSearch").value.trim().toLowerCase();
+      return !q || [item.mode, item.model, item.status, item.ok ? "成功" : "失败"].some(v => String(v ?? "").toLowerCase().includes(q));
+    });
+    const body = $("recentRows");
+    body.replaceChildren();
     if (!rows.length) {
       const tr = document.createElement("tr"), td = document.createElement("td");
-      td.colSpan = 5; td.textContent = "暂无记录。启用管理后产生的请求会逐步显示在这里。"; tr.append(td); $("recentRows").append(tr); return;
-    }
-    rows.forEach(item => {
+      td.colSpan = 5; td.textContent = recentRowsData.length ? "没有符合筛选条件的记录。" : "暂无记录。产生请求后会显示最近 20 条元数据。";
+      tr.append(td); body.append(tr);
+    } else rows.forEach(item => {
       const tr = document.createElement("tr");
-      const values = [new Date(item.at).toLocaleString(), item.mode || "—", item.model || "—"];
-      values.forEach(value => { const td = document.createElement("td"); td.textContent = value; tr.append(td); });
+      [new Date(item.at).toLocaleString(), item.mode || "—", item.model || "—"].forEach(value => {
+        const td = document.createElement("td"); td.textContent = value; tr.append(td);
+      });
       const state = document.createElement("td"), badge = document.createElement("span");
       badge.className = "badge " + (item.ok ? "ok" : "fail"); badge.textContent = item.ok ? "成功" : "失败"; state.append(badge); tr.append(state);
       const code = document.createElement("td"); code.textContent = item.status || "—"; tr.append(code);
-      $("recentRows").append(tr);
+      body.append(tr);
     });
+    $("recordCount").textContent = "显示 " + rows.length + " / " + recentRowsData.length + " 条记录（后端仅保留最近 20 条）";
   }
+  $("recordSearch").addEventListener("input", renderRecentRows);
+  $("recordFilter").addEventListener("change", renderRecentRows);
   async function refreshSettings() {
     const data = await api("/admin/settings", { method: "GET" });
     settings = data; populateSettings(); renderStats();
+    settingsDirty = false;
+    status("draftStatus", "配置与统计已同步。", "success");
     showToast("数据已刷新");
   }
   $("refresh").addEventListener("click", async () => { try { await refreshSettings(); } catch(e) { status("overviewStatus",e.message,"error"); } });
@@ -329,6 +348,21 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     catch(e) { status("recordsStatus",e.message,"error"); }
   });
   $("temperature").addEventListener("input", () => $("tempValue").textContent = Number($("temperature").value).toFixed(1));
+  function markSettingsDirty() {
+    settingsDirty = true;
+    status("draftStatus", "有未保存的配置修改。请保存，或使用“刷新数据”丢弃修改。", "error");
+  }
+  ["apiBaseUrl","model","temperature","maxTokens","apiKey"].forEach(id => $(id).addEventListener("input", markSettingsDirty));
+  $("providerPreset").addEventListener("change", () => {
+    const presets = {
+      openai: "https://api.openai.com/v1",
+      deepseek: "https://api.deepseek.com/v1",
+      siliconflow: "https://api.siliconflow.cn/v1",
+      modelscope: "https://api-inference.modelscope.cn/v1"
+    };
+    const value = presets[$("providerPreset").value];
+    if (value) { $("apiBaseUrl").value = value; markSettingsDirty(); }
+  });
   function gatherPrompts() {
     const p = structuredClone(settings?.prompts || defaults);
     const key = $("promptScope").value;
@@ -383,9 +417,31 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     $("apiKey").value = "";
     dirtyPrompt = false;
     populateSettings(); renderStats(); renderPromptEditor(true);
+    settingsDirty = false;
+    status("draftStatus", "配置已保存到 Worker。", "success");
     if(showMessage) { status("providerStatus","配置已安全保存到 Worker。","success"); status("promptStatus","提示词已保存，后续请求将使用新配置。","success"); showToast("保存成功"); }
     return result;
   }
+  $("quickSave").addEventListener("click", async () => {
+    activateTab("provider");
+    setBusy($("quickSave"), true, "保存中…");
+    try { await saveAll(true); }
+    catch(e) { status("providerStatus", e.message, "error"); }
+    finally { setBusy($("quickSave"), false); }
+  });
+  $("quickBackup").addEventListener("click", () => { exportConfig(); activateTab("security"); });
+  $("saveAndTest").addEventListener("click", async () => {
+    setBusy($("saveAndTest"), true, "保存并测试中…");
+    status("providerStatus", "");
+    try {
+      await saveAll(false);
+      const data = await api("/admin/test", { method: "POST", body: { apiBaseUrl: settings.apiBaseUrl, model: settings.model } });
+      status("providerStatus", "保存成功，连接正常 · " + data.model + " · " + data.elapsedMs + " ms · " + (data.preview || "测试通过"), "success");
+      status("draftStatus", "配置已保存并通过连接测试。", "success");
+      showToast("保存与连接测试均成功");
+    } catch(e) { status("providerStatus", e.message, "error"); }
+    finally { setBusy($("saveAndTest"), false); }
+  });
   $("saveSettings").addEventListener("click", async () => {
     setBusy($("saveSettings"),true,"保存中…"); status("providerStatus","");
     try { await saveAll(true); } catch(e) { status("providerStatus",e.message,"error"); }
@@ -442,7 +498,48 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     catch(e) { status("backupStatus",e.message,"error"); }
   }
   $("exportConfig").addEventListener("click",exportConfig);
-  $("exportRecords").addEventListener("click",exportConfig);
+  $("exportRecords").addEventListener("click", () => {
+    const rows = [["时间","场景","模型","结果","HTTP 状态"], ...recentRowsData.map(item => [
+      item.at || "", item.mode || "", item.model || "", item.ok ? "成功" : "失败", item.status ?? ""
+    ])];
+    const csv = "\\uFEFF" + rows.map(row => row.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(",")).join("\\r\\n");
+    downloadText(csv, "zhixing-ai-usage-records.csv", "text/csv;charset=utf-8");
+    status("recordsStatus", "已导出最近 " + recentRowsData.length + " 条调用元数据，不含题目正文或密钥。", "success");
+  });
+  function downloadText(value, filename, type="text/plain;charset=utf-8") {
+    const blob = new Blob([value], { type });
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  $("exportPrompt").addEventListener("click", () => {
+    const name = $("promptScope").selectedOptions[0]?.textContent || "prompt";
+    downloadText($("promptText").value, "zhixing-prompt-" + $("promptScope").value.replace(/[^a-z0-9_-]/gi,"_") + ".txt");
+    status("promptStatus", "已导出当前提示词：" + name + "。", "success");
+  });
+  $("importPromptBtn").addEventListener("click", () => $("promptFile").click());
+  $("promptFile").addEventListener("change", async () => {
+    const file = $("promptFile").files[0];
+    if (!file) return;
+    try {
+      if (file.size > 100 * 1024) throw new Error("提示词文件不能超过 100 KB。");
+      $("promptText").value = await file.text();
+      dirtyPrompt = true; updatePromptCount();
+      status("promptStatus", "提示词已载入编辑器，保存后才会应用。", "success");
+    } catch(e) { status("promptStatus", e.message, "error"); }
+    finally { $("promptFile").value = ""; }
+  });
+  $("resetStats").addEventListener("click", async () => {
+    if (!confirm("确定清空累计请求数、失败数、Token 统计和最近 20 条调用记录吗？此操作不可撤销，但不会删除模型配置与提示词。")) return;
+    setBusy($("resetStats"), true, "重置中…");
+    try {
+      await api("/admin/stats/reset", { method: "POST", body: { confirm: "RESET_STATS" } });
+      await refreshSettings();
+      status("recordsStatus", "统计已清空；后续请求会重新累计。", "success");
+      showToast("统计已重置");
+    } catch(e) { status("recordsStatus", e.message, "error"); }
+    finally { setBusy($("resetStats"), false); }
+  });
   $("importConfigBtn").addEventListener("click",()=>$("importFile").click());
   $("importFile").addEventListener("change",async()=>{
     const file=$("importFile").files[0]; if(!file)return;
