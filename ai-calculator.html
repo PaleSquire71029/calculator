@@ -4601,16 +4601,20 @@ function zxFnAdvance(f,xValue,rangeText){
   async function typesetAnswer(node){
     if(!node)return;
     try{
+      // 已经排版过的区域不要重新用 textContent 覆盖 MathJax 生成的节点。
+      if(node.querySelector('mjx-container'))return;
       for(let i=0;i<100&&!(window.MathJax&&window.MathJax.typesetPromise);i++)await new Promise(resolve=>setTimeout(resolve,100));
-      if(!window.MathJax||!window.MathJax.typesetPromise)throw new Error('数学公式引擎加载失败（CDN 不可访问）');
+      if(!window.MathJax||!window.MathJax.typesetPromise)throw new Error('数学公式引擎加载失败（已尝试备用 CDN）');
       if(window.MathJax.startup&&window.MathJax.startup.promise)await window.MathJax.startup.promise;
-      node.querySelectorAll('.zx-ai-answer-section-content').forEach(el=>{el.textContent=normalizeLatexSource(el.textContent);});
+      node.querySelectorAll('.zx-ai-answer-section-content').forEach(el=>{
+        if(!el.querySelector('mjx-container'))el.textContent=normalizeLatexSource(el.textContent);
+      });
       if(window.MathJax.typesetClear)window.MathJax.typesetClear([node]);
       await window.MathJax.typesetPromise([node]);
     }catch(err){
       console.warn('AI 公式渲染失败：',err);
       const status=node.closest('.zx-ai-result')?.querySelector('[data-zx-ai-status]');
-      if(status&&!status.dataset.state?.includes('error'))status.textContent+=' · 公式渲染失败，请检查网络';
+      if(status&&status.dataset.state!=='error')status.textContent+=' · 公式渲染失败，请检查网络连接';
     }
   }
   async function analyze(section,viewId,action,button){
