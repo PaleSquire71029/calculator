@@ -416,14 +416,18 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       catch { return json({ error: "设置已保存，但无法解密 API Key。请检查加密密钥设置。" }, 503, cors); }
     }
     if (url.pathname === "/admin/models" && request.method === "POST") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await checkRateLimit(env, "admin-upstream:" + ip, 20, 15 * 60 * 1000);
+      if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return json({ error: "模型管理请求过于频繁，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
       let runtime;
       try { runtime = await buildRuntimeSettings(data, env); }
       catch { return json({ error: "无法解密已保存的 API Key，请检查加密密钥设置。" }, 503, cors); }
       const parsed = await readJsonLimited(request, 16384);
       if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
       const input = parsed.data;
-      let apiBaseUrl = runtime.apiBaseUrl;
-      try { if (input.apiBaseUrl) apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl); }
+      let apiBaseUrl;
+      try { apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl || runtime.apiBaseUrl); }
       catch (error) { return json({ error: error.message }, 400, cors); }
       const apiKey = typeof input.apiKey === "string" && input.apiKey.trim() ? input.apiKey.trim() : runtime.apiKey;
       if (!apiKey || !apiBaseUrl) return json({ error: "请先设置 API 地址和密钥" }, 400, cors);
@@ -435,22 +439,28 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
           signal: AbortSignal.timeout(20000)
         });
       } catch { return json({ error: "无法连接模型列表接口，请检查 API 地址和网络" }, 502, cors); }
+      const responseText = await readResponseTextLimited(response, 1024 * 1024);
+      if (responseText.error) return json({ error: "模型列表响应体过大或无法读取。" }, 502, cors);
       let result;
-      try { result = await response.json(); } catch { result = {}; }
+      try { result = JSON.parse(responseText.text); } catch { result = {}; }
       if (!response.ok) return json({ error: "获取模型列表失败（HTTP " + response.status + "）：" + String(result?.error?.message || result?.message || "当前供应商可能不支持 /models 接口").slice(0, 400) }, 502, cors);
       const list = Array.isArray(result.data) ? result.data : (Array.isArray(result.models) ? result.models : []);
       const models = [...new Set(list.map(item => typeof item === "string" ? item : item?.id).filter(item => typeof item === "string" && item.length > 0))].sort();
       return json({ models, count: models.length }, 200, cors);
     }
     if (url.pathname === "/admin/test" && request.method === "POST") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await checkRateLimit(env, "admin-upstream:" + ip, 20, 15 * 60 * 1000);
+      if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return json({ error: "模型管理请求过于频繁，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
       let runtime;
       try { runtime = await buildRuntimeSettings(data, env); }
       catch { return json({ error: "无法解密已保存的 API Key，请检查加密密钥设置。" }, 503, cors); }
       const parsed = await readJsonLimited(request, 16384);
       if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
       const input = parsed.data;
-      let apiBaseUrl = runtime.apiBaseUrl;
-      try { if (input.apiBaseUrl) apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl); }
+      let apiBaseUrl;
+      try { apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl || runtime.apiBaseUrl); }
       catch (error) { return json({ error: error.message }, 400, cors); }
       const apiKey = typeof input.apiKey === "string" && input.apiKey.trim() ? input.apiKey.trim() : runtime.apiKey;
       const model = String(input.model || runtime.model || "").trim();
@@ -466,8 +476,10 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
           signal: AbortSignal.timeout(25000)
         });
       } catch { return json({ ok: false, elapsedMs: Date.now() - start, error: "连接失败：无法连接模型服务，请检查地址和网络" }, 502, cors); }
+      const responseText = await readResponseTextLimited(response, 256 * 1024);
+      if (responseText.error) return json({ ok: false, elapsedMs: Date.now() - start, error: "测试响应体过大或无法读取。" }, 502, cors);
       let result;
-      try { result = await response.json(); } catch { result = {}; }
+      try { result = JSON.parse(responseText.text); } catch { result = {}; }
       const elapsedMs = Date.now() - start;
       if (!response.ok) return json({ ok: false, elapsedMs, error: "模型服务返回 HTTP " + response.status + "：" + String(result?.error?.message || result?.message || "请检查 API 地址、密钥和模型权限").slice(0, 500) }, 502, cors);
       return json({ ok: true, elapsedMs, model: result.model || model, preview: String(result?.choices?.[0]?.message?.content || "连接成功").slice(0, 300), usage: result.usage || null }, 200, cors);
