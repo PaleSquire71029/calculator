@@ -10,3 +10,11 @@ ALLOWED_ORIGINS = "https://c.zhixing.us.ci,https://zhixingjsq.pages.dev,https://
 
 [observability]
 enabled = true
+
+[[durable_objects.bindings]]
+name = "ADMIN_STORE"
+class_name = "AdminSettingsStore"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AdminSettingsStore"]
