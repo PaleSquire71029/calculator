@@ -262,6 +262,25 @@ test("migrates a legacy plaintext custom API key during a normal config read", a
   assert.equal(migrated.settings.apiKey.includes(legacyKey), false);
 });
 
+test("rate-limits invalid admin tokens before repeated HMAC verification", async () => {
+  const { env } = fakeEnvironment();
+  const url = "https://worker.test/admin/defaults";
+  let lastResponse;
+  for (let i = 0; i < 121; i++) {
+    lastResponse = await worker.fetch(new Request(url, {
+      method: "GET",
+      headers: {
+        Origin: "https://c.zhixing.us.ci",
+        Authorization: "Bearer invalid-token",
+        "CF-Connecting-IP": "198.51.100.91"
+      }
+    }), env);
+    if (i < 120) assert.equal(lastResponse.status, 401);
+  }
+  assert.equal(lastResponse.status, 429);
+  assert.ok(Number(lastResponse.headers.get("Retry-After")) > 0);
+});
+
 test("fails closed when persistent rate-limit storage is not bound", async () => {
   const response = await worker.fetch(new Request("https://worker.test/api/chat", {
     method: "POST",
