@@ -1,4 +1,4 @@
-import { AdminSettingsStore, createAdminModule } from "./admin.js";
+import { AdminSettingsStore, createAdminModule, readJsonLimited, normalizeApiBaseUrl, readResponseTextLimited } from "./admin.js";
 export { AdminSettingsStore };
 /**
  * 知行计算器 AI 代理
@@ -12,7 +12,6 @@ const DEFAULT_ORIGINS = [
 const MAX_BODY_BYTES = 8 * 1024 * 1024;
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_REQUESTS = 12;
-const buckets = new Map();
 
 const MODE_PROMPTS = {
   solve: "你是严谨的高中数学解题老师。用中文回答，按已知条件、思路、逐步推导、结论组织。不要跳过关键步骤；计算不确定时明确指出，不得编造题目条件。",
@@ -85,22 +84,6 @@ function corsHeaders(request, env) {
   if (allowed.includes(origin)) headers["Access-Control-Allow-Origin"] = origin;
   return headers;
 }
-function tooLarge(request) {
-  const len = Number(request.headers.get("Content-Length") || 0);
-  return len > MAX_BODY_BYTES;
-}
-function checkRate(request) {
-  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-  const now = Date.now();
-  const old = buckets.get(ip);
-  if (!old || now - old.start >= WINDOW_MS) {
-    buckets.set(ip, { start: now, count: 1 });
-    return true;
-  }
-  old.count += 1;
-  if (old.count <= MAX_REQUESTS) return true;
-  return false;
-}
 function validImageUrl(value) {
   return typeof value === "string" &&
     /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=\r\n]+$/.test(value) &&
@@ -151,10 +134,16 @@ export default {
     }
     if (url.pathname !== "/api/chat" || request.method !== "POST") return json({ error: "Not found" }, 404, cors);
     if (!origin || !allowed.includes(origin)) return json({ error: "该网站来源未获授权，请检查 Worker 的 ALLOWED_ORIGINS 配置。" }, 403, cors);
-    if (!checkRate(request)) return json({ error: "请求过于频繁，请等待几分钟后再试。" }, 429, cors);
-    if (tooLarge(request)) return json({ error: "请求体过大，请压缩图片后重试。" }, 413, cors);
-    let body;
-    try { body = await request.json(); } catch { return json({ error: "请求不是有效的 JSON。" }, 400, cors); }
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    const rate = await adminModule.checkRateLimit(env, "chat:" + ip, MAX_REQUESTS, WINDOW_MS);
+    if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
+    if (!rate.allowed) return json({ error: "请求过于频繁，请等待几分钟后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
+    const parsed = await readJsonLimited(request, MAX_BODY_BYTES);
+    if (parsed.error) {
+      const message = parsed.status === 413 ? "请求体过大，请压缩图片后重试。" : "请求不是有效的 JSON 对象。";
+      return json({ error: message }, parsed.status, cors);
+    }
+    const body = parsed.data;
     let runtime;
     try { runtime = await adminModule.getRuntimeSettings(env); }
     catch { return json({ error: "无法读取 AI 配置存储，请稍后重试。" }, 503, cors); }
@@ -184,10 +173,9 @@ export default {
     }
     let base;
     try {
-      base = new URL(runtime.apiBaseUrl);
-      if (base.protocol !== "https:" && base.hostname !== "localhost") throw new Error("HTTPS required");
+      base = new URL(normalizeApiBaseUrl(runtime.apiBaseUrl));
     } catch {
-      return json({ error: "API 地址必须是有效的 HTTPS API 根地址。" }, 500, cors);
+      return json({ error: "API 地址必须是安全的公开 HTTPS 域名，且不能使用 IP 地址、自定义端口或内网主机。" }, 500, cors);
     }
     const endpoint = base.toString().replace(/\/+$/, "") + "/chat/completions";
     const wantsStream = body.task === "analysis" && body.stream === true;
@@ -204,6 +192,7 @@ export default {
         method: "POST",
         headers: { "Authorization": "Bearer " + runtime.apiKey, "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        redirect: "error",
         signal: AbortSignal.timeout(90000)
       });
     } catch {
@@ -223,9 +212,13 @@ export default {
         }
       });
     }
-    const text = await upstream.text();
+    const upstreamRead = await readResponseTextLimited(upstream, 4 * 1024 * 1024);
+    if (upstreamRead.error) {
+      await adminModule.recordRequest(env, { mode, ok: false, status: 502, model: runtime.model });
+      return json({ error: "模型服务响应体过大或无法读取，请检查 API 服务配置后重试。" }, 502, cors);
+    }
     let result;
-    try { result = JSON.parse(text); } catch { result = null; }
+    try { result = JSON.parse(upstreamRead.text); } catch { result = null; }
     if (!upstream.ok) {
       await adminModule.recordRequest(env, { mode, ok: false, status: upstream.status, model: runtime.model });
       const upstreamMessage = result?.error?.message;
