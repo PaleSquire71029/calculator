@@ -164,6 +164,30 @@ test("admin save encrypts custom API keys at rest and never returns the key", as
   assert.equal(JSON.stringify(publicSettings).includes(secret), false);
 });
 
+test("migrates a legacy plaintext custom API key during a normal config read", async () => {
+  const { env, storage } = fakeEnvironment();
+  const legacyKey = "sk-legacy-key-that-was-previously-plaintext";
+  await storage.put("adminData", {
+    settings: {
+      apiKey: legacyKey,
+      apiKeyMode: "custom",
+      apiBaseUrl: "https://api.example-provider.com/v1",
+      model: "example-model",
+      temperature: 0.2,
+      maxTokens: 512,
+      prompts: {}
+    }
+  });
+
+  const response = await worker.fetch(new Request("https://worker.test/health"), env);
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).configured, true);
+
+  const migrated = await storage.get("adminData");
+  assert.match(migrated.settings.apiKey, /^enc:v1:/);
+  assert.equal(migrated.settings.apiKey.includes(legacyKey), false);
+});
+
 test("API endpoint returns 400, not 500, for JSON null", async () => {
   const { env } = fakeEnvironment();
   const response = await worker.fetch(new Request("https://worker.test/api/chat", {
