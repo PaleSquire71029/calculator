@@ -1486,7 +1486,7 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
         startup: { typeset: false }
       };
 </script>
-    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.js'"></script>
     <style id="zx-ai-mathjax-fix">
       .zx-ai-result-body { display:block; white-space:pre-wrap; overflow-wrap:anywhere; word-break:normal; }
       .zx-ai-result-body mjx-container { max-width:100%; overflow-x:auto; overflow-y:hidden; }
@@ -4289,50 +4289,29 @@ function zxFnAdvance(f,xValue,rangeText){
 .zx-ai-result-title i{color:#d8b878}
 .zx-ai-result-head button,.zx-ai-result-footer button{border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.045);color:#aeb7c2;padding:6px 9px;font:11px var(--zx-font,system-ui);cursor:pointer}
 .zx-ai-result-status{padding:12px 0 0;color:#c4ad7e;font-size:12px;line-height:1.75}
-.zx-ai-result-status[data-state="error"]{color:#ffaaa2}
-/* 思考状态采用连续流动的文字高光，结果逐字输出时同步扫过高光 */
-.zx-ai-result-status[data-loading="true"]{display:inline-block;color:transparent;background:linear-gradient(100deg,#9d8d6a 0%,#d5c08e 22%,#fff1c6 38%,#cdb77f 52%,#9d8d6a 72%);background-size:240% 100%;background-position:100% 0;-webkit-background-clip:text;background-clip:text;animation:zx-ai-thinking-flow 1.8s linear infinite}
-.zx-ai-result-status[data-loading="true"]:after{content:"";display:inline-block;width:5px;height:5px;margin-left:8px;border-radius:50%;background:#e5cc8e;vertical-align:middle;animation:zx-ai-thinking-dot .7s ease-in-out infinite alternate}
-.zx-ai-answer-section-content{background-image:linear-gradient(100deg,transparent 0%,transparent 40%,rgba(255,239,190,.72) 50%,transparent 60%,transparent 100%);background-size:250% 100%;background-position:120% 0}
-.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-content{animation:zx-ai-thinking-flow 1.4s linear infinite}
-@keyframes zx-ai-thinking-flow{from{background-position:100% 0}to{background-position:-140% 0}}
-@keyframes zx-ai-thinking-dot{from{opacity:.3;transform:scale(.7)}to{opacity:1;transform:scale(1.2)}}
-@media(prefers-reduced-motion:reduce){.zx-ai-result-status[data-loading="true"],.zx-ai-result-status[data-loading="true"]:after,.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-content{animation:none!important;background:none;color:inherit}}
-
-.zx-ai-result-body{margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;color:#e1e5e9;font:13px/1.9 var(--zx-font,"Noto Sans SC",system-ui,sans-serif)}
-.zx-ai-result-body{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;white-space:normal}
-/* ChatGPT 风格的流式文字显现：文字逐段向前流动，而非整块淡入 */
-.zx-ai-answer-section-content{white-space:pre-wrap}
-.zx-ai-stream-caret{display:inline-block;width:2px;height:1.05em;margin-left:2px;vertical-align:-.13em;background:#e4c783;border-radius:2px;animation:zx-ai-caret-blink .72s steps(2,end) infinite}
-.zx-ai-answer-section[data-streaming="true"]{border-color:rgba(216,184,120,.22)}
-.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-title:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,rgba(216,184,120,.45),transparent);background-size:200% 100%;animation:zx-ai-flow-line 1.4s linear infinite}
-@keyframes zx-ai-caret-blink{0%,48%{opacity:1}49%,100%{opacity:0}}
-@keyframes zx-ai-flow-line{from{background-position:100% 0}to{background-position:-100% 0}}
-@media(prefers-reduced-motion:reduce){.zx-ai-stream-caret,.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-title:after{animation:none!important}}
-
-.zx-ai-answer-section{min-width:0;padding:12px 13px;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:rgba(255,255,255,.025)}
-.zx-ai-answer-section[data-kind="result"]{border-color:rgba(216,184,120,.3);background:linear-gradient(135deg,rgba(216,184,120,.08),rgba(255,255,255,.018))}
+.zx-ai-result-status[data-state="error"]{color:#ffaaa2!important;background:none!important;animation:none!important}
+.zx-ai-result-status[data-loading="true"]{display:block}
+.zx-ai-result-body{margin:8px 0 0;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;color:#e1e5e9;font:13px/1.9 var(--zx-font,"Noto Sans SC",system-ui,sans-serif)}
+.zx-ai-answer-section{min-width:0;padding:12px 13px;border:1px solid rgba(255,255,255,.09);border-radius:11px;background:rgba(255,255,255,.025)}
+.zx-ai-answer-section[data-kind="result"]{border-color:rgba(216,184,120,.26);background:linear-gradient(135deg,rgba(216,184,120,.07),rgba(255,255,255,.018))}
 .zx-ai-answer-section-title{display:flex;align-items:center;gap:8px;margin:0 0 7px;color:#d8c18e;font-size:12px;font-weight:750;letter-spacing:.02em}
 .zx-ai-answer-section-title:before{content:"";width:3px;height:13px;flex:0 0 3px;border-radius:3px;background:#bda16a}
 .zx-ai-answer-section[data-kind="result"] .zx-ai-answer-section-title{color:#f0d7a0}
-.zx-ai-answer-section-content{color:#e1e5e9;font:13px/1.85 var(--zx-font,"Noto Sans SC",system-ui,sans-serif);white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal}
+.zx-ai-answer-section-content{display:block;min-width:0;color:#e1e5e9;font:13px/1.85 var(--zx-font,"Noto Sans SC",system-ui,sans-serif);white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal}
 .zx-ai-answer-section-content mjx-container{max-width:100%;overflow-x:auto;overflow-y:hidden}
 .zx-ai-answer-section-content mjx-container[display="true"]{display:block;margin:.65em 0;text-align:left}
-.zx-ai-result-status[data-loading="true"]{display:flex;align-items:center;gap:8px}
-.zx-ai-thinking-stream{display:inline;background:linear-gradient(100deg,#9aa2ad 0%,#d5d9df 22%,#fff2c8 42%,#d8b878 50%,#fff2c8 58%,#d5d9df 78%,#9aa2ad 100%);background-size:260% 100%;background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:zx-ai-text-flow 2.1s linear infinite}
-.zx-ai-thinking-cursor{display:inline-block;width:2px;height:1em;margin-left:3px;vertical-align:-.16em;background:#d8b878;animation:zx-ai-cursor-blink .8s steps(2,start) infinite}
+.zx-ai-thinking-stream,.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-content{color:transparent!important;background-image:linear-gradient(100deg,#cbd0d7 0%,#cbd0d7 35%,#fff0bf 47%,#d8b878 50%,#fff0bf 53%,#cbd0d7 66%,#cbd0d7 100%);background-size:260% 100%;background-position:100% 0;background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:zx-ai-text-flow 2.2s linear infinite}
 @keyframes zx-ai-text-flow{from{background-position:100% 0}to{background-position:-160% 0}}
-@keyframes zx-ai-cursor-blink{to{opacity:0}}
-@media(prefers-reduced-motion:reduce){.zx-ai-thinking-stream,.zx-ai-thinking-cursor{animation:none!important}}
-.zx-ai-result-status[data-loading="true"]:after{content:"";width:7px;height:7px;border-radius:50%;background:#d8b878;animation:zx-ai-pulse 1.15s ease-out infinite;flex:0 0 7px}
-.zx-ai-answer-section{animation:zx-ai-card-in .48s cubic-bezier(.2,.75,.25,1) both;animation-delay:calc(var(--zx-ai-index,0)*95ms)}
-.zx-ai-answer-section-title:before{animation:zx-ai-title-glow 2.1s ease-in-out infinite alternate}
-@keyframes zx-ai-card-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes zx-ai-pulse{0%{box-shadow:0 0 0 0 rgba(216,184,120,.45);opacity:.7}70%{box-shadow:0 0 0 7px rgba(216,184,120,0);opacity:1}100%{box-shadow:0 0 0 0 rgba(216,184,120,0);opacity:.8}}
-@keyframes zx-ai-title-glow{from{filter:brightness(.8)}to{filter:brightness(1.35)}}
-@media(prefers-reduced-motion:reduce){.zx-ai-answer-section,.zx-ai-answer-section-title:before,.zx-ai-result-status[data-loading="true"]{animation:none!important}}
-
-@media(min-width:760px){.zx-ai-result-body{grid-template-columns:repeat(2,minmax(0,1fr))}.zx-ai-answer-section[data-kind="result"]{grid-column:1/-1}.zx-ai-answer-section[data-wide="true"]{grid-column:1/-1}}
+.zx-ai-answer-details{min-width:0;border:1px solid rgba(255,255,255,.075);border-radius:10px;background:rgba(255,255,255,.018);overflow:hidden}
+.zx-ai-answer-details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:12px 13px;color:#c4b58f;font-size:12px;font-weight:650}
+.zx-ai-answer-details>summary::-webkit-details-marker{display:none}
+.zx-ai-answer-details>summary:after{content:"＋";margin-left:auto;color:#bca875;font-size:15px;font-weight:400}
+.zx-ai-answer-details[open]>summary:after{content:"−"}
+.zx-ai-answer-details-content{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;padding:0 9px 10px}
+.zx-ai-answer-details-content .zx-ai-answer-section{background:rgba(0,0,0,.08)}
+.zx-ai-answer-details-content mjx-container{max-width:100%;overflow-x:auto;overflow-y:hidden}
+@media(min-width:760px){.zx-ai-answer-details-content{grid-template-columns:repeat(2,minmax(0,1fr))}.zx-ai-answer-details-content .zx-ai-answer-section[data-wide="true"]{grid-column:1/-1}}
+@media(prefers-reduced-motion:reduce){.zx-ai-thinking-stream,.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-content{animation:none!important;background:none!important;color:inherit!important;-webkit-text-fill-color:currentColor}}
 
 .zx-ai-result-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:13px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07);color:#7f8997;font-size:10px}
 .zx-ai-result-settings{flex-basis:100%;width:100%;color:#8e9bab}
@@ -4469,104 +4448,169 @@ function zxFnAdvance(f,xValue,rangeText){
     statusEl.replaceChildren();
     const textNode=document.createElement('span');
     textNode.className='zx-ai-thinking-stream';
-    textNode.textContent=action==='extend'?'正在继续推理，补充更多解法与细节':'正在分析输入、推导过程与最终结果';
-    const cursor=document.createElement('span');
-    cursor.className='zx-ai-thinking-cursor';
-    cursor.setAttribute('aria-hidden','true');
-    statusEl.append(textNode,cursor);
+    textNode.textContent=action==='extend'?'正在补充分析内容':'正在生成核心结论';
+    statusEl.append(textNode);
   }
   function answerSectionKind(title){
-    const t=String(title||'').replace(/[：:。\s]/g,'');
-    if(/^(结果|答案|结论|最终答案|核心结论|计算结果|配平结果|换算结果|解集|解)$/.test(t))return 'result';
-    if(/(步骤|推导|计算过程|解题过程|求解过程)/.test(t))return 'steps';
-    if(/(公式|定理|依据|反应方程式|离子方程式)/.test(t))return 'formula';
-    if(/(易错|注意|检查|条件|定义域|限制|警告)/.test(t))return 'notes';
-    if(/(分析|思路|原理|说明|解释|判断|讨论)/.test(t))return 'analysis';
+    const t=String(title||'').replace(/[：:。 \t]/g,'');
+    if(/核心结论|关键结论|最终答案|结论|答案|配平结果|换算结果|计算结果|解集|反应方程式|配平方程式|净离子方程式/.test(t))return 'result';
+    if(/推导|步骤|计算过程|解题过程|求解过程/.test(t))return 'steps';
+    if(/公式|定理|依据|离子方程式|反应条件|现象/.test(t))return 'formula';
+    if(/核验|限制|易错|注意|检查|条件|定义域|警告/.test(t))return 'notes';
+    if(/关键信息|已知条件|输入条件/.test(t))return 'info';
+    if(/分析|思路|原理|说明|解释|判断|讨论|扩展能力/.test(t))return 'analysis';
     return 'other';
   }
   function splitAnswerSections(answer,viewId){
     const raw=String(answer||'').replace(/\r\n?/g,'\n').trim();
     const lines=raw.split('\n');
     const sections=[];let current=null;
-    const add=(title,content='')=>{current={title,content:content||''};sections.push(current);};
-    const known=/^(结果|答案|结论|最终答案|核心结论|计算结果|配平结果|换算结果|解集|解题思路|分析|思路|推导|步骤|解题步骤|计算过程|求解过程|关键公式|公式|原理|易错点|注意事项|注意|条件|定义域|反应方程式|离子方程式|现象|反应条件|检查|补充说明|总结)[：:]?$/;
+    const add=(title,content)=>{current={title:String(title||'分析说明').trim(),content:content||''};sections.push(current);};
+    const known=/^(核心结论|关键结论|最终答案|答案|结果|结论|配平结果|计算结果|换算结果|解集|关键信息|已知条件|输入条件|推导与依据|推导|步骤|解题步骤|计算过程|求解过程|关键公式|公式|原理|易错点|注意事项|注意|核验与限制|限制条件|条件|定义域|反应方程式|配平方程式|离子方程式|净离子方程式|现象|反应条件|分析|分析说明|思路|补充说明|总结|AI扩展能力)[：:]?$/;
+    const isKnown=t=>known.test(String(t||'').replace(/\*\*/g,'').trim().replace(/[：:]$/,''));
     for(const line of lines){
       const trimmed=line.trim();
       if(!trimmed){if(current&&current.content&&!current.content.endsWith('\n'))current.content+='\n';continue;}
-      let title='',content='';
-      let m=trimmed.match(/^#{1,4}\s+(.+?)\s*#*$/);
-      if(m){title=m[1].replace(/\*\*/g,'').trim();}
-      else if((m=trimmed.match(/^\*\*([^*]{1,28})\*\*\s*[：:]?\s*(.*)$/))&&answerSectionKind(m[1])!=='other'){
-        title=m[1].replace(/[：:]$/,'').trim();content=m[2]||'';
-      }else if(known.test(trimmed.replace(/\*\*/g,''))){title=trimmed.replace(/\*\*/g,'').replace(/[：:]$/,'').trim();}
+      let title='',content='',m;
+      m=trimmed.match(/^(?:【([^】]{1,48})】|\[([^\]]{1,48})\])\s*(.*)$/);
+      if(m){title=(m[1]||m[2]).trim();content=m[3]||'';}
+      else if((m=trimmed.match(/^#{1,4}\s+(.+?)\s*#*$/))){title=m[1].replace(/\*\*/g,'').trim();}
+      else if((m=trimmed.match(/^\*\*([^*]{1,40})\*\*\s*[：:]?\s*(.*)$/))&&isKnown(m[1])){title=m[1].trim();content=m[2]||'';}
+      else if((m=trimmed.match(/^([^：:]{2,24})[：:]\s*(.*)$/))&&isKnown(m[1])){title=m[1].trim();content=m[2]||'';}
       if(title){add(title,content);}
       else if(current){current.content+=(current.content?'\n':'')+line;}
       else{add('核心结论',line);}
     }
     sections.forEach(x=>x.content=x.content.trim());
     let useful=sections.filter(x=>x.title||x.content);
-    if(useful.length===1&&useful[0].title==='核心结论'){
+    if(!useful.length)useful=[{title:viewId==='chemistry'?'反应结果':'核心结论',content:raw}];
+    if(useful.length===1 && !raw.match(/(?:【[^】]+】|\[[^\]]+\]|^#{1,4}\s)/m)){
       const paragraphs=raw.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
       if(paragraphs.length>1){
         useful=[{title:viewId==='chemistry'?'反应结果':'核心结论',content:paragraphs[0]}];
         paragraphs.slice(1).forEach((p,i)=>useful.push({title:i===0?'分析说明':'补充说明',content:p}));
       }
     }
-    if(!useful.length)useful=[{title:'分析说明',content:raw}];
     if(!useful.some(x=>answerSectionKind(x.title)==='result')){
       const first=useful.find(x=>x.content);
       if(first)first.title=viewId==='chemistry'?'反应结果':'核心结论';
     }
     return useful;
   }
-  async function renderStructuredAnswer(node,answer,viewId){
-    node.replaceChildren();
-    const sections=splitAnswerSections(answer,viewId);
-    let sectionsIndex=0;
-    for(const item of sections){
-      const card=document.createElement('section');
-      card.className='zx-ai-answer-section';
+  function createAnswerSection(item,streaming){
+    const card=document.createElement('section');
+    card.className='zx-ai-answer-section';
+    card.dataset.kind=answerSectionKind(item.title);
+    if(streaming)card.dataset.streaming='true';
+    if(card.dataset.kind==='formula'||card.dataset.kind==='steps'||item.content.length>420)card.dataset.wide='true';
+    const title=document.createElement('h4');
+    title.className='zx-ai-answer-section-title';
+    title.textContent=item.title||'分析说明';
+    const body=document.createElement('div');
+    body.className='zx-ai-answer-section-content';
+    body.textContent=item.content||'';
+    card.append(title,body);
+    return card;
+  }
+  function updateStreamPreview(node,answer,viewId){
+    const raw=String(answer||'');
+    const sections=splitAnswerSections(raw,viewId);
+    let core=sections.find(x=>answerSectionKind(x.title)==='result')||sections[0];
+    let coreText=core&&core.content?core.content:'';
+    let coreTitle=core&&answerSectionKind(core.title)==='result'?core.title:(viewId==='chemistry'?'反应结果':'核心结论');
+    if(/^\s*(?:【[^】]*| \[[^\]]*)$/.test(raw)||(/^\s*[【\[]/.test(raw)&&!raw.includes('】')&&!raw.includes(']'))){
+      coreText='';coreTitle=viewId==='chemistry'?'反应结果':'核心结论';
+    }
+    let card=node.querySelector('.zx-ai-live-core');
+    if(!card){
+      node.replaceChildren();
+      card=document.createElement('section');
+      card.className='zx-ai-answer-section zx-ai-live-core';
+      card.dataset.kind='result';
       card.dataset.streaming='true';
-      const kind=answerSectionKind(item.title);
-      card.dataset.kind=kind;
-      card.style.setProperty("--zx-ai-index",String(sectionsIndex++));
-      if(kind==='formula'||kind==='steps'||item.content.length>420)card.dataset.wide='true';
       const title=document.createElement('h4');
       title.className='zx-ai-answer-section-title';
-      title.textContent=item.title||'分析说明';
       const body=document.createElement('div');
       body.className='zx-ai-answer-section-content';
-      const text= item.content||'—';
-      const textNode=document.createTextNode('');
-      const caret=document.createElement('span');
-      caret.className='zx-ai-stream-caret';
-      caret.setAttribute('aria-hidden','true');
-      body.append(textNode,caret);
       card.append(title,body);
       node.append(card);
-      // 按字符流式显示，长回答自动加速，避免手机上等待太久。
-      const step=text.length>500?4:text.length>220?2:1;
-      const delay=text.length>500?9:text.length>220?14:20;
-      for(let i=0;i<text.length;i+=step){
-        textNode.appendData(text.slice(i,i+step));
-        await new Promise(resolve=>setTimeout(resolve,delay));
-      }
-      caret.remove();
-      delete card.dataset.streaming;
     }
+    card.querySelector('.zx-ai-answer-section-title').textContent=coreTitle;
+    card.querySelector('.zx-ai-answer-section-content').textContent=coreText||'正在生成核心结论…';
+    card.dataset.streaming='true';
+  }
+  function renderStructuredAnswer(node,answer,viewId){
+    node.replaceChildren();
+    const sections=splitAnswerSections(answer,viewId);
+    let coreIndex=sections.findIndex(x=>answerSectionKind(x.title)==='result');
+    if(coreIndex<0)coreIndex=0;
+    const core=sections[coreIndex]||{title:'核心结论',content:String(answer||'')};
+    const coreCard=createAnswerSection(core,false);
+    coreCard.dataset.kind='result';
+    node.append(coreCard);
+    const extra=sections.filter((_,i)=>i!==coreIndex && sections[i].content.trim());
+    if(extra.length){
+      const details=document.createElement('details');
+      details.className='zx-ai-answer-details';
+      const summary=document.createElement('summary');
+      summary.textContent='查看完整分析（'+extra.length+' 项）';
+      const body=document.createElement('div');
+      body.className='zx-ai-answer-details-content';
+      extra.forEach(item=>body.append(createAnswerSection(item,false)));
+      details.append(summary,body);
+      details.addEventListener('toggle',()=>{if(details.open)typesetAnswer(details);});
+      node.append(details);
+    }
+  }
+  function extractDeltaContent(obj){
+    const choice=obj&&obj.choices&&obj.choices[0];
+    let value=choice&&(choice.delta&&choice.delta.content!==undefined?choice.delta.content:choice.message&&choice.message.content);
+    if(Array.isArray(value))value=value.map(p=>typeof p==='string'?p:(p&&p.text)||'').join('');
+    return typeof value==='string'?value:'';
+  }
+  async function readAnalysisStream(response,onText){
+    const reader=response.body&&response.body.getReader?response.body.getReader():null;
+    if(!reader)throw new Error('当前浏览器无法读取流式响应');
+    const decoder=new TextDecoder();
+    let buffer='',answer='',model='',streamError='';
+    const consumeBlock=block=>{
+      const data=block.split(/\r?\n/).filter(line=>line.startsWith('data:')).map(line=>line.slice(5).trimStart()).join('\n');
+      if(!data||data==='[DONE]')return;
+      let obj;try{obj=JSON.parse(data);}catch(e){return;}
+      if(obj.error)streamError=typeof obj.error==='string'?obj.error:(obj.error.message||'模型流式输出失败');
+      if(obj.model)model=obj.model;
+      const delta=extractDeltaContent(obj);
+      if(delta){answer+=delta;onText(answer);}
+    };
+    while(true){
+      const part=await reader.read();
+      buffer+=decoder.decode(part.value||new Uint8Array(),{stream:!part.done});
+      const blocks=buffer.split(/\r?\n\r?\n/);
+      buffer=blocks.pop()||'';
+      blocks.forEach(consumeBlock);
+      if(part.done){if(buffer.trim())consumeBlock(buffer);break;}
+    }
+    if(streamError)throw new Error(streamError);
+    return {answer,model};
+  }
+  function normalizeLatexSource(value){
+    return String(value||'')
+      .replace(/\\\\(\(|\)|\[|\])/g,(_,ch)=>'\\'+ch)
+      .replace(/\\\\(mathrm|mathbf|mathbb|text|frac|sqrt|left|right|rightarrow|leftrightarrow|cdot|times|neq|leq|geq|pm|alpha|beta|infty|begin|end)\b/g,(_,cmd)=>'\\'+cmd);
   }
   async function typesetAnswer(node){
     if(!node)return;
     try{
-      for(let i=0;i<80&&!(window.MathJax&&window.MathJax.typesetPromise);i++)await new Promise(resolve=>setTimeout(resolve,100));
-      if(!window.MathJax||!window.MathJax.typesetPromise)throw new Error('MathJax 加载失败');
+      for(let i=0;i<100&&!(window.MathJax&&window.MathJax.typesetPromise);i++)await new Promise(resolve=>setTimeout(resolve,100));
+      if(!window.MathJax||!window.MathJax.typesetPromise)throw new Error('数学公式引擎加载失败（CDN 不可访问）');
       if(window.MathJax.startup&&window.MathJax.startup.promise)await window.MathJax.startup.promise;
+      node.querySelectorAll('.zx-ai-answer-section-content').forEach(el=>{el.textContent=normalizeLatexSource(el.textContent);});
       if(window.MathJax.typesetClear)window.MathJax.typesetClear([node]);
       await window.MathJax.typesetPromise([node]);
     }catch(err){
       console.warn('AI 公式渲染失败：',err);
       const status=node.closest('.zx-ai-result')?.querySelector('[data-zx-ai-status]');
-      if(status)status.textContent+=' · 公式渲染失败，请检查网络';
+      if(status&&!status.dataset.state?.includes('error'))status.textContent+=' · 公式渲染失败，请检查网络';
     }
   }
   async function analyze(section,viewId,action,button){
@@ -4574,43 +4618,48 @@ function zxFnAdvance(f,xValue,rangeText){
     const panel=makeResult(section);
     panel.hidden=false;
     const answerEl=panel.querySelector('[data-zx-ai-answer]');
-    answerEl.hidden=true;answerEl.textContent='';
-    setStatus(panel,action==='extend'?'AI 正在补充本地计算器未覆盖的分析……':'AI 正在检查输入、结果和关键条件……',false);
-    panel.querySelector('[data-zx-ai-status]').dataset.loading='true';
-    setThinkingText(panel.querySelector('[data-zx-ai-status]'),action);
+    answerEl.hidden=true;answerEl.replaceChildren();
+    const statusEl=panel.querySelector('[data-zx-ai-status]');
+    setStatus(panel,'',false);
+    statusEl.dataset.loading='true';
+    setThinkingText(statusEl,action);
     const allButtons=Array.from(document.querySelectorAll('[data-zx-ai-action]'));
     busy=true;allButtons.forEach(b=>b.disabled=true);
+    let partialAnswer='';
     try{
       const ep=endpoint();
       if(!ep)throw new Error('AI Worker 地址无效，请展开“AI 服务设置”重新配置。');
       const context=collectContext(viewId,section);
-      const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'analysis',action:action,mode:viewId,context:context})});
-      let data={};try{data=await response.json();}catch(e){}
-      if(!response.ok)throw new Error(data.error||('请求失败（HTTP '+response.status+'）'));
-      if(typeof data.answer!=='string'||!data.answer.trim())throw new Error('AI 没有返回可显示的分析结果。');
-      setStatus(panel,(action==='extend'?'AI 扩展完成':'AI 分析完成')+(data.model?' · '+data.model:''),false);
-      delete panel.querySelector('[data-zx-ai-status]').dataset.loading;
-      await renderStructuredAnswer(answerEl,data.answer,viewId);
-      answerEl.querySelectorAll('.zx-ai-answer-section-content').forEach(el=>{
-        const original=el.textContent;
-        el.replaceChildren();
-        const textNode=document.createTextNode('');
-        el.append(textNode);
-        let i=0;
-        const reveal=()=>{
-          if(!el.isConnected)return;
-          textNode.textContent=original.slice(0,i);
-          i=Math.min(i+4,original.length);
-          if(i<original.length)requestAnimationFrame(reveal);
-        };
-        requestAnimationFrame(reveal);
-      });
+      const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'analysis',action:action,mode:viewId,context:context,stream:true})});
+      if(!response.ok){
+        let errorData={};try{errorData=await response.json();}catch(e){}
+        throw new Error(errorData.error||('请求失败（HTTP '+response.status+'）'));
+      }
+      let answer='',model='';
+      const contentType=response.headers.get('content-type')||'';
+      if(contentType.includes('text/event-stream')){
+        answerEl.hidden=false;
+        const streamed=await readAnalysisStream(response,text=>{partialAnswer=text;updateStreamPreview(answerEl,text,viewId);});
+        answer=streamed.answer;model=streamed.model;
+      }else{
+        const data=await response.json();
+        answer=data.answer||'';model=data.model||'';
+      }
+      if(typeof answer!=='string'||!answer.trim())throw new Error('AI 没有返回可显示的文字内容。');
+      delete statusEl.dataset.loading;
+      setStatus(panel,(action==='extend'?'扩展分析完成':'分析完成')+(model?' · '+model:''),false);
+      renderStructuredAnswer(answerEl,answer,viewId);
       answerEl.hidden=false;
       await typesetAnswer(answerEl);
       panel.querySelector('[data-zx-ai-proxy]').value=proxyValue();
     }catch(e){
-      setStatus(panel,'请求失败：'+(e&&e.message?e.message:'网络错误')+'。可展开“AI 服务设置”检查 Worker 地址或网络。',true);
+      delete statusEl.dataset.loading;
+      setStatus(panel,'请求失败：'+(e&&e.message?e.message:'网络错误')+'。请检查网络或 AI 服务设置。',true);
+      answerEl.querySelectorAll('[data-streaming="true"]').forEach(el=>delete el.dataset.streaming);
+      if(partialAnswer.trim())await typesetAnswer(answerEl);
+      else answerEl.hidden=true;
     }finally{
+      delete statusEl.dataset.loading;
       busy=false;allButtons.forEach(b=>b.disabled=false);
     }
   }
