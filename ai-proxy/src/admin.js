@@ -1,7 +1,85 @@
 const ADMIN_SESSION_TTL_MS = 4 * 60 * 60 * 1000;
 const ADMIN_LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const ADMIN_LOGIN_MAX_ATTEMPTS = 8;
-const loginBuckets = new Map();
+const LOCAL_RATE_BUCKETS = new Map();
+const ENCRYPTED_KEY_PREFIX = "enc:v1:";
+
+export async function readJsonLimited(request, maxBytes = 256 * 1024) {
+  const declaredLength = request.headers.get("Content-Length");
+  if (declaredLength && /^\d+$/.test(declaredLength) && Number(declaredLength) > maxBytes) {
+    return { error: "请求体过大", status: 413 };
+  }
+  if (!request.body) return { error: "请求格式错误：缺少 JSON 请求体", status: 400 };
+  const reader = request.body.getReader();
+  const chunks = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > maxBytes) {
+        await reader.cancel().catch(() => {});
+        return { error: "请求体过大", status: 413 };
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    const data = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      return { error: "请求 JSON 必须是对象", status: 400 };
+    }
+    return { data };
+  } catch {
+    return { error: "请求不是有效的 JSON", status: 400 };
+  } finally {
+    try { reader.releaseLock(); } catch {}
+  }
+}
+
+function encryptionSecrets(env) {
+  return [...new Set([env.ADMIN_ENCRYPTION_KEY, env.ADMIN_SESSION_SECRET, env.ADMIN_PASSWORD]
+    .filter(value => typeof value === "string" && value.length > 0))];
+}
+
+async function importEncryptionKey(secret) {
+  const material = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("zhixing-ai-key-encryption-v1\0" + secret));
+  return crypto.subtle.importKey("raw", material, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+}
+
+async function encryptApiKey(value, env) {
+  const secret = encryptionSecrets(env)[0];
+  if (!secret) throw new Error("缺少 ADMIN_ENCRYPTION_KEY 或其他可用的管理密钥，无法安全保存 API Key");
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await importEncryptionKey(secret);
+  const encrypted = new Uint8Array(await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    new TextEncoder().encode(value)
+  ));
+  return ENCRYPTED_KEY_PREFIX + encodeBase64Url(iv) + "." + encodeBase64Url(encrypted);
+}
+
+async function decryptApiKey(value, env) {
+  if (typeof value !== "string" || !value.startsWith(ENCRYPTED_KEY_PREFIX)) return String(value || "");
+  const parts = value.slice(ENCRYPTED_KEY_PREFIX.length).split(".");
+  if (parts.length !== 2) throw new Error("自定义 API Key 的加密数据格式无效");
+  const iv = decodeBase64Url(parts[0]);
+  const ciphertext = decodeBase64Url(parts[1]);
+  for (const secret of encryptionSecrets(env)) {
+    try {
+      const key = await importEncryptionKey(secret);
+      const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+      return new TextDecoder("utf-8", { fatal: true }).decode(plaintext);
+    } catch {}
+  }
+  throw new Error("无法解密自定义 API Key。请检查管理加密密钥是否被轮换；如已丢失原密钥，请重新保存模型 API Key。");
+}
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -63,14 +141,50 @@ export class AdminSettingsStore {
   constructor(state, env) { this.state = state; this.env = env; }
   async fetch(request) {
     const url = new URL(request.url);
+    if (url.pathname === "/rate-limit") {
+      if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+      const parsed = await readJsonLimited(request, 4096);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status);
+      const { key, limit, windowMs } = parsed.data;
+      if (typeof key !== "string" || key.length < 1 || key.length > 512 ||
+          !Number.isInteger(limit) || limit < 1 || limit > 10000 ||
+          !Number.isInteger(windowMs) || windowMs < 1000 || windowMs > 86400000) {
+        return json({ error: "Invalid rate limit parameters" }, 400);
+      }
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
+      const storageKey = "rl:" + encodeBase64Url(new Uint8Array(digest));
+      const now = Date.now();
+      const bucket = await this.state.storage.transaction(async txn => {
+        let entry = await txn.get(storageKey);
+        if (!entry || now < entry.start || now - entry.start >= windowMs) {
+          entry = { start: now, count: 0, expiresAt: now + windowMs };
+        }
+        entry.count += 1;
+        await txn.put(storageKey, entry);
+        return { allowed: entry.count <= limit, retryAfter: Math.max(1, Math.ceil((entry.expiresAt - now) / 1000)), expiresAt: entry.expiresAt };
+      });
+      const alarmAt = bucket.expiresAt + 1000;
+      const currentAlarm = await this.state.storage.getAlarm();
+      if (currentAlarm === null || currentAlarm > alarmAt) await this.state.storage.setAlarm(alarmAt);
+      return json({ allowed: bucket.allowed, retryAfter: bucket.retryAfter });
+    }
     if (url.pathname !== "/data") return json({ error: "Not found" }, 404);
     if (request.method === "GET") return json((await this.state.storage.get("adminData")) || {});
     if (request.method !== "PUT") return json({ error: "Method not allowed" }, 405);
-    let data;
-    try { data = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
-    if (!data || typeof data !== "object" || Array.isArray(data)) return json({ error: "Invalid admin data" }, 400);
-    await this.state.storage.put("adminData", data);
+    const parsed = await readJsonLimited(request, 1024 * 1024);
+    if (parsed.error) return json({ error: parsed.error }, parsed.status);
+    await this.state.storage.put("adminData", parsed.data);
     return json({ ok: true });
+  }
+  async alarm() {
+    const now = Date.now();
+    const records = await this.state.storage.list({ prefix: "rl:" });
+    let nextAlarm = Infinity;
+    for (const [key, value] of records) {
+      if (!value || Number(value.expiresAt) <= now) await this.state.storage.delete(key);
+      else nextAlarm = Math.min(nextAlarm, Number(value.expiresAt) + 1000);
+    }
+    if (Number.isFinite(nextAlarm)) await this.state.storage.setAlarm(nextAlarm);
   }
 }
 export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
@@ -79,7 +193,15 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
     const response = await stub.fetch("https://admin-store.internal/data");
     if (!response.ok) throw new Error("无法读取管理设置存储");
-    return await response.json();
+    const data = await response.json();
+    // Migrate older plaintext custom keys to authenticated AES-GCM ciphertext on first read.
+    const savedKey = data?.settings?.apiKey;
+    if (data?.settings?.apiKeyMode === "custom" && typeof savedKey === "string" &&
+        savedKey.length > 0 && !savedKey.startsWith(ENCRYPTED_KEY_PREFIX)) {
+      data.settings.apiKey = await encryptApiKey(savedKey, env);
+      await writeData(env, data);
+    }
+    return data;
   }
   async function writeData(env, data) {
     if (!env.ADMIN_STORE) throw new Error("管理设置存储未绑定");
@@ -118,11 +240,13 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     }
     return output;
   }
-  function buildRuntimeSettings(data, env) {
+  async function buildRuntimeSettings(data, env) {
     const saved = data?.settings || {};
     const defaults = defaultPrompts();
     const stored = saved.prompts || {};
-    const apiKey = saved.apiKeyMode === "custom" && saved.apiKey ? saved.apiKey : (env.AI_API_KEY || "");
+    const apiKey = saved.apiKeyMode === "custom" && saved.apiKey
+      ? await decryptApiKey(saved.apiKey, env)
+      : (env.AI_API_KEY || "");
     return {
       apiBaseUrl: saved.apiBaseUrl || env.AI_BASE_URL || "",
       model: saved.model || env.AI_MODEL || "",
@@ -149,7 +273,37 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     };
   }
   async function getRuntimeSettings(env) {
-    return buildRuntimeSettings(await readData(env), env);
+    return await buildRuntimeSettings(await readData(env), env);
+  }
+
+  async function checkRateLimit(env, key, limit, windowMs) {
+    if (env.ADMIN_STORE) {
+      try {
+        const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+        const response = await stub.fetch("https://admin-store.internal/rate-limit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key, limit, windowMs })
+        });
+        if (!response.ok) return { allowed: false, unavailable: true, retryAfter: 60 };
+        return await response.json();
+      } catch {
+        return { allowed: false, unavailable: true, retryAfter: 60 };
+      }
+    }
+    // Development fallback only: local maps can reset or differ between isolates.
+    const now = Date.now();
+    const previous = LOCAL_RATE_BUCKETS.get(key);
+    let entry = previous;
+    if (!entry || now < entry.start || now - entry.start >= windowMs) entry = { start: now, count: 0 };
+    entry.count += 1;
+    LOCAL_RATE_BUCKETS.set(key, entry);
+    if (LOCAL_RATE_BUCKETS.size > 5000) {
+      for (const [bucketKey, bucket] of LOCAL_RATE_BUCKETS) {
+        if (now < bucket.start || now - bucket.start >= windowMs) LOCAL_RATE_BUCKETS.delete(bucketKey);
+      }
+    }
+    return { allowed: entry.count <= limit, retryAfter: Math.max(1, Math.ceil((entry.start + windowMs - now) / 1000)) };
   }
   async function recordRequest(env, event) {
     try {
@@ -172,10 +326,13 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     if (!origin || !getAllowedOrigins(env).includes(origin)) return json({ error: "该网页来源未获授权" }, 403, cors);
     if (url.pathname === "/admin/login" && request.method === "POST") {
       if (!env.ADMIN_PASSWORD) return json({ error: "尚未配置管理密码。请在 Cloudflare Worker → Settings → Variables and Secrets 中添加 Secret：ADMIN_PASSWORD。" }, 503, cors);
-      if (!loginAllowed(request)) return json({ error: "登录尝试过多，请 15 分钟后再试。" }, 429, cors);
-      let body;
-      try { body = await request.json(); } catch { return json({ error: "请求格式错误" }, 400, cors); }
-      if (typeof body.password !== "string" || !safeEqual(body.password, env.ADMIN_PASSWORD)) return json({ error: "管理密码不正确" }, 401, cors);
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await checkRateLimit(env, "admin-login:" + ip, ADMIN_LOGIN_MAX_ATTEMPTS, ADMIN_LOGIN_WINDOW_MS);
+      if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return json({ error: "登录尝试过多，请 15 分钟后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
+      const parsed = await readJsonLimited(request, 8192);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
+      if (typeof parsed.data.password !== "string" || !safeEqual(parsed.data.password, env.ADMIN_PASSWORD)) return json({ error: "管理密码不正确" }, 401, cors);
       return json({ token: await createToken(env), expiresIn: ADMIN_SESSION_TTL_MS }, 200, cors);
     }
     if (!await verifyToken(request, env)) return json({ error: "管理会话已失效，请重新登录" }, 401, cors);
@@ -183,10 +340,14 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     if (!env.ADMIN_STORE) return json({ error: "管理设置存储尚未部署，请检查 Worker 的 Durable Object 绑定" }, 503, cors);
     let data;
     try { data = await readData(env) || {}; } catch { return json({ error: "读取管理数据失败，请稍后重试" }, 500, cors); }
-    if (url.pathname === "/admin/settings" && request.method === "GET") return json(publicSettings(buildRuntimeSettings(data, env)), 200, cors);
+    if (url.pathname === "/admin/settings" && request.method === "GET") {
+      try { return json(publicSettings(await buildRuntimeSettings(data, env)), 200, cors); }
+      catch { return json({ error: "无法读取加密的 API Key。请检查加密密钥设置；若原密钥已丢失，需要重新保存 API Key。" }, 503, cors); }
+    }
     if (url.pathname === "/admin/settings" && request.method === "PUT") {
-      let body;
-      try { body = await request.json(); } catch { return json({ error: "请求格式错误" }, 400, cors); }
+      const parsed = await readJsonLimited(request, 256 * 1024);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
+      const body = parsed.data;
       let apiBaseUrl;
       try { apiBaseUrl = normalizeApiBaseUrl(body.apiBaseUrl); } catch (error) { return json({ error: error.message }, 400, cors); }
       const model = String(body.model || "").trim();
@@ -214,18 +375,24 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       if (body.clearSavedKey === true) {
         next.apiKey = ""; next.apiKeyMode = "worker";
       } else if (newKey) {
-        next.apiKey = newKey; next.apiKeyMode = "custom";
+        try { next.apiKey = await encryptApiKey(newKey, env); }
+        catch { return json({ error: "无法加密保存 API Key。请在 Worker Secrets 中配置 ADMIN_ENCRYPTION_KEY（推荐）或 ADMIN_SESSION_SECRET。" }, 503, cors); }
+        next.apiKeyMode = "custom";
       } else {
         next.apiKey = current.apiKey || ""; next.apiKeyMode = current.apiKeyMode || "worker";
       }
       data.settings = next;
       try { await writeData(env, data); } catch { return json({ error: "保存失败，请检查管理存储是否正常" }, 500, cors); }
-      return json({ ok: true, settings: publicSettings(buildRuntimeSettings(data, env)) }, 200, cors);
+      try { return json({ ok: true, settings: publicSettings(await buildRuntimeSettings(data, env)) }, 200, cors); }
+      catch { return json({ error: "设置已保存，但无法解密 API Key。请检查加密密钥设置。" }, 503, cors); }
     }
     if (url.pathname === "/admin/models" && request.method === "POST") {
-      const runtime = buildRuntimeSettings(data, env);
-      let input = {};
-      try { input = await request.json(); } catch { input = {}; }
+      let runtime;
+      try { runtime = await buildRuntimeSettings(data, env); }
+      catch { return json({ error: "无法解密已保存的 API Key，请检查加密密钥设置。" }, 503, cors); }
+      const parsed = await readJsonLimited(request, 16384);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
+      const input = parsed.data;
       let apiBaseUrl = runtime.apiBaseUrl;
       try { if (input.apiBaseUrl) apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl); }
       catch (error) { return json({ error: error.message }, 400, cors); }
@@ -234,7 +401,9 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       let response;
       try {
         response = await fetch(apiBaseUrl.replace(/\/+$/, "") + "/models", {
-          headers: { "Authorization": "Bearer " + apiKey, "Accept": "application/json" }, signal: AbortSignal.timeout(20000)
+          headers: { "Authorization": "Bearer " + apiKey, "Accept": "application/json" },
+          redirect: "error",
+          signal: AbortSignal.timeout(20000)
         });
       } catch { return json({ error: "无法连接模型列表接口，请检查 API 地址和网络" }, 502, cors); }
       let result;
@@ -245,9 +414,12 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       return json({ models, count: models.length }, 200, cors);
     }
     if (url.pathname === "/admin/test" && request.method === "POST") {
-      const runtime = buildRuntimeSettings(data, env);
-      let input = {};
-      try { input = await request.json(); } catch { input = {}; }
+      let runtime;
+      try { runtime = await buildRuntimeSettings(data, env); }
+      catch { return json({ error: "无法解密已保存的 API Key，请检查加密密钥设置。" }, 503, cors); }
+      const parsed = await readJsonLimited(request, 16384);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
+      const input = parsed.data;
       let apiBaseUrl = runtime.apiBaseUrl;
       try { if (input.apiBaseUrl) apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl); }
       catch (error) { return json({ error: error.message }, 400, cors); }
@@ -261,6 +433,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
           method: "POST",
           headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
           body: JSON.stringify({ model, messages: [{ role: "user", content: "请只回复：连接成功" }], temperature: 0, max_tokens: 20, stream: false }),
+          redirect: "error",
           signal: AbortSignal.timeout(25000)
         });
       } catch { return json({ ok: false, elapsedMs: Date.now() - start, error: "连接失败：无法连接模型服务，请检查地址和网络" }, 502, cors); }
