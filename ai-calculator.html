@@ -4416,9 +4416,7 @@ function zxFnAdvance(f,xValue,rangeText){
         if(typeof window.MathJax.typesetClear === 'function') window.MathJax.typesetClear([node]);
         await window.MathJax.typesetPromise([node]);
       }
-    } catch (err) {
-      console.warn('AI 公式渲染失败：', err);
-    }
+    } catch (err) { console.warn('AI 公式渲染失败：', err); }
   }
   async function analyze(section,viewId,action,button){
     if(busy)return;
@@ -7457,7 +7455,7 @@ function zxFnAdvance(f,xValue,rangeText){
         chtml: { scale: 1, matchFontHeight: false },
         startup: { typeset: false }
       };
-    </script>
+</script>
     <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <style id="zx-ai-mathjax-fix">
       .zx-ai-result-body { display:block; white-space:pre-wrap; overflow-wrap:anywhere; word-break:normal; }
