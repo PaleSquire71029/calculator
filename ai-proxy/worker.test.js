@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Script } from "node:vm";
-import worker from "./src/index.js";
+import worker, { AdminSettingsStore } from "./src/index.js";
 
 const origin = "https://c.zhixing.us.ci";
 const env = {
@@ -23,6 +23,51 @@ function req(body, ip = "198.51.100.10", requestOrigin = origin) {
   });
 }
 const userMessage = { role: "user", content: "解方程 x+2=5" };
+
+test("admin login requires an explicitly configured password", async () => {
+  const response = await worker.fetch(new Request("https://worker.example.test/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Origin": origin, "CF-Connecting-IP": "198.51.100.70" },
+    body: JSON.stringify({ password: "guess" })
+  }), { ALLOWED_ORIGINS: origin });
+  assert.equal(response.status, 503);
+  assert.match((await response.json()).error, /ADMIN_PASSWORD/);
+});
+
+test("admin login issues a signed, expiring session token", async () => {
+  const response = await worker.fetch(new Request("https://worker.example.test/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Origin": origin, "CF-Connecting-IP": "198.51.100.71" },
+    body: JSON.stringify({ password: "test-admin-password" })
+  }), { ...env, ADMIN_PASSWORD: "test-admin-password" });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.match(body.token, /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
+  assert.ok(body.expiresIn > 0);
+});
+
+test("admin settings require a valid bearer session", async () => {
+  const response = await worker.fetch(new Request("https://worker.example.test/admin/settings", {
+    headers: { "Origin": origin }
+  }), { ...env, ADMIN_PASSWORD: "test-admin-password" });
+  assert.equal(response.status, 401);
+});
+
+test("admin settings durable object persists JSON", async () => {
+  const map = new Map();
+  const storage = {
+    get: async key => map.get(key),
+    put: async (key, value) => map.set(key, structuredClone(value))
+  };
+  const store = new AdminSettingsStore({ storage }, {});
+  const config = { settings: { apiBaseUrl: "https://api.example.test/v1", model: "model-a" } };
+  const put = await store.fetch(new Request("https://internal/data", {
+    method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config)
+  }));
+  assert.equal(put.status, 200);
+  const get = await store.fetch(new Request("https://internal/data"));
+  assert.deepEqual(await get.json(), config);
+});
 
 test("health endpoint does not expose secret values", async () => {
   const response = await worker.fetch(new Request("https://worker.example.test/health", { headers: { Origin: origin } }), env);
@@ -156,4 +201,15 @@ test("AI frontend inline JavaScript parses without syntax errors", () => {
   const end = html.lastIndexOf("</script>");
   assert.ok(start >= 0 && end > start, "inline script must exist");
   assert.doesNotThrow(() => new Script(html.slice(start + 8, end)));
+});
+
+test("AI admin frontend inline JavaScript parses", () => {
+  const html = readFileSync(new URL("../ai-admin.html", import.meta.url), "utf8");
+  const start = html.lastIndexOf("<script>");
+  const end = html.lastIndexOf("</script>");
+  assert.ok(start >= 0 && end > start, "admin inline script must exist");
+  assert.doesNotThrow(() => new Script(html.slice(start + 8, end)));
+  assert.match(html, /ADMIN_PASSWORD/);
+  assert.match(html, /获取模型列表/);
+  assert.match(html, /提示词管理/);
 });
