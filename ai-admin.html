@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f4f6fb">
+<title>知行 AI · 后端管理</title>
+<style>
+:root{color-scheme:light;--ink:#202938;--muted:#718096;--line:#e1e7f0;--paper:rgba(255,255,255,.82);--blue:#4169e1;--blue2:#7192f4;--mint:#dff7ed;--gold:#d8b878;--danger:#c44747;--shadow:0 16px 45px rgba(46,66,110,.09)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--ink);font:14px/1.55 Inter,"MiSans","PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:radial-gradient(900px 500px at 0% 0%,rgba(198,220,255,.66),transparent 68%),radial-gradient(650px 420px at 100% 8%,rgba(222,246,239,.82),transparent 72%),linear-gradient(145deg,#f7f9fd,#edf2f9 54%,#f9fafc);background-attachment:fixed}
+button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.55;cursor:wait}
+.wrap{width:min(1180px,100%);margin:auto;padding:clamp(16px,3vw,34px)}
+.top{display:flex;align-items:center;gap:14px;margin-bottom:24px}.logo{width:46px;height:46px;display:grid;place-items:center;border-radius:16px;color:#fff;background:linear-gradient(140deg,#557cf0,#78a0fb);box-shadow:0 9px 20px #547bf033;font-size:21px}.brand{min-width:0}.brand strong{display:block;font-size:18px;letter-spacing:.015em}.brand span{display:block;color:var(--muted);font-size:12px}.top-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.eyebrow{color:#5573c7;font-weight:750;font-size:11px;letter-spacing:.13em;text-transform:uppercase}.h1{font-size:clamp(24px,4vw,36px);line-height:1.18;letter-spacing:-.035em;margin:7px 0 10px}.lead{margin:0;max-width:690px;color:var(--muted)}
+.glass{border:1px solid rgba(255,255,255,.92);background:var(--paper);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:22px;box-shadow:var(--shadow)}
+.login{max-width:550px;margin:7vh auto 0;padding:clamp(22px,5vw,38px)}.login h1{margin-top:10px}.login-note{margin-top:18px;background:#f4f7ff;border:1px solid #e0e8ff;border-radius:13px;padding:12px;color:#5f6d87;font-size:12px}.field{display:grid;gap:7px;min-width:0}.field label,.label{font-size:12px;font-weight:720;color:#59667a}.field input,.field select,.field textarea,.control{width:100%;min-width:0;color:var(--ink);background:rgba(255,255,255,.85);border:1px solid #dfe5ee;border-radius:12px;padding:11px 12px;outline:none;transition:border-color .18s,box-shadow .18s}.field input:focus,.field select:focus,.field textarea:focus,.control:focus{border-color:#9db3f7;box-shadow:0 0 0 3px rgba(90,124,229,.12)}.field textarea{resize:vertical;min-height:155px;line-height:1.7;font-family:ui-monospace,"SFMono-Regular",Consolas,monospace;font-size:12px}.hint{font-size:11px;color:var(--muted);margin-top:2px}
+.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.row>*{flex:1}.stack{display:grid;gap:15px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border:1px solid #dfe5ee;border-radius:12px;background:rgba(255,255,255,.88);color:#43516a;font-weight:680;transition:transform .16s,border-color .16s,background .16s}.btn:hover{transform:translateY(-1px);border-color:#b8c8f5}.btn.primary{color:#fff;border-color:transparent;background:linear-gradient(120deg,#5478e7,#7596f6);box-shadow:0 8px 18px #5d7fe42a}.btn.danger{color:#a93d42;background:#fff8f8;border-color:#f1d6d6}.btn.small{padding:7px 10px;font-size:12px}.btn.full{width:100%;padding:12px}.iconbtn{width:36px;height:36px;padding:0}
+#app[hidden],#login[hidden],[hidden]{display:none!important}
+.hero{display:flex;justify-content:space-between;gap:20px;align-items:end;margin:6px 0 23px;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;gap:7px;background:#e9f8f0;color:#237650;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:720}.dot{width:6px;height:6px;border-radius:50%;background:#38aa75;box-shadow:0 0 0 4px #38aa7518}
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:20px;align-items:start}.sidebar{position:sticky;top:14px;padding:12px}.navbtn{width:100%;display:flex;align-items:center;gap:10px;padding:12px;border:0;border-radius:12px;background:transparent;color:#68758b;text-align:left;font-weight:670;margin:2px 0}.navbtn .ni{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:#f0f3f9;color:#7383a2}.navbtn.active{background:#eaf0ff;color:#3458c1}.navbtn.active .ni{background:#d7e2ff;color:#365dc9}.sidebar-foot{margin:16px 5px 4px;padding-top:13px;border-top:1px solid var(--line);font-size:11px;color:#8a94a6}
+.panel{display:none;min-width:0;padding:clamp(17px,3vw,26px)}.panel.active{display:block;animation:panel-in .26s ease both}@keyframes panel-in{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}.panel-title{margin:0 0 4px;font-size:19px;letter-spacing:-.025em}.panel-desc{margin:0 0 23px;color:var(--muted);font-size:12px}.subhead{display:flex;align-items:center;gap:10px;margin:22px 0 13px;font-size:13px;font-weight:780}.subhead:before{content:"";width:4px;height:15px;border-radius:4px;background:linear-gradient(#6282e9,#a7bafa)}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 22px}.metric{padding:16px;border:1px solid #e7ebf3;background:rgba(255,255,255,.7);border-radius:15px;min-width:0}.metric .m-label{font-size:11px;color:var(--muted)}.metric strong{display:block;font-size:clamp(20px,3vw,29px);line-height:1.25;margin-top:7px;letter-spacing:-.035em;overflow-wrap:anywhere}.metric small{display:block;color:#8993a5;font-size:10px;margin-top:4px}.section-card{padding:17px;border:1px solid #e4e9f1;background:rgba(255,255,255,.53);border-radius:16px}.status{margin-top:13px;border-radius:11px;padding:10px 12px;background:#f0f4fc;color:#61708a;font-size:12px;overflow-wrap:anywhere}.status.success{background:#e9f8f0;color:#27734f}.status.error{background:#fff0f0;color:#ad4141}.status:empty{display:none}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.wide{grid-column:1/-1}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}.key-state{display:flex;gap:8px;align-items:center;border-radius:10px;background:#f0f8f4;padding:9px 11px;font-size:12px;color:#3d7c60}.key-state.missing{background:#fff5e5;color:#8b6729}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:13px}table{border-collapse:collapse;width:100%;font-size:12px;min-width:510px}th,td{padding:10px 12px;border-bottom:1px solid #e9edf4;text-align:left;white-space:nowrap}th{background:#f6f8fc;color:#7a879b;font-size:10px;font-weight:750}tbody tr:last-child td{border-bottom:0}.badge{display:inline-block;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:750}.badge.ok{background:#e7f7ed;color:#287a52}.badge.fail{background:#fff0f0;color:#b43e3e}
+.prompt-selects{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}.prompt-meta{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:7px;color:#8993a5;font-size:11px}.prompt-toolbar{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap;margin-top:14px}.counter{font-variant-numeric:tabular-nums}
+.help-list{display:grid;gap:12px}.help-item{display:flex;gap:12px;border:1px solid #e8edf5;background:rgba(255,255,255,.6);border-radius:14px;padding:14px}.step{width:27px;height:27px;flex:none;display:grid;place-items:center;border-radius:9px;background:#edf2ff;color:#4565c3;font-weight:800}.help-item strong{display:block;font-size:12px;margin:1px 0 4px}.help-item p{margin:0;color:var(--muted);font-size:12px}.code{display:inline-block;padding:2px 6px;background:#edf1f8;border-radius:6px;font:11px ui-monospace,monospace;overflow-wrap:anywhere}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,15px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10;max-width:calc(100% - 28px);background:#26334a;color:white;padding:11px 16px;border-radius:13px;box-shadow:0 12px 35px #1d2a452e;font-size:12px}.toast.show{opacity:1;transform:translate(-50%,0)}
+.loading-flow{background:linear-gradient(100deg,#6d7890 0%,#6d7890 35%,#6a87e6 49%,#9adbc5 52%,#6d7890 65%,#6d7890 100%);background-size:250% 100%;background-clip:text;-webkit-background-clip:text;color:transparent;animation:flow 1.7s linear infinite}@keyframes flow{to{background-position:-150% 0}}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.sidebar{position:static;display:flex;overflow-x:auto;gap:4px;padding:7px;border-radius:16px}.navbtn{width:auto;white-space:nowrap;flex:none;padding:9px 11px;font-size:12px}.navbtn .ni{width:23px;height:23px}.sidebar-foot{display:none}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:17px}.hero{align-items:start}.top{margin-bottom:19px}}
+@media(max-width:520px){.wrap{padding:14px}.top{gap:10px}.logo{width:40px;height:40px;border-radius:13px}.brand strong{font-size:16px}.brand span{font-size:10px}.kv{grid-template-columns:minmax(0,1fr)}.wide{grid-column:auto}.row{align-items:stretch;flex-direction:column}.row>*{flex:auto}.metrics{gap:8px}.metric{padding:12px}.metric strong{font-size:23px}.section-card{padding:13px}.actions .btn{flex:1}.login{margin-top:4vh}.prompt-selects{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo" aria-hidden="true">知</div>
+    <div class="brand"><strong>知行 AI 管理中心</strong><span>后端配置 · 提示词实验室 · 服务监测</span></div>
+    <div class="top-right"><span class="pill"><span class="dot"></span>安全管理</span></div>
+  </header>
+
+  <section id="login" class="glass login">
+    <div class="eyebrow">ADMIN CONSOLE</div>
+    <h1 class="h1">管理 AI 服务</h1>
+    <p class="lead">统一配置模型供应商、模型列表、提示词和调用状态。密钥仅发送至你的 Worker，不会回显到页面。</p>
+    <form id="loginForm" class="stack" style="margin-top:24px">
+      <div class="field"><label for="workerUrl">AI Worker 地址</label><input id="workerUrl" type="url" inputmode="url" value="https://zhixing-calculator-ai.xiaoshirong2023.workers.dev" required autocomplete="url"><div class="hint">需为已部署的知行 AI Worker 地址。</div></div>
+      <div class="field"><label for="password">管理密码</label><input id="password" type="password" required autocomplete="current-password" placeholder="输入你在 Cloudflare 中设置的管理密码"></div>
+      <button class="btn primary full" id="loginButton" type="submit">解锁管理中心 <span aria-hidden="true">→</span></button>
+      <div class="status" id="loginStatus" role="status" aria-live="polite"></div>
+    </form>
+    <div class="login-note">首次使用需在 Cloudflare Dashboard → Workers & Pages → <b>zhixing-calculator-ai</b> → Settings → Variables and Secrets 中添加 Secret：<span class="code">ADMIN_PASSWORD</span>。建议使用唯一的长密码，不要把密码写进网页或 GitHub。</div>
+  </section>
+
+  <main id="app" hidden>
+    <div class="hero">
+      <div><div class="eyebrow">WORKSPACE / AI SERVICE</div><h1 class="h1">后端控制台</h1><p class="lead">一个地方管理 AI 提供商、提示词与运行状况。配置保存在 Worker 的私有持久存储中。</p></div>
+      <div class="row" style="flex:0 1 auto;align-items:center"><span class="pill"><span class="dot"></span><span id="servicePill">已验证会话</span></span><button id="logout" class="btn small" type="button">退出登录</button></div>
+    </div>
+    <div class="layout">
+      <aside class="glass sidebar" aria-label="管理导航">
+        <button class="navbtn active" data-tab="overview" type="button"><span class="ni">⌂</span>总览</button>
+        <button class="navbtn" data-tab="provider" type="button"><span class="ni">◇</span>模型与 API</button>
+        <button class="navbtn" data-tab="prompts" type="button"><span class="ni">✎</span>提示词管理</button>
+        <button class="navbtn" data-tab="records" type="button"><span class="ni">≋</span>调用记录</button>
+        <button class="navbtn" data-tab="security" type="button"><span class="ni">♧</span>安全与备份</button>
+        <div class="sidebar-foot">密码会话约 4 小时过期<br>不会在页面中显示已保存密钥</div>
+      </aside>
+
+      <div class="content">
+        <section class="glass panel active" data-panel="overview">
+          <h2 class="panel-title">服务状态</h2><p class="panel-desc">查看当前后端配置、调用趋势和最近请求结果。</p>
+          <div class="metrics">
+            <div class="metric"><div class="m-label">累计请求</div><strong id="statTotal">—</strong><small>自启用统计后累计</small></div>
+            <div class="metric"><div class="m-label">失败请求</div><strong id="statFailed">—</strong><small>模型或网络失败</small></div>
+            <div class="metric"><div class="m-label">输入 Tokens</div><strong id="statPrompt">—</strong><small>供应商返回的 usage</small></div>
+            <div class="metric"><div class="m-label">输出 Tokens</div><strong id="statCompletion">—</strong><small>流式请求可能未回传用量</small></div>
+          </div>
+          <div class="section-card">
+            <div class="subhead" style="margin-top:0">当前连接</div>
+            <div class="kv">
+              <div class="field"><label>API 地址</label><div class="control" id="summaryUrl" style="overflow-wrap:anywhere">读取中…</div></div>
+              <div class="field"><label>当前模型</label><div class="control" id="summaryModel">读取中…</div></div>
+              <div class="field"><label>密钥状态</label><div id="summaryKey" class="key-state">读取中…</div></div>
+              <div class="field"><label>最后保存</label><div class="control" id="summarySaved">—</div></div>
+            </div>
+            <div class="actions"><button class="btn primary" type="button" data-goto="provider">管理模型与 API</button><button class="btn" type="button" data-goto="prompts">编辑提示词</button><button class="btn" id="refresh" type="button">刷新数据</button></div>
+          </div>
+          <div class="status" id="overviewStatus" role="status"></div>
+        </section>
+
+        <section class="glass panel" data-panel="provider">
+          <h2 class="panel-title">模型与 API</h2><p class="panel-desc">兼容 OpenAI API 形式的服务商通常可通过 <span class="code">/models</span> 自动获取模型列表。若供应商不支持，仍可手动输入模型 ID。</p>
+          <div class="section-card">
+            <div class="kv">
+              <div class="field wide"><label for="apiBaseUrl">API 根地址</label><input id="apiBaseUrl" type="url" placeholder="https://api.example.com/v1" autocomplete="url" required><div class="hint">填写根地址，不要加 /chat/completions。仅允许 HTTPS。</div></div>
+              <div class="field wide"><label for="apiKey">API Key <span style="font-weight:400;color:#8792a4">（不回显）</span></label><input id="apiKey" type="password" autocomplete="new-password" placeholder="留空表示不修改已保存的密钥" spellcheck="false"><div id="keyState" class="key-state missing">读取密钥状态中…</div><div class="hint">新密钥只会发送至 Worker 后端；保存后会清空输入框。不要将密钥分享给任何人。</div></div>
+              <div class="field wide"><label for="model">模型名称 / Model ID</label><div class="row"><input style="flex:1.6" id="model" list="modelOptions" placeholder="例如 gpt-6-luna" required><datalist id="modelOptions"></datalist><button class="btn" id="fetchModels" type="button">↻ 获取模型列表</button></div><div id="modelsStatus" class="hint">可直接输入模型 ID，也可以自动获取。</div></div>
+              <div class="field"><label for="temperature">Temperature：<span id="tempValue">0.2</span></label><input id="temperature" type="range" min="0" max="2" step="0.1" value="0.2"><div class="hint">越低越稳定；越高回答变化通常越大。</div></div>
+              <div class="field"><label for="maxTokens">最大输出 Token</label><input id="maxTokens" type="number" min="0" max="32768" step="1" value="0"><div class="hint">0 表示不额外指定，交由供应商决定。</div></div>
+            </div>
+            <div class="actions"><button class="btn primary" id="saveSettings" type="button">保存配置</button><button class="btn" id="testConnection" type="button">测试连接</button><button class="btn danger" id="useWorkerKey" type="button">改用 Worker Secret</button></div>
+            <div class="status" id="providerStatus" role="status" aria-live="polite"></div>
+          </div>
+          <div class="section-card" style="margin-top:15px"><div class="subhead" style="margin-top:0">配置说明</div><p class="lead" style="font-size:12px">修改 API 地址、密钥或模型后，请保存配置。模型列表由当前供应商 API 返回，列表为空或报错时，可手动填入该供应商文档中提供的模型 ID。</p></div>
+        </section>
+
+        <section class="glass panel" data-panel="prompts">
+          <h2 class="panel-title">提示词管理</h2><p class="panel-desc">按使用场景编辑系统提示词。提示词会保存在后端并用于后续请求，不需要重新部署网页。</p>
+          <div class="section-card">
+            <div class="prompt-selects">
+              <div class="field"><label for="promptScope">编辑范围</label><select id="promptScope">
+                <optgroup label="计算器 AI 分析"><option value="analysisBase">分析总提示词</option><option value="analysisModes:basic">基础计算</option><option value="analysisModes:equation">方程求解</option><option value="analysisModes:inequality">不等式</option><option value="analysisModes:fit">函数分析</option><option value="analysisModes:units">单位换算</option><option value="analysisModes:chemistry">化学反应</option><option value="analysisModes:knowledge">知识解释</option><option value="analysisModes:history">历史记录</option><option value="analysisActions:analyze">AI 分析动作</option><option value="analysisActions:extend">AI 扩展动作</option></optgroup>
+                <optgroup label="AI 学习助手聊天"><option value="chat:general">通用聊天</option><option value="chat:solve">数学解题</option><option value="chat:function">函数分析</option><option value="chat:chemistry">化学学习</option></optgroup>
+              </select></div>
+              <button class="btn" id="restorePrompt" type="button">恢复默认</button>
+            </div>
+            <div class="field" style="margin-top:14px"><label for="promptText">系统提示词</label><textarea id="promptText" rows="15" spellcheck="false" placeholder="在这里编写模型角色、回答规则、输出格式与安全约束…"></textarea><div class="prompt-meta"><span id="promptHint">提示词会应用于所选场景。</span><span id="promptCount" class="counter">0 字符</span></div></div>
+            <div class="prompt-toolbar"><span class="hint">可使用中文自然语言。建议明确角色、任务、边界和输出格式。</span><div class="actions" style="margin-top:0"><button class="btn" id="discardPrompt" type="button">撤销本次编辑</button><button class="btn primary" id="savePrompts" type="button">保存全部提示词</button></div></div>
+            <div class="status" id="promptStatus" role="status" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <section class="glass panel" data-panel="records">
+          <h2 class="panel-title">调用记录</h2><p class="panel-desc">仅保存请求时间、题型、模型、HTTP 状态和成功/失败状态，不记录用户题目正文或 API Key。</p>
+          <div class="actions" style="margin-top:0;margin-bottom:14px"><button class="btn" id="refreshRecords" type="button">刷新记录</button><button class="btn" id="exportRecords" type="button">导出配置备份</button></div>
+          <div class="table-wrap"><table><thead><tr><th>时间</th><th>场景</th><th>模型</th><th>状态</th><th>HTTP</th></tr></thead><tbody id="recentRows"><tr><td colspan="5">加载中…</td></tr></tbody></table></div>
+          <div class="status" id="recordsStatus" role="status"></div>
+        </section>
+
+        <section class="glass panel" data-panel="security">
+          <h2 class="panel-title">安全与备份</h2><p class="panel-desc">管理员口令、密钥、会话和配置备份的管理方式。</p>
+          <div class="help-list">
+            <div class="help-item"><span class="step">1</span><div><strong>设置管理密码</strong><p>打开 Cloudflare Dashboard → Workers & Pages → <b>zhixing-calculator-ai</b> → Settings → Variables and Secrets，添加 Secret <span class="code">ADMIN_PASSWORD</span>，值填写你自己设置的强密码。它不会保存在此网页或 GitHub。</p></div></div>
+            <div class="help-item"><span class="step">2</span><div><strong>后台数据持久化</strong><p>配置会存放在 Worker 专用的 Durable Object 私有存储中；后台接口要求有时效的签名会话，登录密码有失败次数限制。</p></div></div>
+            <div class="help-item"><span class="step">3</span><div><strong>密钥处理</strong><p>API Key 不会从后台读取并显示。留空表示不修改；点击“改用 Worker Secret”会切回原有 <span class="code">AI_API_KEY</span> Secret。</p></div></div>
+            <div class="help-item"><span class="step">4</span><div><strong>导出 / 导入配置</strong><p>备份包含模型地址、参数和提示词，不包含 API Key 和管理密码。备份文件仍可能包含你的自定义提示词，请妥善保存。</p></div></div>
+            <div class="help-item"><span class="step">5</span><div><strong>安全边界</strong><p>请勿将管理密码发给他人。若 Worker 曾被公开分享过、密钥泄露或发现异常用量，应立即在供应商处轮换 API Key，并在 Cloudflare 中更换管理密码。</p></div></div>
+          </div>
+          <div class="section-card" style="margin-top:16px">
+            <div class="subhead" style="margin-top:0">配置文件</div>
+            <div class="actions" style="margin-top:0"><button class="btn primary" id="exportConfig" type="button">导出备份（不含密钥）</button><button class="btn" id="importConfigBtn" type="button">导入备份</button><input id="importFile" type="file" accept="application/json,.json" hidden></div>
+            <div class="status" id="backupStatus" role="status"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const DEFAULT_WORKER = "https://zhixing-calculator-ai.xiaoshirong2023.workers.dev";
+  const TOKEN_KEY = "zx-ai-admin-token";
+  const WORKER_KEY = "zx-ai-admin-worker-url";
+  let token = sessionStorage.getItem(TOKEN_KEY) || "";
+  let settings = null;
+  let defaults = null;
+  let dirtyPrompt = false;
+  let toastTimer = 0;
+  let models = [];
+  function workerUrl() {
+    const raw = ($("workerUrl").value || localStorage.getItem(WORKER_KEY) || DEFAULT_WORKER).trim();
+    return raw.replace(/\/+$/, "");
+  }
+  function showToast(message) {
+    $("toast").textContent = message;
+    $("toast").classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $("toast").classList.remove("show"), 2700);
+  }
+  function status(id, message, type="") {
+    const el = $(id);
+    el.textContent = message || "";
+    el.className = "status" + (type ? " " + type : "");
+  }
+  async function api(path, options={}) {
+    const headers = new Headers(options.headers || {});
+    if (options.body !== undefined && !(options.body instanceof FormData)) headers.set("Content-Type", "application/json");
+    if (token && !options.noAuth) headers.set("Authorization", "Bearer " + token);
+    let response;
+    try {
+      response = await fetch(workerUrl() + path, { ...options, headers, body: options.body === undefined || typeof options.body === "string" || options.body instanceof FormData ? options.body : JSON.stringify(options.body) });
+    } catch (err) { throw new Error("无法连接 Worker，请检查地址和网络。"); }
+    let data;
+    try { data = await response.json(); } catch { data = {}; }
+    if (response.status === 401 && path !== "/admin/login") {
+      logout(false);
+      throw new Error("登录会话已过期，请重新登录。");
+    }
+    if (!response.ok) throw new Error(data.error || ("请求失败（HTTP " + response.status + "）"));
+    return data;
+  }
+  function showLogin(message="") {
+    $("login").hidden = false;
+    $("app").hidden = true;
+    if (message) status("loginStatus", message, "error");
+  }
+  function logout(notify=true) {
+    token = "";
+    sessionStorage.removeItem(TOKEN_KEY);
+    $("password").value = "";
+    showLogin();
+    if (notify) showToast("已退出管理中心");
+  }
+  function setBusy(button, busy, text) {
+    if (!button.dataset.label) button.dataset.label = button.textContent.trim();
+    button.disabled = busy;
+    if (busy && text) button.textContent = text;
+    else button.textContent = button.dataset.label;
+  }
+  async function enterAdmin() {
+    const data = await api("/admin/settings", { method: "GET" });
+    settings = data;
+    defaults = await api("/admin/defaults", { method: "GET" });
+    populateSettings();
+    renderStats();
+    renderPromptEditor(true);
+    $("login").hidden = true;
+    $("app").hidden = false;
+    status("loginStatus", "");
+  }
+  $("workerUrl").value = localStorage.getItem(WORKER_KEY) || DEFAULT_WORKER;
+  $("workerUrl").addEventListener("change", () => localStorage.setItem(WORKER_KEY, workerUrl()));
+  $("loginForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    const button = $("loginButton");
+    setBusy(button, true, "正在验证…");
+    status("loginStatus", "");
+    try {
+      localStorage.setItem(WORKER_KEY, workerUrl());
+      const data = await api("/admin/login", { method: "POST", noAuth: true, body: { password: $("password").value } });
+      token = data.token;
+      sessionStorage.setItem(TOKEN_KEY, token);
+      $("password").value = "";
+      await enterAdmin();
+      showToast("验证成功");
+    } catch (error) {
+      status("loginStatus", error.message, "error");
+    } finally { setBusy(button, false); }
+  });
+  $("logout").addEventListener("click", () => logout());
+  document.querySelectorAll("[data-tab]").forEach(button => button.addEventListener("click", () => activateTab(button.dataset.tab)));
+  document.querySelectorAll("[data-goto]").forEach(button => button.addEventListener("click", () => activateTab(button.dataset.goto)));
+  function activateTab(tab) {
+    document.querySelectorAll("[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tab));
+    document.querySelectorAll("[data-panel]").forEach(panel => panel.classList.toggle("active", panel.dataset.panel === tab));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function populateSettings() {
+    $("apiBaseUrl").value = settings.apiBaseUrl || "";
+    $("model").value = settings.model || "";
+    $("temperature").value = String(settings.temperature ?? 0.2);
+    $("tempValue").textContent = Number($("temperature").value).toFixed(1);
+    $("maxTokens").value = String(settings.maxTokens ?? 0);
+    $("apiKey").value = "";
+    const hasKey = settings.hasApiKey;
+    $("keyState").className = "key-state" + (hasKey ? "" : " missing");
+    $("keyState").textContent = hasKey ? (settings.apiKeySource === "custom" ? "✓ 已保存后台密钥（不回显）" : "✓ 已检测到 Worker Secret 密钥") : "⚠ 尚未检测到 API Key";
+    $("summaryKey").className = "key-state" + (hasKey ? "" : " missing");
+    $("summaryKey").textContent = hasKey ? (settings.apiKeySource === "custom" ? "已保存密钥（隐藏）" : "Worker Secret 已配置") : "未设置";
+    $("summaryUrl").textContent = settings.apiBaseUrl || "未设置";
+    $("summaryModel").textContent = settings.model || "未设置";
+    $("summarySaved").textContent = settings.updatedAt ? new Date(settings.updatedAt).toLocaleString() : "尚无后台保存记录（使用 Worker 默认值）";
+    $("servicePill").textContent = hasKey ? "后端已配置" : "需要配置密钥";
+  }
+  function renderStats() {
+    const stats = settings?.stats || {};
+    $("statTotal").textContent = Number(stats.totalRequests || 0).toLocaleString();
+    $("statFailed").textContent = Number(stats.failedRequests || 0).toLocaleString();
+    $("statPrompt").textContent = Number(stats.promptTokens || 0).toLocaleString();
+    $("statCompletion").textContent = Number(stats.completionTokens || 0).toLocaleString();
+    const rows = Array.isArray(stats.recent) ? stats.recent : [];
+    $("recentRows").replaceChildren();
+    if (!rows.length) {
+      const tr = document.createElement("tr"), td = document.createElement("td");
+      td.colSpan = 5; td.textContent = "暂无记录。启用管理后产生的请求会逐步显示在这里。"; tr.append(td); $("recentRows").append(tr); return;
+    }
+    rows.forEach(item => {
+      const tr = document.createElement("tr");
+      const values = [new Date(item.at).toLocaleString(), item.mode || "—", item.model || "—"];
+      values.forEach(value => { const td = document.createElement("td"); td.textContent = value; tr.append(td); });
+      const state = document.createElement("td"), badge = document.createElement("span");
+      badge.className = "badge " + (item.ok ? "ok" : "fail"); badge.textContent = item.ok ? "成功" : "失败"; state.append(badge); tr.append(state);
+      const code = document.createElement("td"); code.textContent = item.status || "—"; tr.append(code);
+      $("recentRows").append(tr);
+    });
+  }
+  async function refreshSettings() {
+    const data = await api("/admin/settings", { method: "GET" });
+    settings = data; populateSettings(); renderStats();
+    showToast("数据已刷新");
+  }
+  $("refresh").addEventListener("click", async () => { try { await refreshSettings(); } catch(e) { status("overviewStatus",e.message,"error"); } });
+  $("refreshRecords").addEventListener("click", async () => {
+    try { await refreshSettings(); status("recordsStatus","调用记录已刷新。","success"); }
+    catch(e) { status("recordsStatus",e.message,"error"); }
+  });
+  $("temperature").addEventListener("input", () => $("tempValue").textContent = Number($("temperature").value).toFixed(1));
+  function gatherPrompts() {
+    const p = structuredClone(settings?.prompts || defaults);
+    const key = $("promptScope").value;
+    const text = $("promptText").value;
+    if (key === "analysisBase") p.analysisBase = text;
+    else { const [group, name] = key.split(":"); if (p[group]) p[group][name] = text; }
+    return p;
+  }
+  function readPrompt(key, data) {
+    if (!data) return "";
+    if (key === "analysisBase") return data.analysisBase || "";
+    const [group, name] = key.split(":");
+    return data[group]?.[name] || "";
+  }
+  function renderPromptEditor(resetDirty=false) {
+    if (resetDirty) dirtyPrompt = false;
+    $("promptText").value = readPrompt($("promptScope").value, settings?.prompts);
+    updatePromptCount();
+    status("promptStatus", "");
+  }
+  $("promptScope").addEventListener("change", () => {
+    if (dirtyPrompt && !confirm("当前提示词尚未保存，切换后会丢弃本次编辑。继续吗？")) return;
+    dirtyPrompt = false; renderPromptEditor();
+  });
+  $("promptText").addEventListener("input", () => { dirtyPrompt = true; updatePromptCount(); });
+  function updatePromptCount() { $("promptCount").textContent = $("promptText").value.length.toLocaleString() + " 字符"; }
+  $("restorePrompt").addEventListener("click", () => {
+    if (!defaults) return;
+    if (!confirm("恢复当前栏目到系统默认提示词？需要点击保存才会应用。")) return;
+    $("promptText").value = readPrompt($("promptScope").value, defaults);
+    dirtyPrompt = true; updatePromptCount();
+  });
+  $("discardPrompt").addEventListener("click", () => {
+    dirtyPrompt = false; renderPromptEditor();
+  });
+  async function saveAll(showMessage=true, clearKey=false) {
+    const body = {
+      apiBaseUrl: $("apiBaseUrl").value.trim(),
+      model: $("model").value.trim(),
+      apiKey: $("apiKey").value,
+      clearSavedKey: clearKey,
+      temperature: Number($("temperature").value),
+      maxTokens: Number($("maxTokens").value || 0),
+      prompts: gatherPrompts()
+    };
+    const result = await api("/admin/settings", { method: "PUT", body });
+    settings = result.settings;
+    $("apiKey").value = "";
+    dirtyPrompt = false;
+    populateSettings(); renderStats(); renderPromptEditor(true);
+    if(showMessage) { status("providerStatus","配置已安全保存到 Worker。","success"); status("promptStatus","提示词已保存，后续请求将使用新配置。","success"); showToast("保存成功"); }
+    return result;
+  }
+  $("saveSettings").addEventListener("click", async () => {
+    setBusy($("saveSettings"),true,"保存中…"); status("providerStatus","");
+    try { await saveAll(true); } catch(e) { status("providerStatus",e.message,"error"); }
+    finally { setBusy($("saveSettings"),false); }
+  });
+  $("savePrompts").addEventListener("click", async () => {
+    setBusy($("savePrompts"),true,"保存中…"); status("promptStatus","");
+    try { await saveAll(false); status("promptStatus","提示词与其他配置已保存。","success"); showToast("提示词已保存"); }
+    catch(e) { status("promptStatus",e.message,"error"); }
+    finally { setBusy($("savePrompts"),false); }
+  });
+  $("useWorkerKey").addEventListener("click", async () => {
+    if (!confirm("移除后台保存的 API Key，并改用 Cloudflare Worker 中原有的 AI_API_KEY Secret？")) return;
+    setBusy($("useWorkerKey"),true,"切换中…");
+    try { await saveAll(false,true); status("providerStatus","已切换为使用 Worker Secret。","success"); showToast("密钥来源已切换"); }
+    catch(e) { status("providerStatus",e.message,"error"); }
+    finally { setBusy($("useWorkerKey"),false); }
+  });
+  $("fetchModels").addEventListener("click", async () => {
+    const button=$("fetchModels");setBusy(button,true,"获取中…");status("providerStatus","");
+    try {
+      const data=await api("/admin/models",{method:"POST",body:{apiBaseUrl:$("apiBaseUrl").value.trim(),apiKey:$("apiKey").value}});
+      models=data.models||[];
+      const list=$("modelOptions");list.replaceChildren();
+      models.forEach(id=>{const opt=document.createElement("option");opt.value=id;list.append(opt);});
+      $("modelsStatus").textContent="已获取 "+models.length+" 个模型。点击输入框可选择；也可以手动输入。";
+      status("providerStatus",models.length?"模型列表已更新。":"接口成功，但没有返回可用的模型 ID。","success");
+      showToast("已获取模型列表");
+    } catch(e) {
+      $("modelsStatus").textContent="无法自动获取模型列表，可手动填写 Model ID。";
+      status("providerStatus",e.message,"error");
+    } finally {setBusy(button,false);}
+  });
+  $("testConnection").addEventListener("click",async()=>{
+    const button=$("testConnection");setBusy(button,true,"测试中…");status("providerStatus","正在调用模型进行最小化连通性测试…");
+    try {
+      const data=await api("/admin/test",{method:"POST",body:{apiBaseUrl:$("apiBaseUrl").value.trim(),apiKey:$("apiKey").value,model:$("model").value.trim()}});
+      status("providerStatus","连接成功 · 模型："+data.model+" · 耗时 "+data.elapsedMs+" ms · 返回："+(data.preview||"成功"),"success");
+      showToast("模型连接正常");
+    } catch(e) { status("providerStatus",e.message,"error"); }
+    finally {setBusy(button,false);}
+  });
+  function makeExportObject() {
+    if (!settings) throw new Error("没有可导出的配置");
+    return { format:"zhixing-ai-admin-v1", exportedAt:new Date().toISOString(), apiBaseUrl:$("apiBaseUrl").value.trim(), model:$("model").value.trim(), temperature:Number($("temperature").value), maxTokens:Number($("maxTokens").value||0), prompts:gatherPrompts() };
+  }
+  function downloadJson(value, filename) {
+    const blob=new Blob([JSON.stringify(value,null,2)],{type:"application/json;charset=utf-8"});
+    const url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);
+  }
+  function exportConfig() {
+    try { downloadJson(makeExportObject(),"zhixing-ai-config-backup.json");status("backupStatus","已导出配置（不包含任何密钥或密码）。","success"); }
+    catch(e) { status("backupStatus",e.message,"error"); }
+  }
+  $("exportConfig").addEventListener("click",exportConfig);
+  $("exportRecords").addEventListener("click",exportConfig);
+  $("importConfigBtn").addEventListener("click",()=>$("importFile").click());
+  $("importFile").addEventListener("change",async()=>{
+    const file=$("importFile").files[0]; if(!file)return;
+    try{
+      const value=JSON.parse(await file.text());
+      if(value.format!=="zhixing-ai-admin-v1"||!value.prompts)throw new Error("这不是知行 AI 管理配置备份");
+      $("apiBaseUrl").value=value.apiBaseUrl||"";
+      $("model").value=value.model||"";
+      $("temperature").value=String(value.temperature??0.2);
+      $("tempValue").textContent=Number($("temperature").value).toFixed(1);
+      $("maxTokens").value=String(value.maxTokens??0);
+      settings={...settings,prompts:value.prompts,apiBaseUrl:value.apiBaseUrl,model:value.model,temperature:value.temperature,maxTokens:value.maxTokens};
+      renderPromptEditor(true);
+      await saveAll(false);
+      status("backupStatus","备份已导入并保存。原有 API Key 保持不变；备份不包含密钥。","success");
+      showToast("配置备份已导入");
+    }catch(e){status("backupStatus",e.message,"error");}
+    finally{$("importFile").value="";}
+  });
+  token ? enterAdmin().catch(error => { logout(false); showLogin(error.message); }) : showLogin();
+})();
+</script>
+</body>
+</html>
