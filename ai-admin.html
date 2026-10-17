@@ -502,7 +502,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     const rows = [["时间","场景","模型","结果","HTTP 状态"], ...recentRowsData.map(item => [
       item.at || "", item.mode || "", item.model || "", item.ok ? "成功" : "失败", item.status ?? ""
     ])];
-    const csv = "\\uFEFF" + rows.map(row => row.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(",")).join("\\r\\n");
+    const csv = "\uFEFF" + rows.map(row => row.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(",")).join("\r\n");
     downloadText(csv, "zhixing-ai-usage-records.csv", "text/csv;charset=utf-8");
     status("recordsStatus", "已导出最近 " + recentRowsData.length + " 条调用元数据，不含题目正文或密钥。", "success");
   });
