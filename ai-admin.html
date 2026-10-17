@@ -160,6 +160,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
   let settings = null;
   let defaults = null;
   let dirtyPrompt = false;
+  let activePromptScope = "analysisBase";
   let toastTimer = 0;
   let models = [];
   function workerUrl() {
@@ -316,12 +317,16 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
   }
   function renderPromptEditor(resetDirty=false) {
     if (resetDirty) dirtyPrompt = false;
-    $("promptText").value = readPrompt($("promptScope").value, settings?.prompts);
+    activePromptScope = $("promptScope").value;
+    $("promptText").value = readPrompt(activePromptScope, settings?.prompts);
     updatePromptCount();
     status("promptStatus", "");
   }
   $("promptScope").addEventListener("change", () => {
-    if (dirtyPrompt && !confirm("当前提示词尚未保存，切换后会丢弃本次编辑。继续吗？")) return;
+    if (dirtyPrompt && !confirm("当前提示词尚未保存，切换后会丢弃本次编辑。继续吗？")) {
+      $("promptScope").value = activePromptScope;
+      return;
+    }
     dirtyPrompt = false; renderPromptEditor();
   });
   $("promptText").addEventListener("input", () => { dirtyPrompt = true; updatePromptCount(); });
