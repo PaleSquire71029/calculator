@@ -16,9 +16,10 @@ Worker 使用一个 SQLite-backed Durable Object 保存后台配置与调用统�
 
 - `ADMIN_PASSWORD`：由你自己设定的管理密码。建议至少 16 位随机字符，并使用密码管理器保存。
 
-可选再添加一个独立 **Secret**：
+建议再添加两个独立 **Secrets**：
 
-- `ADMIN_SESSION_SECRET`：用于签名登录会话的高熵随机字符串。建议单独生成，不要与管理密码相同；轮换后旧会话应失效。
+- `ADMIN_SESSION_SECRET`：用于签名登录会话的高熵随机字符串。请与管理密码、加密密钥分别生成。
+- `ADMIN_ENCRYPTION_KEY`：用于加密后台保存的自定义模型 API Key。应使用独立、高熵的随机值，并长期安全保管。首次保存或读取自定义 Key 前配置它，避免加密依赖管理密码。
 
 保存后打开管理页面：
 
@@ -47,8 +48,8 @@ Worker 使用一个 SQLite-backed Durable Object 保存后台配置与调用统�
 
 - `ADMIN_PASSWORD`、`ADMIN_SESSION_SECRET` 和 `AI_API_KEY` 应配置为 Cloudflare Worker Secrets；不要写进 `wrangler.toml`、网页、仓库或备份。
 - 管理接口使用允许来源校验、HMAC 签名的 Bearer 会话和到期检查；管理会话约 4 小时有效。
-- API Key 不会通过管理 API 回传到浏览器；但管理页面提交的自定义 Key 会保存在后端持久配置中。保护 Cloudflare 账户、Worker 和 Durable Object 的访问权限。
-- 登录失败限制与普通 API 速率限制是在 Worker 运行实例内计数，可能因实例重启或扩容而重置；它们不是全局持久的防暴力破解机制。
+- API Key 不会通过管理 API 回传到浏览器；自定义 Key 使用 AES-GCM 加密后保存在 Durable Object，优先使用 `ADMIN_ENCRYPTION_KEY`。为兼容旧部署，缺少该 Secret 时会回退到 `ADMIN_SESSION_SECRET` 或 `ADMIN_PASSWORD`，因此强烈建议配置独立加密密钥。
+- 登录失败限制、普通 AI 请求限制和上游模型测试/列表限制使用 Durable Object 持久计数；如果限流存储不可用，请求会失败关闭而不是跳过限流。若部署没有绑定 `ADMIN_STORE`，开发回退才会使用进程内计数，生产环境必须核对绑定。
 - 调用统计只记录时间、场景、模型、HTTP 状态、成功/失败和可用的 Token 用量；最近记录最多 20 条。流式供应商若不回传 Token 用量，统计可能不完整。
 - 不要将管理密码、会话令牌、API Key、学生身份信息或其他敏感内容放进公开 Issue、日志、截图或测试问题中。
 - 如果密钥疑似泄露，应立即在服务商控制台撤销并重新生成；仅删除仓库文件不能保证密钥从 Git 历史和缓存中消失。
