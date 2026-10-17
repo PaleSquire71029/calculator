@@ -20,8 +20,6 @@ class MemoryStorage {
 
 function fakeEnvironment(extra = {}) {
   const storage = new MemoryStorage();
-  const durableObject = new AdminSettingsStore({ storage }, {});
-  const stub = { fetch: request => durableObject.fetch(request) };
   const env = {
     ADMIN_PASSWORD: "unit-test-admin-password-at-least-16",
     ADMIN_SESSION_SECRET: "unit-test-session-secret-with-high-entropy",
@@ -29,9 +27,11 @@ function fakeEnvironment(extra = {}) {
     AI_BASE_URL: "https://api.example-provider.com/v1",
     AI_MODEL: "example-model",
     ALLOWED_ORIGINS: "https://c.zhixing.us.ci",
-    ADMIN_STORE: { idFromName: () => "settings-v1", get: () => stub },
     ...extra
   };
+  const durableObject = new AdminSettingsStore({ storage }, env);
+  const stub = { fetch: request => durableObject.fetch(request) };
+  env.ADMIN_STORE = { idFromName: () => "settings-v1", get: () => stub };
   return { env, storage, durableObject };
 }
 
