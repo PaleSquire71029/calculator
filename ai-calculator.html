@@ -4292,6 +4292,15 @@ function zxFnAdvance(f,xValue,rangeText){
 .zx-ai-result-status[data-state="error"]{color:#ffaaa2}
 .zx-ai-result-body{margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;color:#e1e5e9;font:13px/1.9 var(--zx-font,"Noto Sans SC",system-ui,sans-serif)}
 .zx-ai-result-body{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;white-space:normal}
+/* ChatGPT 风格的流式文字显现：文字逐段向前流动，而非整块淡入 */
+.zx-ai-answer-section-content{white-space:pre-wrap}
+.zx-ai-stream-caret{display:inline-block;width:2px;height:1.05em;margin-left:2px;vertical-align:-.13em;background:#e4c783;border-radius:2px;animation:zx-ai-caret-blink .72s steps(2,end) infinite}
+.zx-ai-answer-section[data-streaming="true"]{border-color:rgba(216,184,120,.22)}
+.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-title:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,rgba(216,184,120,.45),transparent);background-size:200% 100%;animation:zx-ai-flow-line 1.4s linear infinite}
+@keyframes zx-ai-caret-blink{0%,48%{opacity:1}49%,100%{opacity:0}}
+@keyframes zx-ai-flow-line{from{background-position:100% 0}to{background-position:-100% 0}}
+@media(prefers-reduced-motion:reduce){.zx-ai-stream-caret,.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-title:after{animation:none!important}}
+
 .zx-ai-answer-section{min-width:0;padding:12px 13px;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:rgba(255,255,255,.025)}
 .zx-ai-answer-section[data-kind="result"]{border-color:rgba(216,184,120,.3);background:linear-gradient(135deg,rgba(216,184,120,.08),rgba(255,255,255,.018))}
 .zx-ai-answer-section-title{display:flex;align-items:center;gap:8px;margin:0 0 7px;color:#d8c18e;font-size:12px;font-weight:750;letter-spacing:.02em}
@@ -4485,13 +4494,14 @@ function zxFnAdvance(f,xValue,rangeText){
     }
     return useful;
   }
-  function renderStructuredAnswer(node,answer,viewId){
+  async function renderStructuredAnswer(node,answer,viewId){
     node.replaceChildren();
     const sections=splitAnswerSections(answer,viewId);
     let sectionsIndex=0;
-    sections.forEach(item=>{
+    for(const item of sections){
       const card=document.createElement('section');
       card.className='zx-ai-answer-section';
+      card.dataset.streaming='true';
       const kind=answerSectionKind(item.title);
       card.dataset.kind=kind;
       card.style.setProperty("--zx-ai-index",String(sectionsIndex++));
@@ -4501,10 +4511,24 @@ function zxFnAdvance(f,xValue,rangeText){
       title.textContent=item.title||'分析说明';
       const body=document.createElement('div');
       body.className='zx-ai-answer-section-content';
-      body.textContent=item.content||'—';
+      const text= item.content||'—';
+      const textNode=document.createTextNode('');
+      const caret=document.createElement('span');
+      caret.className='zx-ai-stream-caret';
+      caret.setAttribute('aria-hidden','true');
+      body.append(textNode,caret);
       card.append(title,body);
       node.append(card);
-    });
+      // 按字符流式显示，长回答自动加速，避免手机上等待太久。
+      const step=text.length>500?5:text.length>220?3:2;
+      const delay=text.length>500?7:text.length>220?12:18;
+      for(let i=0;i<text.length;i+=step){
+        textNode.appendData(text.slice(i,i+step));
+        await new Promise(resolve=>setTimeout(resolve,delay));
+      }
+      caret.remove();
+      delete card.dataset.streaming;
+    }
   }
   async function typesetAnswer(node){
     if(!node)return;
@@ -4540,7 +4564,7 @@ function zxFnAdvance(f,xValue,rangeText){
       if(typeof data.answer!=='string'||!data.answer.trim())throw new Error('AI 没有返回可显示的分析结果。');
       setStatus(panel,(action==='extend'?'AI 扩展完成':'AI 分析完成')+(data.model?' · '+data.model:''),false);
       delete panel.querySelector('[data-zx-ai-status]').dataset.loading;
-      renderStructuredAnswer(answerEl,data.answer,viewId);
+      await renderStructuredAnswer(answerEl,data.answer,viewId);
       answerEl.hidden=false;
       await typesetAnswer(answerEl);
       panel.querySelector('[data-zx-ai-proxy]').value=proxyValue();
