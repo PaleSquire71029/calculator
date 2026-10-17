@@ -133,10 +133,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
           <h2 class="panel-title">安全与备份</h2><p class="panel-desc">管理员口令、密钥、会话和配置备份的管理方式。</p>
           <div class="help-list">
             <div class="help-item"><span class="step">1</span><div><strong>设置管理密码</strong><p>打开 Cloudflare Dashboard → Workers & Pages → <b>zhixing-calculator-ai</b> → Settings → Variables and Secrets，添加 Secret <span class="code">ADMIN_PASSWORD</span>，值填写你自己设置的强密码。它不会保存在此网页或 GitHub。</p></div></div>
-            <div class="help-item"><span class="step">2</span><div><strong>后台数据持久化</strong><p>配置会存放在 Worker 专用的 Durable Object 私有存储中；后台接口要求有时效的签名会话，登录密码有失败次数限制。</p></div></div>
-            <div class="help-item"><span class="step">3</span><div><strong>密钥处理</strong><p>API Key 不会从后台读取并显示。留空表示不修改；点击“改用 Worker Secret”会切回原有 <span class="code">AI_API_KEY</span> Secret。</p></div></div>
+            <div class="help-item"><span class="step">2</span><div><strong>后台数据持久化</strong><p>配置与限流计数保存在 Worker 绑定的 Durable Object 中；管理 API 使用限时签名会话，登录、AI 调用和模型连接测试都有持久化请求限制。</p></div></div>
+            <div class="help-item"><span class="step">3</span><div><strong>密钥处理</strong><p>自定义 API Key 通过 AES-GCM 加密保存在后台，管理接口不回传明文。建议在 Cloudflare Worker Secrets 中配置独立的 <span class="code">ADMIN_ENCRYPTION_KEY</span>；留空表示不修改，点击“改用 Worker Secret”则切回 <span class="code">AI_API_KEY</span>。</p></div></div>
             <div class="help-item"><span class="step">4</span><div><strong>导出 / 导入配置</strong><p>备份包含模型地址、参数和提示词，不包含 API Key 和管理密码。备份文件仍可能包含你的自定义提示词，请妥善保存。</p></div></div>
-            <div class="help-item"><span class="step">5</span><div><strong>安全边界</strong><p>请勿将管理密码发给他人。若 Worker 曾被公开分享过、密钥泄露或发现异常用量，应立即在供应商处轮换 API Key，并在 Cloudflare 中更换管理密码。</p></div></div>
+            <div class="help-item"><span class="step">5</span><div><strong>安全边界</strong><p>用户提问和图片会发送至当前配置的第三方模型服务商，服务商可能按其政策处理请求；项目统计不保存题目正文不代表第三方绝不留存。不要提交密码或不必要的个人隐私。发现异常用量时请立即撤销/轮换 API Key，并更换相关管理密钥。</p></div></div>
           </div>
           <div class="section-card" style="margin-top:16px">
             <div class="subhead" style="margin-top:0">配置文件</div>
