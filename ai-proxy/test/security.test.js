@@ -189,7 +189,7 @@ test("caps streamed AI analysis output and sends a parseable error event", async
     assert.equal(response.status, 200);
     const streamText = await response.text();
     assert.match(streamText, /模型流式输出超过 4 MB 安全上限/);
-    assert.match(streamText, /data: \\[DONE\\]/);
+    assert.ok(streamText.includes("data: [DONE]"));
   } finally {
     globalThis.fetch = originalFetch;
   }
