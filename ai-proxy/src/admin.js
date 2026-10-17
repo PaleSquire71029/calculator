@@ -89,8 +89,8 @@ export function normalizeApiBaseUrl(value) {
     throw new Error("API 地址必须使用 HTTPS，且不能包含账号密码");
   }
   if (url.port) throw new Error("API 地址暂不允许自定义端口，请使用标准 HTTPS 端口");
-  const host = url.hostname.toLowerCase().replace(/^\\[|\\]$/g, "").replace(/\\.$/, "");
-  const isIPv4 = /^(?:\\d{1,3}\\.){3}\\d{1,3}$/.test(host);
+  const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "").replace(/\.$/, "");
+  const isIPv4 = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(host);
   const isIPv6 = host.includes(":");
   if (isIPv4 || isIPv6 || !host.includes(".")) {
     throw new Error("API 地址必须使用公开的 HTTPS 域名，不接受 IP 地址或单段主机名");
@@ -102,15 +102,15 @@ export function normalizeApiBaseUrl(value) {
   if (host === "localhost" || blockedSuffixes.some(suffix => host.endsWith(suffix))) {
     throw new Error("API 地址不能指向本机或内网域名");
   }
-  url.pathname = url.pathname.replace(/\\/+(chat\\/completions|models)\\/?$/i, "").replace(/\\/+$/, "") || "/";
+  url.pathname = url.pathname.replace(/\/+(chat\/completions|models)\/?$/i, "").replace(/\/+$/, "") || "/";
   url.search = "";
   url.hash = "";
-  return url.toString().replace(/\\/$/, "");
+  return url.toString().replace(/\/$/, "");
 }
 
 export async function readResponseTextLimited(response, maxBytes = 2 * 1024 * 1024) {
   const declaredLength = response.headers.get("Content-Length");
-  if (declaredLength && /^\\d+$/.test(declaredLength) && Number(declaredLength) > maxBytes) {
+  if (declaredLength && /^\d+$/.test(declaredLength) && Number(declaredLength) > maxBytes) {
     try { await response.body?.cancel(); } catch {}
     return { error: "上游响应体过大" };
   }
