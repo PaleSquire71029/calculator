@@ -197,6 +197,47 @@ test("caps streamed AI analysis output and sends a parseable error event", async
   }
 });
 
+test("re-wraps a key encrypted with the fallback secret when the preferred key is added", async () => {
+  const { env, storage } = fakeEnvironment({ ADMIN_ENCRYPTION_KEY: undefined });
+  const origin = "https://c.zhixing.us.ci";
+  const loginResponse = await worker.fetch(jsonRequest(
+    "https://worker.test/admin/login",
+    { password: env.ADMIN_PASSWORD },
+    { Origin: origin, "CF-Connecting-IP": "203.0.113.17" }
+  ), env);
+  const { token } = await loginResponse.json();
+  const customKey = "sk-rotating-key-that-stays-encrypted";
+  const saveResponse = await worker.fetch(new Request("https://worker.test/admin/settings", {
+    method: "PUT",
+    headers: {
+      Origin: origin,
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json",
+      "CF-Connecting-IP": "203.0.113.17"
+    },
+    body: JSON.stringify({
+      apiBaseUrl: "https://api.example-provider.com/v1",
+      model: "example-model",
+      apiKey: customKey,
+      temperature: 0.2,
+      maxTokens: 512
+    })
+  }), env);
+  assert.equal(saveResponse.status, 200);
+  const encryptedWithFallback = (await storage.get("adminData")).settings.apiKey;
+
+  env.ADMIN_ENCRYPTION_KEY = "new-independent-key-after-upgrade";
+  const getResponse = await worker.fetch(new Request("https://worker.test/admin/settings", {
+    method: "GET",
+    headers: { Origin: origin, Authorization: "Bearer " + token }
+  }), env);
+  assert.equal(getResponse.status, 200);
+  const encryptedWithPreferredKey = (await storage.get("adminData")).settings.apiKey;
+  assert.match(encryptedWithPreferredKey, /^enc:v1:/);
+  assert.notEqual(encryptedWithPreferredKey, encryptedWithFallback);
+  assert.equal(encryptedWithPreferredKey.includes(customKey), false);
+});
+
 test("migrates a legacy plaintext custom API key during a normal config read", async () => {
   const { env, storage } = fakeEnvironment();
   const legacyKey = "sk-legacy-key-that-was-previously-plaintext";
