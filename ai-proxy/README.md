@@ -49,6 +49,7 @@ Worker 使用一个 SQLite-backed Durable Object 保存后台配置与调用统�
 - `ADMIN_PASSWORD`、`ADMIN_SESSION_SECRET`、`ADMIN_ENCRYPTION_KEY` 和 `AI_API_KEY` 应配置为 Cloudflare Worker Secrets；不要写进 `wrangler.toml`、网页、仓库或备份。
 - 管理接口使用允许来源校验、HMAC 签名的 Bearer 会话和到期检查；管理会话约 4 小时有效，并绑定到管理页当前 Worker 地址，地址切换后须重新登录。
 - API Key 不会通过管理 API 回传到浏览器；自定义 Key 使用 AES-GCM 加密后保存在 Durable Object，优先使用 `ADMIN_ENCRYPTION_KEY`。为兼容旧部署，缺少该 Secret 时会回退到 `ADMIN_SESSION_SECRET` 或 `ADMIN_PASSWORD`，因此强烈建议配置独立加密密钥。
+- **密钥轮换顺序：**如果之前未设置独立的 `ADMIN_ENCRYPTION_KEY`，先添加该 Secret，再登录管理页刷新一次，让系统迁移现有密钥；在确认 AI 仍可正常连接前，不要删除或更改原有的 `ADMIN_SESSION_SECRET` / `ADMIN_PASSWORD`。
 - 登录失败限制、普通 AI 请求限制、健康检查和上游模型测试/列表限制使用 Durable Object 持久计数；如果限流存储不可用或没有绑定 `ADMIN_STORE`，请求会失败关闭而不是跳过限流。
 - 调用统计只记录时间、场景、模型、HTTP 状态、成功/失败和可用的 Token 用量；最近记录最多 20 条。流式供应商若不回传 Token 用量，统计可能不完整。
 - 不要将管理密码、会话令牌、API Key、学生身份信息或其他敏感内容放进公开 Issue、日志、截图或测试问题中。
