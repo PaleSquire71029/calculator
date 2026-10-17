@@ -6,6 +6,7 @@ on:
       - "ai-proxy/**"
       - "ai.html"
       - "ai-calculator.html"
+      - "ai-admin.html"
       - ".github/workflows/ai-proxy-tests.yml"
   pull_request:
     paths:
