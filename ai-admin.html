@@ -56,7 +56,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
   <main id="app" hidden>
     <div class="hero">
       <div><div class="eyebrow">WORKSPACE / AI SERVICE</div><h1 class="h1">后端控制台</h1><p class="lead">一个地方管理 AI 提供商、提示词与运行状况。配置保存在 Worker 的私有持久存储中。</p></div>
-      <div class="row" style="flex:0 1 auto;align-items:center"><span class="pill"><span class="dot"></span><span id="servicePill">已验证会话</span></span><button id="logout" class="btn small" type="button">退出登录</button></div>
+      <div class="row" style="flex:0 1 auto;align-items:center"><span class="pill"><span class="dot"></span><span id="servicePill">已验证会话</span></span><button class="btn small" id="quickSave" type="button">保存</button><button class="btn small" id="quickBackup" type="button">备份</button><button id="logout" class="btn small" type="button">退出</button></div>
     </div>
     <div class="layout">
       <aside class="glass sidebar" aria-label="管理导航">
@@ -94,13 +94,15 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
           <h2 class="panel-title">模型与 API</h2><p class="panel-desc">兼容 OpenAI API 形式的服务商通常可通过 <span class="code">/models</span> 自动获取模型列表。若供应商不支持，仍可手动输入模型 ID。</p>
           <div class="section-card">
             <div class="kv">
+              <div class="field wide"><label for="providerPreset">服务商快捷预设</label><select id="providerPreset"><option value="custom">自定义 / 不修改地址</option><option value="openai">OpenAI 兼容 · OpenAI</option><option value="deepseek">DeepSeek</option><option value="siliconflow">SiliconFlow</option><option value="modelscope">ModelScope API</option></select><div class="hint">预设只填写常见 API 根地址，不会自动替你更换密钥或模型；选择后请核对服务商文档。</div></div>
               <div class="field wide"><label for="apiBaseUrl">API 根地址</label><input id="apiBaseUrl" type="url" placeholder="https://api.example.com/v1" autocomplete="url" required><div class="hint">填写根地址，不要加 /chat/completions。仅允许 HTTPS。</div></div>
               <div class="field wide"><label for="apiKey">API Key <span style="font-weight:400;color:#8792a4">（不回显）</span></label><input id="apiKey" type="password" autocomplete="new-password" placeholder="留空表示不修改已保存的密钥" spellcheck="false"><div id="keyState" class="key-state missing">读取密钥状态中…</div><div class="hint">新密钥只会发送至 Worker 后端；保存后会清空输入框。不要将密钥分享给任何人。</div></div>
               <div class="field wide"><label for="model">模型名称 / Model ID</label><div class="row"><input style="flex:1.6" id="model" list="modelOptions" placeholder="例如 gpt-6-luna" required><datalist id="modelOptions"></datalist><button class="btn" id="fetchModels" type="button">↻ 获取模型列表</button></div><div id="modelsStatus" class="hint">可直接输入模型 ID，也可以自动获取。</div></div>
               <div class="field"><label for="temperature">Temperature：<span id="tempValue">0.2</span></label><input id="temperature" type="range" min="0" max="2" step="0.1" value="0.2"><div class="hint">越低越稳定；越高回答变化通常越大。</div></div>
               <div class="field"><label for="maxTokens">最大输出 Token</label><input id="maxTokens" type="number" min="0" max="32768" step="1" value="0"><div class="hint">0 表示不额外指定，交由供应商决定。</div></div>
             </div>
-            <div class="actions"><button class="btn primary" id="saveSettings" type="button">保存配置</button><button class="btn" id="testConnection" type="button">测试连接</button><button class="btn danger" id="useWorkerKey" type="button">改用 Worker Secret</button></div>
+            <div class="actions"><button class="btn primary" id="saveSettings" type="button">保存配置</button><button class="btn primary" id="saveAndTest" type="button">保存并测试</button><button class="btn" id="testConnection" type="button">仅测试当前输入</button><button class="btn danger" id="useWorkerKey" type="button">改用 Worker Secret</button></div>
+            <div class="status" id="draftStatus" role="status">配置修改后请保存；测试连接不会自动保存。</div>
             <div class="status" id="providerStatus" role="status" aria-live="polite"></div>
           </div>
           <div class="section-card" style="margin-top:15px"><div class="subhead" style="margin-top:0">配置说明</div><p class="lead" style="font-size:12px">修改 API 地址、密钥或模型后，请保存配置。模型列表由当前供应商 API 返回，列表为空或报错时，可手动填入该供应商文档中提供的模型 ID。</p></div>
@@ -117,16 +119,17 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
               <button class="btn" id="restorePrompt" type="button">恢复默认</button>
             </div>
             <div class="field" style="margin-top:14px"><label for="promptText">系统提示词</label><textarea id="promptText" rows="15" spellcheck="false" placeholder="在这里编写模型角色、回答规则、输出格式与安全约束…"></textarea><div class="prompt-meta"><span id="promptHint">提示词会应用于所选场景。</span><span id="promptCount" class="counter">0 字符</span></div></div>
-            <div class="prompt-toolbar"><span class="hint">可使用中文自然语言。建议明确角色、任务、边界和输出格式。</span><div class="actions" style="margin-top:0"><button class="btn" id="discardPrompt" type="button">撤销本次编辑</button><button class="btn primary" id="savePrompts" type="button">保存全部提示词</button></div></div>
+            <div class="prompt-toolbar"><span class="hint">可使用中文自然语言。建议明确角色、任务、边界和输出格式。</span><div class="actions" style="margin-top:0"><button class="btn" id="exportPrompt" type="button">导出当前提示词</button><button class="btn" id="importPromptBtn" type="button">导入当前提示词</button><input id="promptFile" type="file" accept="text/plain,.txt,.md" hidden><button class="btn" id="discardPrompt" type="button">撤销本次编辑</button><button class="btn primary" id="savePrompts" type="button">保存全部提示词</button></div></div>
             <div class="status" id="promptStatus" role="status" aria-live="polite"></div>
           </div>
         </section>
 
         <section class="glass panel" data-panel="records">
           <h2 class="panel-title">调用记录</h2><p class="panel-desc">仅保存请求时间、题型、模型、HTTP 状态和成功/失败状态，不记录用户题目正文或 API Key。</p>
-          <div class="actions" style="margin-top:0;margin-bottom:14px"><button class="btn" id="refreshRecords" type="button">刷新记录</button><button class="btn" id="exportRecords" type="button">导出配置备份</button></div>
+          <div class="row" style="align-items:center;margin-bottom:12px"><div class="field"><label for="recordSearch">搜索记录</label><input id="recordSearch" type="search" placeholder="按模型、场景或 HTTP 状态搜索"></div><div class="field" style="max-width:180px"><label for="recordFilter">请求状态</label><select id="recordFilter"><option value="all">全部状态</option><option value="ok">仅成功</option><option value="fail">仅失败</option></select></div></div>
+          <div class="actions" style="margin-top:0;margin-bottom:14px"><button class="btn" id="refreshRecords" type="button">刷新记录</button><button class="btn" id="exportRecords" type="button">导出调用记录 CSV</button><button class="btn danger" id="resetStats" type="button">重置统计</button></div>
           <div class="table-wrap"><table><thead><tr><th>时间</th><th>场景</th><th>模型</th><th>状态</th><th>HTTP</th></tr></thead><tbody id="recentRows"><tr><td colspan="5">加载中…</td></tr></tbody></table></div>
-          <div class="status" id="recordsStatus" role="status"></div>
+          <div class="hint" id="recordCount" style="margin-top:10px">显示最近调用记录</div><div class="status" id="recordsStatus" role="status"></div>
         </section>
 
         <section class="glass panel" data-panel="security">
@@ -139,7 +142,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
             <div class="help-item"><span class="step">5</span><div><strong>安全边界</strong><p>用户提问和图片会发送至当前配置的第三方模型服务商，服务商可能按其政策处理请求；项目统计不保存题目正文不代表第三方绝不留存。不要提交密码或不必要的个人隐私。发现异常用量时请立即撤销/轮换 API Key，并更换相关管理密钥。</p></div></div>
           </div>
           <div class="section-card" style="margin-top:16px">
-            <div class="subhead" style="margin-top:0">配置文件</div>
+            <div class="subhead" style="margin-top:0">配置文件与维护</div>
+            <p class="hint">备份文件不含 API Key。重置统计仅清除累计计数与最近 20 条记录，不会删除模型配置或提示词。</p>
             <div class="actions" style="margin-top:0"><button class="btn primary" id="exportConfig" type="button">导出备份（不含密钥）</button><button class="btn" id="importConfigBtn" type="button">导入备份</button><input id="importFile" type="file" accept="application/json,.json" hidden></div>
             <div class="status" id="backupStatus" role="status"></div>
           </div>
