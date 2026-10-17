@@ -183,7 +183,7 @@ async function createToken(env) {
 }
 async function verifyToken(request, env) {
   const match = (request.headers.get("Authorization") || "").match(/^Bearer\s+([A-Za-z0-9_.-]+)$/i);
-  if (!match || !env.ADMIN_PASSWORD) return false;
+  if (!match || match[1].length > 2048 || !env.ADMIN_PASSWORD) return false;
   const parts = match[1].split(".");
   if (parts.length !== 2) return false;
   try {
@@ -206,7 +206,9 @@ export class AdminSettingsStore {
           !Number.isInteger(windowMs) || windowMs < 1000 || windowMs > 86400000) {
         return json({ error: "Invalid rate limit parameters" }, 400);
       }
-      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
+      // Keyed digest keeps client IPs from being trivially recovered from stored rate-limit keys.
+      const rateSecret = String(this.env?.ADMIN_ENCRYPTION_KEY || this.env?.ADMIN_SESSION_SECRET || this.env?.ADMIN_PASSWORD || "");
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(rateSecret + "\0" + key));
       const storageKey = "rl:" + encodeBase64Url(new Uint8Array(digest));
       const now = Date.now();
       const bucket = await this.state.storage.transaction(async txn => {
