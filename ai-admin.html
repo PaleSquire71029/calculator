@@ -20,7 +20,14 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .hero{display:flex;justify-content:space-between;gap:20px;align-items:end;margin:6px 0 23px;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;gap:7px;background:#e9f8f0;color:#237650;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:720}.dot{width:6px;height:6px;border-radius:50%;background:#38aa75;box-shadow:0 0 0 4px #38aa7518}
 .layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:20px;align-items:start}.sidebar{position:sticky;top:14px;padding:12px}.navbtn{width:100%;display:flex;align-items:center;gap:10px;padding:12px;border:0;border-radius:12px;background:transparent;color:#68758b;text-align:left;font-weight:670;margin:2px 0}.navbtn .ni{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:#f0f3f9;color:#7383a2}.navbtn.active{background:#eaf0ff;color:#3458c1}.navbtn.active .ni{background:#d7e2ff;color:#365dc9}.sidebar-foot{margin:16px 5px 4px;padding-top:13px;border-top:1px solid var(--line);font-size:11px;color:#8a94a6}
 .panel{display:none;min-width:0;padding:clamp(17px,3vw,26px)}.panel.active{display:block;animation:panel-in .26s ease both}@keyframes panel-in{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}.panel-title{margin:0 0 4px;font-size:19px;letter-spacing:-.025em}.panel-desc{margin:0 0 23px;color:var(--muted);font-size:12px}.subhead{display:flex;align-items:center;gap:10px;margin:22px 0 13px;font-size:13px;font-weight:780}.subhead:before{content:"";width:4px;height:15px;border-radius:4px;background:linear-gradient(#6282e9,#a7bafa)}
-.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 22px}.metric{padding:16px;border:1px solid #e7ebf3;background:rgba(255,255,255,.7);border-radius:15px;min-width:0}.metric .m-label{font-size:11px;color:var(--muted)}.metric strong{display:block;font-size:clamp(20px,3vw,29px);line-height:1.25;margin-top:7px;letter-spacing:-.035em;overflow-wrap:anywhere}.metric small{display:block;color:#8993a5;font-size:10px;margin-top:4px}.section-card{padding:17px;border:1px solid #e4e9f1;background:rgba(255,255,255,.53);border-radius:16px}.status{margin-top:13px;border-radius:11px;padding:10px 12px;background:#f0f4fc;color:#61708a;font-size:12px;overflow-wrap:anywhere}.status.success{background:#e9f8f0;color:#27734f}.status.error{background:#fff0f0;color:#ad4141}.status:empty{display:none}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 22px}.metric{padding:16px;border:1px solid #e7ebf3;background:rgba(255,255,255,.7);border-radius:15px;min-width:0}.metric .m-label{font-size:11px;color:var(--muted)}.metric strong{display:block;font-size:clamp(20px,3vw,29px);line-height:1.25;margin-top:7px;letter-spacing:-.035em;overflow-wrap:anywhere}.metric small{display:block;color:#8993a5;font-size:10px;margin-top:4px}.section-card{padding:17px;border:1px solid #e4e9f1;background:rgba(255,255,255,.53);border-radius:16px}.status{margin-top:13px;border-radius:11px;padding:10px 12px;background:#f0f4fc;color:#61708a;font-size:12px;overflow-wrap:anywhere}.status.success{background:#e9f8f0;color:#27734f}.status.error{background:#fff0f0;color:#ad4141}.status.warn{background:#fff7e8;color:#8a6425}.status:empty{display:none}
+.btn:focus-visible,.navbtn:focus-visible{outline:3px solid #9bb5ff;outline-offset:2px}
+.btn:active{transform:translateY(0) scale(.985)}
+.metric{transition:transform .18s,border-color .18s,box-shadow .18s}
+.metric:hover{transform:translateY(-2px);border-color:#cbd8fb;box-shadow:0 10px 26px #526fbd10}
+.section-card{transition:border-color .18s}
+.navbtn{transition:background .16s,color .16s}
+@media(max-width:520px){.top-right{gap:5px}.top-right .btn{padding:7px 9px}.hero .row{width:100%;flex-wrap:wrap}.hero .row .btn{flex:1}}
 .kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.wide{grid-column:1/-1}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}.key-state{display:flex;gap:8px;align-items:center;border-radius:10px;background:#f0f8f4;padding:9px 11px;font-size:12px;color:#3d7c60}.key-state.missing{background:#fff5e5;color:#8b6729}
 .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:13px}table{border-collapse:collapse;width:100%;font-size:12px;min-width:510px}th,td{padding:10px 12px;border-bottom:1px solid #e9edf4;text-align:left;white-space:nowrap}th{background:#f6f8fc;color:#7a879b;font-size:10px;font-weight:750}tbody tr:last-child td{border-bottom:0}.badge{display:inline-block;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:750}.badge.ok{background:#e7f7ed;color:#287a52}.badge.fail{background:#fff0f0;color:#b43e3e}
 .prompt-selects{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}.prompt-meta{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:7px;color:#8993a5;font-size:11px}.prompt-toolbar{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap;margin-top:14px}.counter{font-variant-numeric:tabular-nums}
@@ -119,7 +126,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
               <button class="btn" id="restorePrompt" type="button">恢复默认</button>
             </div>
             <div class="field" style="margin-top:14px"><label for="promptText">系统提示词</label><textarea id="promptText" rows="15" spellcheck="false" placeholder="在这里编写模型角色、回答规则、输出格式与安全约束…"></textarea><div class="prompt-meta"><span id="promptHint">提示词会应用于所选场景。</span><span id="promptCount" class="counter">0 字符</span></div></div>
-            <div class="prompt-toolbar"><span class="hint">可使用中文自然语言。建议明确角色、任务、边界和输出格式。</span><div class="actions" style="margin-top:0"><button class="btn" id="exportPrompt" type="button">导出当前提示词</button><button class="btn" id="importPromptBtn" type="button">导入当前提示词</button><input id="promptFile" type="file" accept="text/plain,.txt,.md" hidden><button class="btn" id="discardPrompt" type="button">撤销本次编辑</button><button class="btn primary" id="savePrompts" type="button">保存全部提示词</button></div></div>
+            <div class="prompt-toolbar"><span class="hint">可使用中文自然语言。建议明确角色、任务、边界和输出格式。</span><div class="actions" style="margin-top:0"><button class="btn" id="exportPrompt" type="button">导出当前提示词</button><button class="btn" id="importPromptBtn" type="button">导入文件</button><button class="btn" id="restorePromptDraft" type="button">恢复本地草稿</button><input id="promptFile" type="file" accept="text/plain,.txt,.md" hidden><button class="btn" id="discardPrompt" type="button">撤销本次编辑</button><button class="btn primary" id="savePrompts" type="button">保存全部提示词</button></div></div>
             <div class="status" id="promptStatus" role="status" aria-live="polite"></div>
           </div>
         </section>
@@ -350,7 +357,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
   $("temperature").addEventListener("input", () => $("tempValue").textContent = Number($("temperature").value).toFixed(1));
   function markSettingsDirty() {
     settingsDirty = true;
-    status("draftStatus", "有未保存的配置修改。请保存，或使用“刷新数据”丢弃修改。", "error");
+    status("draftStatus", "有未保存的配置修改。请保存，或使用“刷新数据”丢弃修改。", "warn");
   }
   ["apiBaseUrl","model","temperature","maxTokens","apiKey"].forEach(id => $(id).addEventListener("input", markSettingsDirty));
   $("providerPreset").addEventListener("change", () => {
@@ -377,10 +384,15 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     const [group, name] = key.split(":");
     return data[group]?.[name] || "";
   }
+  const PROMPT_DRAFT_PREFIX = "zx-ai-prompt-draft-v1:";
+  function hasPromptDraft(scope=$("promptScope").value) {
+    try { return localStorage.getItem(PROMPT_DRAFT_PREFIX + scope) !== null; } catch { return false; }
+  }
   function renderPromptEditor(resetDirty=false) {
     if (resetDirty) dirtyPrompt = false;
     activePromptScope = $("promptScope").value;
     $("promptText").value = readPrompt(activePromptScope, settings?.prompts);
+    $("restorePromptDraft").disabled = !hasPromptDraft(activePromptScope);
     updatePromptCount();
     status("promptStatus", "");
   }
@@ -391,7 +403,22 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     }
     dirtyPrompt = false; renderPromptEditor();
   });
-  $("promptText").addEventListener("input", () => { dirtyPrompt = true; updatePromptCount(); });
+  $("promptText").addEventListener("input", () => {
+    dirtyPrompt = true;
+    updatePromptCount();
+    try { localStorage.setItem(PROMPT_DRAFT_PREFIX + $("promptScope").value, $("promptText").value); } catch {}
+    $("restorePromptDraft").disabled = false;
+  });
+  $("restorePromptDraft").addEventListener("click", () => {
+    try {
+      const draft = localStorage.getItem(PROMPT_DRAFT_PREFIX + $("promptScope").value);
+      if (draft === null) { showToast("没有找到当前栏目的本地草稿"); return; }
+      if (!confirm("用浏览器本地草稿覆盖当前编辑框？覆盖后仍需保存到后端才会生效。")) return;
+      $("promptText").value = draft;
+      dirtyPrompt = true; updatePromptCount();
+      status("promptStatus", "已恢复本地草稿；请点击保存后应用。", "success");
+    } catch { status("promptStatus", "无法读取本地草稿。", "error"); }
+  });
   function updatePromptCount() { $("promptCount").textContent = $("promptText").value.length.toLocaleString() + " 字符"; }
   $("restorePrompt").addEventListener("click", () => {
     if (!defaults) return;
@@ -416,6 +443,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     settings = result.settings;
     $("apiKey").value = "";
     dirtyPrompt = false;
+    try { localStorage.removeItem(PROMPT_DRAFT_PREFIX + $("promptScope").value); } catch {}
     populateSettings(); renderStats(); renderPromptEditor(true);
     settingsDirty = false;
     status("draftStatus", "配置已保存到 Worker。", "success");
