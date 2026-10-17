@@ -1,7 +1,6 @@
 const ADMIN_SESSION_TTL_MS = 4 * 60 * 60 * 1000;
 const ADMIN_LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const ADMIN_LOGIN_MAX_ATTEMPTS = 8;
-const LOCAL_RATE_BUCKETS = new Map();
 const ENCRYPTED_KEY_PREFIX = "enc:v1:";
 
 export async function readJsonLimited(request, maxBytes = 256 * 1024) {
@@ -326,33 +325,22 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
   }
 
   async function checkRateLimit(env, key, limit, windowMs) {
-    if (env.ADMIN_STORE) {
-      try {
-        const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
-        const response = await stub.fetch("https://admin-store.internal/rate-limit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key, limit, windowMs })
-        });
-        if (!response.ok) return { allowed: false, unavailable: true, retryAfter: 60 };
-        return await response.json();
-      } catch {
-        return { allowed: false, unavailable: true, retryAfter: 60 };
-      }
+    // Never silently fall back to isolate-local counters: production abuse controls must fail closed.
+    if (!env.ADMIN_STORE) return { allowed: false, unavailable: true, retryAfter: 60 };
+    try {
+      const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+      const response = await stub.fetch("https://admin-store.internal/rate-limit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, limit, windowMs })
+      });
+      if (!response.ok) return { allowed: false, unavailable: true, retryAfter: 60 };
+      const result = await response.json();
+      if (typeof result.allowed !== "boolean") return { allowed: false, unavailable: true, retryAfter: 60 };
+      return result;
+    } catch {
+      return { allowed: false, unavailable: true, retryAfter: 60 };
     }
-    // Development fallback only: local maps can reset or differ between isolates.
-    const now = Date.now();
-    const previous = LOCAL_RATE_BUCKETS.get(key);
-    let entry = previous;
-    if (!entry || now < entry.start || now - entry.start >= windowMs) entry = { start: now, count: 0 };
-    entry.count += 1;
-    LOCAL_RATE_BUCKETS.set(key, entry);
-    if (LOCAL_RATE_BUCKETS.size > 5000) {
-      for (const [bucketKey, bucket] of LOCAL_RATE_BUCKETS) {
-        if (now < bucket.start || now - bucket.start >= windowMs) LOCAL_RATE_BUCKETS.delete(bucketKey);
-      }
-    }
-    return { allowed: entry.count <= limit, retryAfter: Math.max(1, Math.ceil((entry.start + windowMs - now) / 1000)) };
   }
   async function recordRequest(env, event) {
     try {
