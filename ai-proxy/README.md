@@ -1,34 +1,49 @@
-# 知行计算器 AI 后端代理
+# 知行计算器 AI 后端代理与管理中心
 
-此目录部署到 Cloudflare Workers。前端不会接触模型 API 密钥，密钥必须在 Worker 的 Secret 中设置。
+此目录部署到 Cloudflare Workers。模型 API Key 不会返回给网页；管理员通过有时效的签名会话访问受保护的管理 API。
 
-## 1. 创建/部署 Worker
+## 1. 首次部署
 
-在本目录执行：
+Worker 使用一个 SQLite-backed Durable Object 保存后台配置与调用统计，Wrangler 会通过 `v1` migration 自动创建存储命名空间，不需要手动创建 KV。
 
-```bash
-npx wrangler login
-npx wrangler deploy
-npx wrangler secret put AI_API_KEY
-```
+在 Cloudflare Dashboard 中打开：
 
-按提示粘贴你所选模型供应商的 API Key。不要把密钥写进 `wrangler.toml`、前端文件或 GitHub。
+`Workers & Pages → zhixing-calculator-ai → Settings → Variables and Secrets`
 
-默认配置使用 DeepSeek 的 OpenAI 兼容接口。可在 Cloudflare Dashboard → Worker → Settings → Variables and Secrets 中修改：
-- `AI_BASE_URL`：API 根地址，必须是 HTTPS，例如 `https://api.deepseek.com/v1`（不要加 `/chat/completions`）。
-- `AI_MODEL`：供应商实际提供的模型 ID。
-- `ALLOWED_ORIGINS`：允许访问的网页源，逗号分隔；必须与浏览器地址栏的 Origin 完全匹配。
+添加一个 **Secret**：
 
-其他兼容供应商也只需改 `AI_BASE_URL`、`AI_MODEL` 和 Secret `AI_API_KEY`。拍照识题要求模型支持图像输入。
+- `ADMIN_PASSWORD`：由你自己设定的管理密码。建议至少 16 位，并使用密码管理器保存。
 
-## 2. 在前端连接代理
+可选再添加一个独立 **Secret**：
 
-打开计算器的「AI 学习助手」页面，在「后端代理地址」填写部署后得到的 Worker 地址，例如 `https://zhixing-calculator-ai.<你的子域>.workers.dev`。前端会请求该地址下的 `/api/chat`。地址仅保存在当前浏览器标签页的会话中，不包含 API Key。
+- `ADMIN_SESSION_SECRET`：用于签名登录会话的随机长字符串。未设置时，系统会使用 `ADMIN_PASSWORD` 作为会话签名密钥。
 
-## 3. 安全说明
+保存后打开管理页面：
 
-- Worker 只接受配置的来源，限制请求体大小，拒绝不支持的图片格式，并提供每个运行实例的基础频率限制。
-- 内存频率限制不是全局配额控制。部署到公开网页前，建议在 Cloudflare Dashboard 为 `/api/chat` 配置正式的 Rate Limiting 规则，并监控模型费用。
-- CORS 不是身份验证；任何非浏览器客户端都可能伪造 Origin。请勿将该代理当作私有 API。
-- `AI_API_KEY` 必须使用 Cloudflare Secret；`.dev.vars`、`.env` 等本地密钥文件不要提交到 Git。
-- Worker 的 API Key 与 GitHub Pages 的静态文件完全分离。不要在前端添加供应商密钥输入框。
+`https://c.zhixing.us.ci/ai-admin.html`
+
+输入上述管理密码登录。没有配置 `ADMIN_PASSWORD` 时，后端会拒绝登录；密码绝不会被写入网页代码或 GitHub 仓库。
+
+## 2. 后端管理页面功能
+
+- **模型与 API**：编辑 OpenAI 兼容 API 根地址、API Key、模型 ID、Temperature 和最大输出 Token。
+- **自动获取模型列表**：使用当前 API 地址和密钥调用 `GET /models`，将可用模型显示为下拉候选；若服务商不实现该接口，可以直接手动填写模型 ID。
+- **连接测试**：发起一次短回复请求，返回 HTTP 错误、响应耗时与模型预览。
+- **提示词管理**：分别编辑 AI 学习助手通用聊天、数学、函数、化学，以及计算器各题型和分析/扩展动作提示词；保存后无需重新部署。
+- **统计与调用记录**：显示累计请求、失败次数、供应商返回的 Token 用量和最近 20 条元数据。不会存储用户题目正文。
+- **配置备份**：导出/导入 API 地址、模型参数和提示词；导出文件不包含密钥和管理密码。
+
+## 3. 模型 API 配置
+
+`AI_BASE_URL` 是 API 根地址，例如 `https://api.example.com/v1`，不要填写 `/chat/completions`。必须使用 HTTPS，且不能指向本机或内网地址。`AI_MODEL` 和 `AI_API_KEY` 的 Worker 原有变量/Secret 继续作为默认值；管理页面保存的配置优先使用。密钥输入框留空表示不修改现有密钥；“改用 Worker Secret”会清除后台保存的自定义 Key 并回退至 `AI_API_KEY`。
+
+模型列表通过 `GET /models` 获取，这是 OpenAI 兼容接口的常见行为，但部分服务商可能禁用该接口；此时可以手动输入模型 ID，使用“测试连接”确认权限。
+
+## 4. 安全说明
+
+- `ADMIN_PASSWORD` 必须作为 Cloudflare Worker Secret 配置，不要写进 `wrangler.toml`、网页或仓库。
+- 管理接口只允许 `ALLOWED_ORIGINS` 中的网页来源，并要求 HMAC 签名、约 4 小时有效的 Bearer 会话；登录失败次数受到限制。
+- API Key 不会通过管理 API 回传到浏览器；后台保存的密钥只在 Worker 内部读取。
+- 管理页不是靠隐藏网址来保密，安全性依赖 Worker Secret、签名验证、来源校验与 HTTPS。不要把管理密码分享给他人。
+- 使用量只记录时间、场景、模型、HTTP 状态和成功/失败结果。流式供应商若不回传 Token 用量，统计中的 Token 数可能不完整。
+- `AI_API_KEY` 仍建议保留在 Cloudflare Secret 中；不要在前端添加服务商密钥或将密钥放入导出备份。
