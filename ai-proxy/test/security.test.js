@@ -221,6 +221,26 @@ test("migrates a legacy plaintext custom API key during a normal config read", a
   assert.equal(migrated.settings.apiKey.includes(legacyKey), false);
 });
 
+test("fails closed when persistent rate-limit storage is not bound", async () => {
+  const response = await worker.fetch(new Request("https://worker.test/api/chat", {
+    method: "POST",
+    headers: {
+      Origin: "https://c.zhixing.us.ci",
+      "Content-Type": "application/json",
+      "CF-Connecting-IP": "198.51.100.46"
+    },
+    body: JSON.stringify({ mode: "general", messages: [{ role: "user", content: "test" }] })
+  }), {
+    ADMIN_PASSWORD: "unit-test-admin-password-at-least-16",
+    AI_API_KEY: "worker-test-key",
+    AI_BASE_URL: "https://api.example-provider.com/v1",
+    AI_MODEL: "example-model",
+    ALLOWED_ORIGINS: "https://c.zhixing.us.ci"
+  });
+  assert.equal(response.status, 503);
+  assert.match((await response.json()).error, /限流存储/);
+});
+
 test("API endpoint returns 400, not 500, for JSON null", async () => {
   const { env } = fakeEnvironment();
   const response = await worker.fetch(new Request("https://worker.test/api/chat", {
