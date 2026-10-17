@@ -10,6 +10,7 @@ const DEFAULT_ORIGINS = [
   "https://palesquire71029.github.io"
 ];
 const MAX_BODY_BYTES = 8 * 1024 * 1024;
+const MAX_STREAM_BYTES = 4 * 1024 * 1024;
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_REQUESTS = 12;
 
@@ -71,6 +72,35 @@ function json(data, status, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...headers }
+  });
+}
+function limitSseStream(body, maxBytes = MAX_STREAM_BYTES) {
+  const reader = body.getReader();
+  const encoder = new TextEncoder();
+  let totalBytes = 0;
+  return new ReadableStream({
+    async pull(controller) {
+      try {
+        const { done, value } = await reader.read();
+        if (done) { controller.close(); return; }
+        totalBytes += value.byteLength;
+        if (totalBytes > maxBytes) {
+          await reader.cancel().catch(() => {});
+          const message = {
+            error: { message: "模型流式输出超过 4 MB 安全上限，请在管理页设置较小的最大输出 Token 后重试。" }
+          };
+          controller.enqueue(encoder.encode("data: " + JSON.stringify(message) + "\n\ndata: [DONE]\n\n"));
+          controller.close();
+          return;
+        }
+        controller.enqueue(value);
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      await reader.cancel(reason).catch(() => {});
+    }
   });
 }
 function getAllowedOrigins(env) {
@@ -202,7 +232,7 @@ export default {
     const upstreamContentType = upstream.headers.get("Content-Type") || "";
     if (wantsStream && upstream.ok && upstream.body && upstreamContentType.includes("text/event-stream")) {
       await adminModule.recordRequest(env, { mode, ok: true, status: upstream.status, model: runtime.model });
-      return new Response(upstream.body, {
+      return new Response(limitSseStream(upstream.body), {
         status: 200,
         headers: {
           ...cors,
