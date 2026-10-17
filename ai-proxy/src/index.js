@@ -100,7 +100,7 @@ function limitSseStream(body, maxBytes = MAX_STREAM_BYTES, onFinish = () => {}) 
           const message = {
             error: { message: "模型流式输出超过 4 MB 安全上限，请在管理页设置较小的最大输出 Token 后重试。" }
           };
-          controller.enqueue(encoder.encode("data: " + JSON.stringify(message) + "\n\ndata: [DONE]\n\n"));
+          controller.enqueue(encoder.encode("\n\ndata: " + JSON.stringify(message) + "\n\ndata: [DONE]\n\n"));
           controller.close();
           return;
         }
