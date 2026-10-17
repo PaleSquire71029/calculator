@@ -361,6 +361,12 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
   async function handleRoute(request, env, url, cors) {
     const origin = request.headers.get("Origin") || "";
     if (!origin || !getAllowedOrigins(env).includes(origin)) return json({ error: "该网页来源未获授权" }, 403, cors);
+    if (!(url.pathname === "/admin/login" && request.method === "POST")) {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await checkRateLimit(env, "admin-auth:" + ip, 120, 60 * 1000);
+      if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return json({ error: "管理接口请求过于频繁，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
+    }
     if (url.pathname === "/admin/login" && request.method === "POST") {
       if (!env.ADMIN_PASSWORD) return json({ error: "尚未配置管理密码。请在 Cloudflare Worker → Settings → Variables and Secrets 中添加 Secret：ADMIN_PASSWORD。" }, 503, cors);
       const ip = request.headers.get("CF-Connecting-IP") || "unknown";
