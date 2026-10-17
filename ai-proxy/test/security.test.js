@@ -164,6 +164,37 @@ test("admin save encrypts custom API keys at rest and never returns the key", as
   assert.equal(JSON.stringify(publicSettings).includes(secret), false);
 });
 
+test("caps streamed AI analysis output and sends a parseable error event", async () => {
+  const { env } = fakeEnvironment({ AI_API_KEY: "worker-test-key" });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(new ReadableStream({
+    start(controller) {
+      controller.enqueue(new Uint8Array(4 * 1024 * 1024 + 1));
+      controller.close();
+    }
+  }), { status: 200, headers: { "Content-Type": "text/event-stream" } });
+
+  try {
+    const response = await worker.fetch(jsonRequest(
+      "https://worker.test/api/chat",
+      {
+        task: "analysis",
+        action: "analyze",
+        mode: "basic",
+        stream: true,
+        context: { title: "stream size test" }
+      },
+      { Origin: "https://c.zhixing.us.ci", "CF-Connecting-IP": "198.51.100.55" }
+    ), env);
+    assert.equal(response.status, 200);
+    const streamText = await response.text();
+    assert.match(streamText, /模型流式输出超过 4 MB 安全上限/);
+    assert.match(streamText, /data: \\[DONE\\]/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("migrates a legacy plaintext custom API key during a normal config read", async () => {
   const { env, storage } = fakeEnvironment();
   const legacyKey = "sk-legacy-key-that-was-previously-plaintext";
