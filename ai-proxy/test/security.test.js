@@ -271,7 +271,7 @@ test("rate-limits invalid admin tokens before repeated HMAC verification", async
       method: "GET",
       headers: {
         Origin: "https://c.zhixing.us.ci",
-        Authorization: "Bearer invalid-token",
+        Authorization: "Bearer eyJyb2xlIjoiYWRtaW4ifQ.invalid-signature",
         "CF-Connecting-IP": "198.51.100.91"
       }
     }), env);
