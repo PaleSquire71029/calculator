@@ -127,6 +127,18 @@ table{min-width:0}
 }
 @media(prefers-reduced-motion:reduce){.panel.active{animation:none}}
 
+
+/* Fix narrow action buttons: keep labels on normal horizontal lines. */
+.provider-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.provider-actions .btn{min-width:0;min-height:46px;padding:10px 12px;line-height:1.35;white-space:normal;word-break:keep-all;overflow-wrap:normal;text-align:center}
+@media(max-width:800px){
+  .provider-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .provider-actions .btn{padding:11px 9px;font-size:13px}
+}
+@media(max-width:360px){
+  .provider-actions .btn{font-size:12px;padding:10px 6px}
+}
+
 </style>
 </head>
 <body>
@@ -147,12 +159,12 @@ table{min-width:0}
       <button class="btn primary full" id="loginButton" type="submit">解锁管理中心 <span aria-hidden="true">→</span></button>
       <div class="status" id="loginStatus" role="status" aria-live="polite"></div>
     </form>
-    <div class="login-note">首次使用需在 Cloudflare Dashboard → Workers & Pages → <b>zhixing-calculator-ai</b> → Settings → Variables and Secrets 中添加 Secret：<span class="code">ADMIN_PASSWORD</span>。建议使用唯一的长密码，不要把密码写进网页或 GitHub。</div>
+    <div class="login-note">首次使用：在 Cloudflare Worker Secrets 中设置 <span class="code">ADMIN_PASSWORD</span>。</div>
   </section>
 
   <main id="app" hidden>
     <div class="hero">
-      <div><div class="eyebrow">WORKSPACE / AI SERVICE</div><h1 class="h1">后端控制台</h1><p class="lead">一个地方管理 AI 提供商、提示词与运行状况。配置保存在 Worker 的私有持久存储中。</p></div>
+      <div><div class="eyebrow">WORKSPACE / AI SERVICE</div><h1 class="h1">后端控制台</h1><p class="lead">管理模型、提示词与调用状态。</p></div>
       <div class="row hero-actions"><span class="pill"><span class="dot"></span><span id="servicePill">已验证会话</span></span><button class="btn small primary" id="quickSave" type="button">保存</button><button class="btn small" id="quickBackup" type="button">备份</button><button id="logout" class="btn small" type="button">退出</button></div>
     </div>
     <div class="layout">
@@ -167,7 +179,7 @@ table{min-width:0}
 
       <div class="content">
         <section class="glass panel active" data-panel="overview">
-          <h2 class="panel-title">服务状态</h2><p class="panel-desc">查看当前后端配置、调用趋势和最近请求结果。</p>
+          <h2 class="panel-title">服务状态</h2><p class="panel-desc">查看请求统计和当前连接。</p>
           <div class="metrics">
             <div class="metric"><div class="m-label">累计请求</div><strong id="statTotal">—</strong><small>自启用统计后累计</small></div>
             <div class="metric"><div class="m-label">失败请求</div><strong id="statFailed">—</strong><small>模型或网络失败</small></div>
@@ -189,25 +201,24 @@ table{min-width:0}
         </section>
 
         <section class="glass panel" data-panel="provider">
-          <h2 class="panel-title">模型与 API</h2><p class="panel-desc">兼容 OpenAI API 形式的服务商通常可通过 <span class="code">/models</span> 自动获取模型列表。若供应商不支持，仍可手动输入模型 ID。</p>
+          <h2 class="panel-title">模型与 API</h2><p class="panel-desc">配置连接信息，保存后测试。</p>
           <div class="section-card">
             <div class="kv">
-              <div class="field wide"><label for="providerPreset">服务商快捷预设</label><select id="providerPreset"><option value="custom">自定义 / 不修改地址</option><option value="openai">OpenAI 兼容 · OpenAI</option><option value="deepseek">DeepSeek</option><option value="siliconflow">SiliconFlow</option><option value="modelscope">ModelScope API</option></select><div class="hint">预设只填写常见 API 根地址，不会自动替你更换密钥或模型；选择后请核对服务商文档。</div></div>
-              <div class="field wide"><label for="apiBaseUrl">API 根地址</label><input id="apiBaseUrl" type="url" placeholder="https://api.example.com/v1" autocomplete="url" required><div class="hint">填写根地址，不要加 /chat/completions。仅允许 HTTPS。</div></div>
-              <div class="field wide"><label for="apiKey">API Key <span style="font-weight:400;color:#8792a4">（不回显）</span></label><input id="apiKey" type="password" autocomplete="new-password" placeholder="留空表示不修改已保存的密钥" spellcheck="false"><div id="keyState" class="key-state missing">读取密钥状态中…</div><div class="hint">新密钥只会发送至 Worker 后端；保存后会清空输入框。不要将密钥分享给任何人。</div></div>
+              <div class="field wide"><label for="providerPreset">服务商快捷预设</label><select id="providerPreset"><option value="custom">自定义 / 不修改地址</option><option value="openai">OpenAI 兼容 · OpenAI</option><option value="deepseek">DeepSeek</option><option value="siliconflow">SiliconFlow</option><option value="modelscope">ModelScope API</option></select><div class="hint">只填入地址，不会更换密钥或模型。</div></div>
+              <div class="field wide"><label for="apiBaseUrl">API 根地址</label><input id="apiBaseUrl" type="url" placeholder="https://api.example.com/v1" autocomplete="url" required><div class="hint">填写 HTTPS 根地址。</div></div>
+              <div class="field wide"><label for="apiKey">API Key <span style="font-weight:400;color:#8792a4">（不回显）</span></label><input id="apiKey" type="password" autocomplete="new-password" placeholder="留空表示不修改已保存的密钥" spellcheck="false"><div id="keyState" class="key-state missing">读取密钥状态中…</div><div class="hint">保存后输入框会清空；留空表示不修改。</div></div>
               <div class="field wide"><label for="model">模型名称 / Model ID</label><div class="row"><input style="flex:1.6" id="model" list="modelOptions" placeholder="例如 gpt-6-luna" required><datalist id="modelOptions"></datalist><button class="btn" id="fetchModels" type="button">↻ 获取模型列表</button></div><div id="modelsStatus" class="hint">可直接输入模型 ID，也可以自动获取。</div></div>
-              <div class="field"><label for="temperature">Temperature：<span id="tempValue">0.2</span></label><input id="temperature" type="range" min="0" max="2" step="0.1" value="0.2"><div class="hint">越低越稳定；越高回答变化通常越大。</div></div>
-              <div class="field"><label for="maxTokens">最大输出 Token</label><input id="maxTokens" type="number" min="0" max="32768" step="1" value="0"><div class="hint">0 表示不额外指定，交由供应商决定。</div></div>
+              <div class="field"><label for="temperature">Temperature：<span id="tempValue">0.2</span></label><input id="temperature" type="range" min="0" max="2" step="0.1" value="0.2"><div class="hint">越低越稳定。</div></div>
+              <div class="field"><label for="maxTokens">最大输出 Token</label><input id="maxTokens" type="number" min="0" max="32768" step="1" value="0"><div class="hint">0 = 使用服务商默认值。</div></div>
             </div>
-            <div class="actions"><button class="btn primary" id="saveSettings" type="button">保存配置</button><button class="btn primary" id="saveAndTest" type="button">保存并测试</button><button class="btn" id="testConnection" type="button">仅测试当前输入</button><button class="btn danger" id="useWorkerKey" type="button">改用 Worker Secret</button></div>
-            <div class="status" id="draftStatus" role="status">配置修改后请保存；测试连接不会自动保存。</div>
+            <div class="actions provider-actions"><button class="btn primary" id="saveSettings" type="button">保存配置</button><button class="btn primary" id="saveAndTest" type="button">保存并测试</button><button class="btn" id="testConnection" type="button">仅测试当前输入</button><button class="btn danger" id="useWorkerKey" type="button">改用 Worker Secret</button></div>
+            <div class="status" id="draftStatus" role="status">修改后记得保存。</div>
             <div class="status" id="providerStatus" role="status" aria-live="polite"></div>
           </div>
-          <div class="section-card" style="margin-top:15px"><div class="subhead" style="margin-top:0">配置说明</div><p class="lead" style="font-size:12px">修改 API 地址、密钥或模型后，请保存配置。模型列表由当前供应商 API 返回，列表为空或报错时，可手动填入该供应商文档中提供的模型 ID。</p></div>
         </section>
 
         <section class="glass panel" data-panel="prompts">
-          <h2 class="panel-title">提示词管理</h2><p class="panel-desc">按使用场景编辑系统提示词。提示词会保存在后端并用于后续请求，不需要重新部署网页。</p>
+          <h2 class="panel-title">提示词管理</h2><p class="panel-desc">编辑对应场景的提示词并保存。</p>
           <div class="section-card">
             <div class="prompt-selects">
               <div class="field"><label for="promptScope">编辑范围</label><select id="promptScope">
@@ -217,13 +228,13 @@ table{min-width:0}
               <button class="btn" id="restorePrompt" type="button">恢复默认</button>
             </div>
             <div class="field" style="margin-top:14px"><label for="promptText">系统提示词</label><textarea id="promptText" rows="15" spellcheck="false" placeholder="在这里编写模型角色、回答规则、输出格式与安全约束…"></textarea><div class="prompt-meta"><span id="promptHint">提示词会应用于所选场景。</span><span id="promptCount" class="counter">0 字符</span></div></div>
-            <div class="prompt-toolbar"><span class="hint">可使用中文自然语言。建议明确角色、任务、边界和输出格式。</span><div class="actions" style="margin-top:0"><button class="btn" id="exportPrompt" type="button">导出当前提示词</button><button class="btn" id="importPromptBtn" type="button">导入文件</button><button class="btn" id="restorePromptDraft" type="button">恢复本地草稿</button><input id="promptFile" type="file" accept="text/plain,.txt,.md" hidden><button class="btn" id="discardPrompt" type="button">撤销本次编辑</button><button class="btn primary" id="savePrompts" type="button">保存全部提示词</button></div></div>
+            <div class="prompt-toolbar"><span class="hint">选择场景，编辑后保存。</span><div class="actions" style="margin-top:0"><button class="btn" id="exportPrompt" type="button">导出当前提示词</button><button class="btn" id="importPromptBtn" type="button">导入文件</button><button class="btn" id="restorePromptDraft" type="button">恢复本地草稿</button><input id="promptFile" type="file" accept="text/plain,.txt,.md" hidden><button class="btn" id="discardPrompt" type="button">撤销本次编辑</button><button class="btn primary" id="savePrompts" type="button">保存全部提示词</button></div></div>
             <div class="status" id="promptStatus" role="status" aria-live="polite"></div>
           </div>
         </section>
 
         <section class="glass panel" data-panel="records">
-          <h2 class="panel-title">调用记录</h2><p class="panel-desc">仅保存请求时间、题型、模型、HTTP 状态和成功/失败状态，不记录用户题目正文或 API Key。</p>
+          <h2 class="panel-title">调用记录</h2><p class="panel-desc">最近 20 条请求记录。</p>
           <div class="row record-filters" style="margin-bottom:14px"><div class="field"><label for="recordSearch">搜索记录</label><input id="recordSearch" type="search" placeholder="按模型、场景或 HTTP 状态搜索"></div><div class="field"><label for="recordFilter">请求状态</label><select id="recordFilter"><option value="all">全部状态</option><option value="ok">仅成功</option><option value="fail">仅失败</option></select></div></div>
           <div class="actions record-actions" style="margin-top:0;margin-bottom:14px"><button class="btn" id="refreshRecords" type="button">刷新记录</button><button class="btn" id="exportRecords" type="button">导出调用记录 CSV</button><button class="btn danger" id="resetStats" type="button">重置统计</button></div>
           <div class="table-wrap"><table><thead><tr><th>时间</th><th>场景</th><th>模型</th><th>状态</th><th>HTTP</th></tr></thead><tbody id="recentRows"><tr><td colspan="5">加载中…</td></tr></tbody></table></div>
@@ -231,17 +242,17 @@ table{min-width:0}
         </section>
 
         <section class="glass panel" data-panel="security">
-          <h2 class="panel-title">安全与备份</h2><p class="panel-desc">管理员口令、密钥、会话和配置备份的管理方式。</p>
+          <h2 class="panel-title">安全与备份</h2><p class="panel-desc">备份、导入配置与安全提示。</p>
           <div class="help-list">
-            <div class="help-item"><span class="step">1</span><div><strong>设置管理密码</strong><p>打开 Cloudflare Dashboard → Workers & Pages → <b>zhixing-calculator-ai</b> → Settings → Variables and Secrets，添加 Secret <span class="code">ADMIN_PASSWORD</span>，值填写你自己设置的强密码。它不会保存在此网页或 GitHub。</p></div></div>
-            <div class="help-item"><span class="step">2</span><div><strong>后台数据持久化</strong><p>配置与限流计数保存在 Worker 绑定的 Durable Object 中；管理 API 使用限时签名会话，登录、AI 调用和模型连接测试都有持久化请求限制。</p></div></div>
-            <div class="help-item"><span class="step">3</span><div><strong>密钥处理</strong><p>自定义 API Key 通过 AES-GCM 加密保存在后台，管理接口不回传明文。建议在 Cloudflare Worker Secrets 中配置独立的 <span class="code">ADMIN_ENCRYPTION_KEY</span>；留空表示不修改，点击“改用 Worker Secret”则切回 <span class="code">AI_API_KEY</span>。</p></div></div>
-            <div class="help-item"><span class="step">4</span><div><strong>导出 / 导入配置</strong><p>备份包含模型地址、参数和提示词，不包含 API Key 和管理密码。备份文件仍可能包含你的自定义提示词，请妥善保存。</p></div></div>
-            <div class="help-item"><span class="step">5</span><div><strong>安全边界</strong><p>用户提问和图片会发送至当前配置的第三方模型服务商，服务商可能按其政策处理请求；项目统计不保存题目正文不代表第三方绝不留存。不要提交密码或不必要的个人隐私。发现异常用量时请立即撤销/轮换 API Key，并更换相关管理密钥。</p></div></div>
+            <div class="help-item"><span class="step">1</span><div><strong>设置管理密码</strong><p>在 Cloudflare Worker Secrets 中设置 <span class="code">ADMIN_PASSWORD</span>，使用强密码。</p></div></div>
+            <div class="help-item"><span class="step">2</span><div><strong>后台数据持久化</strong><p>配置保存在 Worker 后端；管理登录会话有时效。</p></div></div>
+            <div class="help-item"><span class="step">3</span><div><strong>密钥处理</strong><p>自定义 API Key 加密保存且不会回显；“改用 Worker Secret”会切回后端的 <span class="code">AI_API_KEY</span>。</p></div></div>
+            <div class="help-item"><span class="step">4</span><div><strong>导出 / 导入配置</strong><p>备份不包含 API Key，但会包含提示词。</p></div></div>
+            <div class="help-item"><span class="step">5</span><div><strong>安全边界</strong><p>提问和图片会发送到所选模型服务商。发现异常用量时请轮换 API Key。</p></div></div>
           </div>
           <div class="section-card" style="margin-top:16px">
             <div class="subhead" style="margin-top:0">配置文件与维护</div>
-            <p class="hint">备份文件不含 API Key。重置统计仅清除累计计数与最近 20 条记录，不会删除模型配置或提示词。</p>
+            <p class="hint">重置统计不会删除模型配置或提示词。</p>
             <div class="actions" style="margin-top:0"><button class="btn primary" id="exportConfig" type="button">导出备份（不含密钥）</button><button class="btn" id="importConfigBtn" type="button">导入备份</button><input id="importFile" type="file" accept="application/json,.json" hidden></div>
             <div class="status" id="backupStatus" role="status"></div>
           </div>
