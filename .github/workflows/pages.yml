@@ -1,6 +1,13 @@
 name: Deploy Zhixing Calculator to GitHub Pages
 
 on:
+  push:
+    branches: ["main"]
+    paths:
+      - "ai.html"
+      - "ai-calculator.html"
+      - "ai-admin.html"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
