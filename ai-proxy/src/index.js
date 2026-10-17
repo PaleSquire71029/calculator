@@ -173,11 +173,12 @@ export default {
       return json({ error: "AI_BASE_URL 必须是有效的 HTTPS API 根地址。" }, 500, cors);
     }
     const endpoint = base.toString().replace(/\/+$/, "") + "/chat/completions";
+    const wantsStream = body.task === "analysis" && body.stream === true;
     const payload = {
       model: env.AI_MODEL,
       messages: upstreamMessages,
       temperature: 0.2,
-      stream: false
+      stream: wantsStream
     };
     let upstream;
     try {
@@ -189,6 +190,18 @@ export default {
       });
     } catch {
       return json({ error: "无法连接模型服务，请检查 API 地址和网络后重试。" }, 502, cors);
+    }
+    const upstreamContentType = upstream.headers.get("Content-Type") || "";
+    if (wantsStream && upstream.ok && upstream.body && upstreamContentType.includes("text/event-stream")) {
+      return new Response(upstream.body, {
+        status: 200,
+        headers: {
+          ...cors,
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          "X-Accel-Buffering": "no"
+        }
+      });
     }
     const text = await upstream.text();
     let result;
