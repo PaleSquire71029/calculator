@@ -179,6 +179,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       return json({ token: await createToken(env), expiresIn: ADMIN_SESSION_TTL_MS }, 200, cors);
     }
     if (!await verifyToken(request, env)) return json({ error: "管理会话已失效，请重新登录" }, 401, cors);
+    if (url.pathname === "/admin/defaults" && request.method === "GET") return json(defaultPrompts(), 200, cors);
     if (!env.ADMIN_STORE) return json({ error: "管理设置存储尚未部署，请检查 Worker 的 Durable Object 绑定" }, 503, cors);
     let data;
     try { data = await readData(env) || {}; } catch { return json({ error: "读取管理数据失败，请稍后重试" }, 500, cors); }
@@ -223,11 +224,17 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     }
     if (url.pathname === "/admin/models" && request.method === "POST") {
       const runtime = buildRuntimeSettings(data, env);
-      if (!runtime.apiKey || !runtime.apiBaseUrl) return json({ error: "请先设置 API 地址和密钥" }, 400, cors);
+      let input = {};
+      try { input = await request.json(); } catch { input = {}; }
+      let apiBaseUrl = runtime.apiBaseUrl;
+      try { if (input.apiBaseUrl) apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl); }
+      catch (error) { return json({ error: error.message }, 400, cors); }
+      const apiKey = typeof input.apiKey === "string" && input.apiKey.trim() ? input.apiKey.trim() : runtime.apiKey;
+      if (!apiKey || !apiBaseUrl) return json({ error: "请先设置 API 地址和密钥" }, 400, cors);
       let response;
       try {
-        response = await fetch(runtime.apiBaseUrl.replace(/\/+$/, "") + "/models", {
-          headers: { "Authorization": "Bearer " + runtime.apiKey, "Accept": "application/json" }, signal: AbortSignal.timeout(20000)
+        response = await fetch(apiBaseUrl.replace(/\/+$/, "") + "/models", {
+          headers: { "Authorization": "Bearer " + apiKey, "Accept": "application/json" }, signal: AbortSignal.timeout(20000)
         });
       } catch { return json({ error: "无法连接模型列表接口，请检查 API 地址和网络" }, 502, cors); }
       let result;
@@ -239,14 +246,21 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     }
     if (url.pathname === "/admin/test" && request.method === "POST") {
       const runtime = buildRuntimeSettings(data, env);
-      if (!runtime.apiKey || !runtime.apiBaseUrl || !runtime.model) return json({ error: "请先配置 API 地址、模型和 API Key" }, 400, cors);
+      let input = {};
+      try { input = await request.json(); } catch { input = {}; }
+      let apiBaseUrl = runtime.apiBaseUrl;
+      try { if (input.apiBaseUrl) apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl); }
+      catch (error) { return json({ error: error.message }, 400, cors); }
+      const apiKey = typeof input.apiKey === "string" && input.apiKey.trim() ? input.apiKey.trim() : runtime.apiKey;
+      const model = String(input.model || runtime.model || "").trim();
+      if (!apiKey || !apiBaseUrl || !model) return json({ error: "请先配置 API 地址、模型和 API Key" }, 400, cors);
       const start = Date.now();
       let response;
       try {
-        response = await fetch(runtime.apiBaseUrl.replace(/\/+$/, "") + "/chat/completions", {
+        response = await fetch(apiBaseUrl.replace(/\/+$/, "") + "/chat/completions", {
           method: "POST",
-          headers: { "Authorization": "Bearer " + runtime.apiKey, "Content-Type": "application/json" },
-          body: JSON.stringify({ model: runtime.model, messages: [{ role: "user", content: "请只回复：连接成功" }], temperature: 0, max_tokens: 20, stream: false }),
+          headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
+          body: JSON.stringify({ model, messages: [{ role: "user", content: "请只回复：连接成功" }], temperature: 0, max_tokens: 20, stream: false }),
           signal: AbortSignal.timeout(25000)
         });
       } catch { return json({ ok: false, elapsedMs: Date.now() - start, error: "连接失败：无法连接模型服务，请检查地址和网络" }, 502, cors); }
@@ -254,7 +268,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       try { result = await response.json(); } catch { result = {}; }
       const elapsedMs = Date.now() - start;
       if (!response.ok) return json({ ok: false, elapsedMs, error: "模型服务返回 HTTP " + response.status + "：" + String(result?.error?.message || result?.message || "请检查 API 地址、密钥和模型权限").slice(0, 500) }, 502, cors);
-      return json({ ok: true, elapsedMs, model: result.model || runtime.model, preview: String(result?.choices?.[0]?.message?.content || "连接成功").slice(0, 300), usage: result.usage || null }, 200, cors);
+      return json({ ok: true, elapsedMs, model: result.model || model, preview: String(result?.choices?.[0]?.message?.content || "连接成功").slice(0, 300), usage: result.usage || null }, 200, cors);
     }
     return json({ error: "管理接口不存在" }, 404, cors);
   }
