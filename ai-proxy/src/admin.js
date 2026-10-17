@@ -81,6 +81,65 @@ async function decryptApiKey(value, env) {
   throw new Error("无法解密自定义 API Key。请检查管理加密密钥是否被轮换；如已丢失原密钥，请重新保存模型 API Key。");
 }
 
+export function normalizeApiBaseUrl(value) {
+  let url;
+  try { url = new URL(String(value || "").trim()); }
+  catch { throw new Error("API 地址不是有效的网址"); }
+  if (url.protocol !== "https:" || url.username || url.password) {
+    throw new Error("API 地址必须使用 HTTPS，且不能包含账号密码");
+  }
+  if (url.port) throw new Error("API 地址暂不允许自定义端口，请使用标准 HTTPS 端口");
+  const host = url.hostname.toLowerCase().replace(/^\\[|\\]$/g, "").replace(/\\.$/, "");
+  const isIPv4 = /^(?:\\d{1,3}\\.){3}\\d{1,3}$/.test(host);
+  const isIPv6 = host.includes(":");
+  if (isIPv4 || isIPv6 || !host.includes(".")) {
+    throw new Error("API 地址必须使用公开的 HTTPS 域名，不接受 IP 地址或单段主机名");
+  }
+  const blockedSuffixes = [
+    ".localhost", ".local", ".internal", ".lan", ".home", ".home.arpa",
+    ".test", ".invalid", ".example"
+  ];
+  if (host === "localhost" || blockedSuffixes.some(suffix => host.endsWith(suffix))) {
+    throw new Error("API 地址不能指向本机或内网域名");
+  }
+  url.pathname = url.pathname.replace(/\\/+(chat\\/completions|models)\\/?$/i, "").replace(/\\/+$/, "") || "/";
+  url.search = "";
+  url.hash = "";
+  return url.toString().replace(/\\/$/, "");
+}
+
+export async function readResponseTextLimited(response, maxBytes = 2 * 1024 * 1024) {
+  const declaredLength = response.headers.get("Content-Length");
+  if (declaredLength && /^\\d+$/.test(declaredLength) && Number(declaredLength) > maxBytes) {
+    try { await response.body?.cancel(); } catch {}
+    return { error: "上游响应体过大" };
+  }
+  if (!response.body) return { text: "" };
+  const reader = response.body.getReader();
+  const chunks = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > maxBytes) {
+        await reader.cancel().catch(() => {});
+        return { error: "上游响应体过大" };
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    return { text: new TextDecoder("utf-8", { fatal: true }).decode(bytes) };
+  } catch {
+    return { error: "无法读取上游响应" };
+  } finally {
+    try { reader.releaseLock(); } catch {}
+  }
+}
+
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,
@@ -125,17 +184,6 @@ async function verifyToken(request, env) {
     const payload = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[0])));
     return payload.role === "admin" && Number(payload.exp) > Date.now();
   } catch { return false; }
-}
-function loginAllowed(request) {
-  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-  const now = Date.now();
-  const previous = loginBuckets.get(ip);
-  if (!previous || now - previous.start >= ADMIN_LOGIN_WINDOW_MS) {
-    loginBuckets.set(ip, { start: now, count: 1 });
-    return true;
-  }
-  previous.count += 1;
-  return previous.count <= ADMIN_LOGIN_MAX_ATTEMPTS;
 }
 export class AdminSettingsStore {
   constructor(state, env) { this.state = state; this.env = env; }
@@ -210,25 +258,6 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
     });
     if (!response.ok) throw new Error("无法保存管理设置");
-  }
-  function normalizeApiBaseUrl(value) {
-    let url;
-    try { url = new URL(String(value || "").trim()); } catch { throw new Error("API 地址不是有效的网址"); }
-    if (url.protocol !== "https:" || url.username || url.password) throw new Error("API 地址必须使用 HTTPS，且不能包含账号密码");
-    const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
-    if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host === "::1" || /^(fc|fd|fe80:)/i.test(host)) {
-      throw new Error("API 地址不能指向本机或内网地址");
-    }
-    const parts = host.split(".");
-    if (parts.length === 4 && parts.every(x => /^\d{1,3}$/.test(x) && Number(x) <= 255)) {
-      const ip = parts.map(Number);
-      if (ip[0] === 0 || ip[0] === 10 || ip[0] === 127 || (ip[0] === 169 && ip[1] === 254) ||
-          (ip[0] === 172 && ip[1] >= 16 && ip[1] <= 31) || (ip[0] === 192 && ip[1] === 168) ||
-          (ip[0] === 100 && ip[1] >= 64 && ip[1] <= 127)) throw new Error("API 地址不能指向本机或内网地址");
-    }
-    url.pathname = url.pathname.replace(/\/+(chat\/completions|models)\/?$/i, "").replace(/\/+$/, "") || "/";
-    url.search = ""; url.hash = "";
-    return url.toString().replace(/\/$/, "");
   }
   function cleanPromptMap(input, fallback) {
     const output = {};
@@ -445,5 +474,5 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     }
     return json({ error: "管理接口不存在" }, 404, cors);
   }
-  return { readData, writeData, getRuntimeSettings, handleRoute, recordRequest };
+  return { readData, writeData, getRuntimeSettings, handleRoute, recordRequest, checkRateLimit };
 }
