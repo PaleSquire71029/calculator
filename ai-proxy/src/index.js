@@ -172,6 +172,10 @@ export default {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/admin/")) return adminModule.handleRoute(request, env, url, cors);
     if (request.method === "GET" && url.pathname === "/health") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await adminModule.checkRateLimit(env, "health:" + ip, 120, 60 * 1000);
+      if (rate.unavailable) return json({ error: "健康检查限流暂时不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return json({ error: "健康检查请求过于频繁。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
       const runtime = await adminModule.getRuntimeSettings(env).catch(() => ({ apiKey: env.AI_API_KEY || "", apiBaseUrl: env.AI_BASE_URL || "", model: env.AI_MODEL || "" }));
       return json({ ok: true, configured: Boolean(runtime.apiKey && runtime.apiBaseUrl && runtime.model), model: runtime.model || null }, 200, cors);
     }
