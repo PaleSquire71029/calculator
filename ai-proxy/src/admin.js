@@ -98,8 +98,10 @@ export function normalizeApiBaseUrl(value) {
   if (url.port) throw new Error("API 地址暂不允许自定义端口，请使用标准 HTTPS 端口");
   const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "").replace(/\.$/, "");
   const isIPv4 = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(host);
+  const numericHost = /^[0-9.]+$/.test(host);
   const isIPv6 = host.includes(":");
-  if (isIPv4 || isIPv6 || !host.includes(".")) {
+  // WHATWG URL parsers normalize legacy numeric IPv4 spellings such as 127.1.
+  if (isIPv4 || numericHost || isIPv6 || !host.includes(".")) {
     throw new Error("API 地址必须使用公开的 HTTPS 域名，不接受 IP 地址或单段主机名");
   }
   const blockedSuffixes = [
