@@ -4310,6 +4310,11 @@ function zxFnAdvance(f,xValue,rangeText){
 .zx-ai-answer-section-content mjx-container{max-width:100%;overflow-x:auto;overflow-y:hidden}
 .zx-ai-answer-section-content mjx-container[display="true"]{display:block;margin:.65em 0;text-align:left}
 .zx-ai-result-status[data-loading="true"]{display:flex;align-items:center;gap:8px}
+.zx-ai-thinking-stream{display:inline;background:linear-gradient(100deg,#9aa2ad 0%,#d5d9df 22%,#fff2c8 42%,#d8b878 50%,#fff2c8 58%,#d5d9df 78%,#9aa2ad 100%);background-size:260% 100%;background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:zx-ai-text-flow 2.1s linear infinite}
+.zx-ai-thinking-cursor{display:inline-block;width:2px;height:1em;margin-left:3px;vertical-align:-.16em;background:#d8b878;animation:zx-ai-cursor-blink .8s steps(2,start) infinite}
+@keyframes zx-ai-text-flow{from{background-position:100% 0}to{background-position:-160% 0}}
+@keyframes zx-ai-cursor-blink{to{opacity:0}}
+@media(prefers-reduced-motion:reduce){.zx-ai-thinking-stream,.zx-ai-thinking-cursor{animation:none!important}}
 .zx-ai-result-status[data-loading="true"]:after{content:"";width:7px;height:7px;border-radius:50%;background:#d8b878;animation:zx-ai-pulse 1.15s ease-out infinite;flex:0 0 7px}
 .zx-ai-answer-section{animation:zx-ai-card-in .48s cubic-bezier(.2,.75,.25,1) both;animation-delay:calc(var(--zx-ai-index,0)*95ms)}
 .zx-ai-answer-section-title:before{animation:zx-ai-title-glow 2.1s ease-in-out infinite alternate}
@@ -4450,6 +4455,17 @@ function zxFnAdvance(f,xValue,rangeText){
     const el=panel.querySelector('[data-zx-ai-status]');
     el.textContent=text;el.dataset.state=error?'error':'ready';
   }
+  function setThinkingText(statusEl,action){
+    if(!statusEl)return;
+    statusEl.replaceChildren();
+    const textNode=document.createElement('span');
+    textNode.className='zx-ai-thinking-stream';
+    textNode.textContent=action==='extend'?'正在继续推理，补充更多解法与细节':'正在分析输入、推导过程与最终结果';
+    const cursor=document.createElement('span');
+    cursor.className='zx-ai-thinking-cursor';
+    cursor.setAttribute('aria-hidden','true');
+    statusEl.append(textNode,cursor);
+  }
   function answerSectionKind(title){
     const t=String(title||'').replace(/[：:。\s]/g,'');
     if(/^(结果|答案|结论|最终答案|核心结论|计算结果|配平结果|换算结果|解集|解)$/.test(t))return 'result';
@@ -4552,6 +4568,7 @@ function zxFnAdvance(f,xValue,rangeText){
     answerEl.hidden=true;answerEl.textContent='';
     setStatus(panel,action==='extend'?'AI 正在补充本地计算器未覆盖的分析……':'AI 正在检查输入、结果和关键条件……',false);
     panel.querySelector('[data-zx-ai-status]').dataset.loading='true';
+    setThinkingText(panel.querySelector('[data-zx-ai-status]'),action);
     const allButtons=Array.from(document.querySelectorAll('[data-zx-ai-action]'));
     busy=true;allButtons.forEach(b=>b.disabled=true);
     try{
@@ -4565,6 +4582,20 @@ function zxFnAdvance(f,xValue,rangeText){
       setStatus(panel,(action==='extend'?'AI 扩展完成':'AI 分析完成')+(data.model?' · '+data.model:''),false);
       delete panel.querySelector('[data-zx-ai-status]').dataset.loading;
       await renderStructuredAnswer(answerEl,data.answer,viewId);
+      answerEl.querySelectorAll('.zx-ai-answer-section-content').forEach(el=>{
+        const original=el.textContent;
+        el.replaceChildren();
+        const textNode=document.createTextNode('');
+        el.append(textNode);
+        let i=0;
+        const reveal=()=>{
+          if(!el.isConnected)return;
+          textNode.textContent=original.slice(0,i);
+          i=Math.min(i+4,original.length);
+          if(i<original.length)requestAnimationFrame(reveal);
+        };
+        requestAnimationFrame(reveal);
+      });
       answerEl.hidden=false;
       await typesetAnswer(answerEl);
       panel.querySelector('[data-zx-ai-proxy]').value=proxyValue();
