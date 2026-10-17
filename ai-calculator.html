@@ -4290,6 +4290,15 @@ function zxFnAdvance(f,xValue,rangeText){
 .zx-ai-result-head button,.zx-ai-result-footer button{border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.045);color:#aeb7c2;padding:6px 9px;font:11px var(--zx-font,system-ui);cursor:pointer}
 .zx-ai-result-status{padding:12px 0 0;color:#c4ad7e;font-size:12px;line-height:1.75}
 .zx-ai-result-status[data-state="error"]{color:#ffaaa2}
+/* 思考状态采用连续流动的文字高光，结果逐字输出时同步扫过高光 */
+.zx-ai-result-status[data-loading="true"]{display:inline-block;color:transparent;background:linear-gradient(100deg,#9d8d6a 0%,#d5c08e 22%,#fff1c6 38%,#cdb77f 52%,#9d8d6a 72%);background-size:240% 100%;background-position:100% 0;-webkit-background-clip:text;background-clip:text;animation:zx-ai-thinking-flow 1.8s linear infinite}
+.zx-ai-result-status[data-loading="true"]:after{content:"";display:inline-block;width:5px;height:5px;margin-left:8px;border-radius:50%;background:#e5cc8e;vertical-align:middle;animation:zx-ai-thinking-dot .7s ease-in-out infinite alternate}
+.zx-ai-answer-section-content{background-image:linear-gradient(100deg,transparent 0%,transparent 40%,rgba(255,239,190,.72) 50%,transparent 60%,transparent 100%);background-size:250% 100%;background-position:120% 0}
+.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-content{animation:zx-ai-thinking-flow 1.4s linear infinite}
+@keyframes zx-ai-thinking-flow{from{background-position:100% 0}to{background-position:-140% 0}}
+@keyframes zx-ai-thinking-dot{from{opacity:.3;transform:scale(.7)}to{opacity:1;transform:scale(1.2)}}
+@media(prefers-reduced-motion:reduce){.zx-ai-result-status[data-loading="true"],.zx-ai-result-status[data-loading="true"]:after,.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-content{animation:none!important;background:none;color:inherit}}
+
 .zx-ai-result-body{margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;color:#e1e5e9;font:13px/1.9 var(--zx-font,"Noto Sans SC",system-ui,sans-serif)}
 .zx-ai-result-body{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;white-space:normal}
 /* ChatGPT 风格的流式文字显现：文字逐段向前流动，而非整块淡入 */
@@ -4536,8 +4545,8 @@ function zxFnAdvance(f,xValue,rangeText){
       card.append(title,body);
       node.append(card);
       // 按字符流式显示，长回答自动加速，避免手机上等待太久。
-      const step=text.length>500?5:text.length>220?3:2;
-      const delay=text.length>500?7:text.length>220?12:18;
+      const step=text.length>500?4:text.length>220?2:1;
+      const delay=text.length>500?9:text.length>220?14:20;
       for(let i=0;i<text.length;i+=step){
         textNode.appendData(text.slice(i,i+step));
         await new Promise(resolve=>setTimeout(resolve,delay));
