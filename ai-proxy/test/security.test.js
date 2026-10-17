@@ -281,6 +281,32 @@ test("rate-limits invalid admin tokens before repeated HMAC verification", async
   assert.ok(Number(lastResponse.headers.get("Retry-After")) > 0);
 });
 
+test("authenticated stats reset clears counters and recent metadata only", async () => {
+  const { env, storage } = fakeEnvironment();
+  await storage.put("adminData", {
+    settings: { apiKey: "", apiKeyMode: "worker", apiBaseUrl: "https://api.example-provider.com/v1", model: "example-model" },
+    stats: { totalRequests: 12, failedRequests: 3, promptTokens: 500, completionTokens: 200, recent: [{ at: "2026-01-01T00:00:00.000Z", mode: "general", ok: false, status: 502, model: "example-model" }] }
+  });
+  const origin = "https://c.zhixing.us.ci";
+  const login = await worker.fetch(jsonRequest("https://worker.test/admin/login", { password: env.ADMIN_PASSWORD }, {
+    Origin: origin, "CF-Connecting-IP": "198.51.100.61"
+  }), env);
+  assert.equal(login.status, 200);
+  const { token } = await login.json();
+  const response = await worker.fetch(jsonRequest("https://worker.test/admin/stats/reset", { confirm: "RESET_STATS" }, {
+    Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "198.51.100.61"
+  }), env);
+  assert.equal(response.status, 200);
+  const data = await storage.get("adminData");
+  assert.equal(data.stats.totalRequests, 0);
+  assert.equal(data.stats.failedRequests, 0);
+  assert.equal(data.stats.promptTokens, 0);
+  assert.equal(data.stats.completionTokens, 0);
+  assert.deepEqual(data.stats.recent, []);
+  assert.equal(data.settings.model, "example-model");
+  assert.ok(data.stats.resetAt);
+});
+
 test("fails closed when persistent rate-limit storage is not bound", async () => {
   const response = await worker.fetch(new Request("https://worker.test/api/chat", {
     method: "POST",
