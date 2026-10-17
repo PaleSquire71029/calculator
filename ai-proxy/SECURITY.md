@@ -30,7 +30,7 @@
 
 ## 3. 管理员必须执行的保护措施
 
-- 将 `ADMIN_PASSWORD`、`ADMIN_SESSION_SECRET`、`AI_API_KEY` 设为 Cloudflare Worker Secrets；绝不要写入 GitHub 文件、前端 JavaScript、截图、Issue 或导出的配置文件。
+- 将 `ADMIN_PASSWORD`、`ADMIN_SESSION_SECRET`、`ADMIN_ENCRYPTION_KEY`、`AI_API_KEY` 设为 Cloudflare Worker Secrets；绝不要写入 GitHub 文件、前端 JavaScript、截图、Issue 或导出的配置文件。
 - 设置唯一且高强度的管理密码（建议至少 16 位随机字符），不要与 GitHub、邮箱或其他网站共用。
 - 为 `ADMIN_SESSION_SECRET` 单独生成高熵随机值。若该值曾泄露，立即轮换；轮换后旧签名会话应失效。
 - 限制 GitHub 仓库和 Cloudflare 账户的协作者与权限；开启 GitHub 双重验证，并定期检查提交历史、Actions 日志和部署配置中是否意外出现密钥。
