@@ -387,6 +387,26 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       try { return json(publicSettings(await buildRuntimeSettings(data, env)), 200, cors); }
       catch { return json({ error: "无法读取加密的 API Key。请检查加密密钥设置；若原密钥已丢失，需要重新保存 API Key。" }, 503, cors); }
     }
+    if (url.pathname === "/admin/stats/reset" && request.method === "POST") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await checkRateLimit(env, "admin-stats-reset:" + ip, 5, 60 * 60 * 1000);
+      if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return json({ error: "统计重置操作过于频繁，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
+      const parsed = await readJsonLimited(request, 4096);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
+      if (parsed.data.confirm !== "RESET_STATS") return json({ error: "确认字段不正确，未重置统计。" }, 400, cors);
+      data.stats = {
+        totalRequests: 0,
+        failedRequests: 0,
+        promptTokens: 0,
+        completionTokens: 0,
+        recent: [],
+        resetAt: new Date().toISOString()
+      };
+      try { await writeData(env, data); }
+      catch { return json({ error: "统计重置失败，请检查管理存储是否正常。" }, 500, cors); }
+      return json({ ok: true, resetAt: data.stats.resetAt }, 200, cors);
+    }
     if (url.pathname === "/admin/settings" && request.method === "PUT") {
       const parsed = await readJsonLimited(request, 256 * 1024);
       if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
