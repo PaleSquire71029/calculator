@@ -65,20 +65,27 @@ async function encryptApiKey(value, env) {
   return ENCRYPTED_KEY_PREFIX + encodeBase64Url(iv) + "." + encodeBase64Url(encrypted);
 }
 
-async function decryptApiKey(value, env) {
-  if (typeof value !== "string" || !value.startsWith(ENCRYPTED_KEY_PREFIX)) return String(value || "");
+async function decryptApiKeyDetails(value, env) {
+  if (typeof value !== "string" || !value.startsWith(ENCRYPTED_KEY_PREFIX)) {
+    return { value: String(value || ""), secretIndex: -1 };
+  }
   const parts = value.slice(ENCRYPTED_KEY_PREFIX.length).split(".");
   if (parts.length !== 2) throw new Error("自定义 API Key 的加密数据格式无效");
   const iv = decodeBase64Url(parts[0]);
   const ciphertext = decodeBase64Url(parts[1]);
-  for (const secret of encryptionSecrets(env)) {
+  const secrets = encryptionSecrets(env);
+  for (let secretIndex = 0; secretIndex < secrets.length; secretIndex++) {
     try {
-      const key = await importEncryptionKey(secret);
+      const key = await importEncryptionKey(secrets[secretIndex]);
       const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
-      return new TextDecoder("utf-8", { fatal: true }).decode(plaintext);
+      return { value: new TextDecoder("utf-8", { fatal: true }).decode(plaintext), secretIndex };
     } catch {}
   }
   throw new Error("无法解密自定义 API Key。请检查管理加密密钥是否被轮换；如已丢失原密钥，请重新保存模型 API Key。");
+}
+
+async function decryptApiKey(value, env) {
+  return (await decryptApiKeyDetails(value, env)).value;
 }
 
 export function normalizeApiBaseUrl(value) {
@@ -244,10 +251,19 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     const data = await response.json();
     // Migrate older plaintext custom keys to authenticated AES-GCM ciphertext on first read.
     const savedKey = data?.settings?.apiKey;
-    if (data?.settings?.apiKeyMode === "custom" && typeof savedKey === "string" &&
-        savedKey.length > 0 && !savedKey.startsWith(ENCRYPTED_KEY_PREFIX)) {
-      data.settings.apiKey = await encryptApiKey(savedKey, env);
-      await writeData(env, data);
+    if (data?.settings?.apiKeyMode === "custom" && typeof savedKey === "string" && savedKey.length > 0) {
+      if (!savedKey.startsWith(ENCRYPTED_KEY_PREFIX)) {
+        // Upgrade legacy plaintext to encrypted storage.
+        data.settings.apiKey = await encryptApiKey(savedKey, env);
+        await writeData(env, data);
+      } else {
+        // Re-wrap ciphertext under the preferred secret if an older fallback key was used.
+        const decrypted = await decryptApiKeyDetails(savedKey, env);
+        if (decrypted.secretIndex > 0) {
+          data.settings.apiKey = await encryptApiKey(decrypted.value, env);
+          await writeData(env, data);
+        }
+      }
     }
     return data;
   }
