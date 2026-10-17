@@ -57,6 +57,8 @@ test("rejects insecure, credential-bearing, literal-IP, internal, and custom-por
     "http://api.example.com/v1",
     "https://user:pass@api.example.com/v1",
     "https://127.0.0.1/v1",
+    "https://127.1/v1",
+    "https://2130706433/v1",
     "https://192.168.1.10/v1",
     "https://[::1]/v1",
     "https://localhost/v1",
@@ -103,7 +105,7 @@ test("bounds upstream response reads", async () => {
   assert.equal(result.error, "上游响应体过大");
 });
 
-test("Durable Object rate limiter persists counters and resets at the window boundary", async () => {
+test("Durable Object rate limiter persists counters and applies separate IP buckets", async () => {
   const storage = new MemoryStorage();
   const store = new AdminSettingsStore({ storage }, {});
   const consume = async key => {
