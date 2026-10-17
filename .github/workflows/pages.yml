@@ -7,6 +7,7 @@ on:
       - "index.html"
       - "ai.html"
       - "ai-calculator.html"
+      - "ai-admin.html"
       - "ai-proxy/**"
       - "zhixing-calculator-mobile-menu-blur-1.html"
       - "liquid-glass-test.html"
