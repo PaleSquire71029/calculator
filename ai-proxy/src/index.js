@@ -74,18 +74,29 @@ function json(data, status, headers = {}) {
     headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...headers }
   });
 }
-function limitSseStream(body, maxBytes = MAX_STREAM_BYTES) {
+function limitSseStream(body, maxBytes = MAX_STREAM_BYTES, onFinish = () => {}) {
   const reader = body.getReader();
   const encoder = new TextEncoder();
   let totalBytes = 0;
+  let finalized = false;
+  async function finish(ok) {
+    if (finalized) return;
+    finalized = true;
+    try { await onFinish(ok); } catch {}
+  }
   return new ReadableStream({
     async pull(controller) {
       try {
         const { done, value } = await reader.read();
-        if (done) { controller.close(); return; }
+        if (done) {
+          await finish(true);
+          controller.close();
+          return;
+        }
         totalBytes += value.byteLength;
         if (totalBytes > maxBytes) {
           await reader.cancel().catch(() => {});
+          await finish(false);
           const message = {
             error: { message: "模型流式输出超过 4 MB 安全上限，请在管理页设置较小的最大输出 Token 后重试。" }
           };
@@ -95,11 +106,13 @@ function limitSseStream(body, maxBytes = MAX_STREAM_BYTES) {
         }
         controller.enqueue(value);
       } catch (error) {
+        await finish(false);
         controller.error(error);
       }
     },
     async cancel(reason) {
       await reader.cancel(reason).catch(() => {});
+      await finish(false);
     }
   });
 }
@@ -231,8 +244,9 @@ export default {
     }
     const upstreamContentType = upstream.headers.get("Content-Type") || "";
     if (wantsStream && upstream.ok && upstream.body && upstreamContentType.includes("text/event-stream")) {
-      await adminModule.recordRequest(env, { mode, ok: true, status: upstream.status, model: runtime.model });
-      return new Response(limitSseStream(upstream.body), {
+      return new Response(limitSseStream(upstream.body, MAX_STREAM_BYTES, ok =>
+        adminModule.recordRequest(env, { mode, ok, status: ok ? upstream.status : 502, model: runtime.model })
+      ), {
         status: 200,
         headers: {
           ...cors,
