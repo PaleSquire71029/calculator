@@ -4,7 +4,8 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "ai-proxy/**"
+      - "ai-proxy/src/**"
+      - "ai-proxy/wrangler.toml"
       - ".github/workflows/deploy-ai-proxy.yml"
   workflow_dispatch:
 
