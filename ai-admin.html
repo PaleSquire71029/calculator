@@ -1153,5 +1153,84 @@ body :where(*,*::before,*::after){box-sizing:border-box;writing-mode:horizontal-
 @media(max-width:520px){.wrap{--admin-inline-pad:12px;--admin-top-pad:12px}.top{padding:14px 24px;margin-bottom:16px;gap:10px}.analytics-head{align-items:flex-start;flex-direction:column;gap:7px}.analytics-source{align-self:flex-start}.analytics-grid{grid-template-columns:minmax(0,1fr)}.chart-card{padding:13px}.chart-head{flex-direction:row;align-items:baseline}.chart-head span{max-width:52%;text-align:right}.chart-svg{min-height:155px}.status-chart-layout{grid-template-columns:minmax(0,1fr) minmax(95px,.8fr);gap:4px}.status-donut{max-height:none;min-height:150px}.chart-status-legend{display:grid;grid-template-columns:1fr;gap:11px;padding:0}.chart-status-item{grid-template-columns:8px 1fr}.analytics-block .chart-card+.chart-card{margin-top:0}}
 @media(prefers-reduced-motion:reduce){.chart-mode-fill,.chart-bar-success,.chart-bar-fail{transition:none!important}}
 </style>
+<style id="zx-admin-font-and-model-picker-fix">
+@font-face{
+ font-family:"Noto Sans SC";
+ src:url("./fonts/NotoSansSC-400.woff2?v=20261018") format("woff2");
+ font-style:normal;font-weight:400;font-display:swap;
+}
+@font-face{
+ font-family:"Noto Sans SC";
+ src:url("./fonts/NotoSansSC-700.woff2?v=20261018") format("woff2");
+ font-style:normal;font-weight:700;font-display:swap;
+}
+/* Use the project's bundled Chinese font: no remote font request required. */
+html,body{font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif!important;font-synthesis:weight style}
+button,input,select{font-family:inherit!important}
+.brand strong,.h1,.panel-title,.subhead,.navbtn,.btn,.field label,.label,.m-label{font-family:inherit!important;letter-spacing:normal}
+.model-option-name,.key-reveal-panel input{font-family:"JetBrains Mono","Noto Sans SC",ui-monospace,monospace!important}
+/* The native select was inheriting a flex basis on a vertically stacked row,
+   so its height grew to several hundred pixels on mobile. Use grid for the row,
+   then give the native select an explicit, non-growing height. */
+.field .row:has(#modelPicker){
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr) auto!important;
+ align-items:center!important;
+ gap:8px!important;
+ min-width:0!important;
+}
+#modelPicker{
+ display:block!important;
+ width:100%!important;
+ min-width:0!important;
+ height:46px!important;
+ min-height:46px!important;
+ max-height:46px!important;
+ flex:none!important;
+ align-self:stretch!important;
+ box-sizing:border-box!important;
+ padding:9px 12px!important;
+ line-height:1.35!important;
+ transform:none!important;
+}
+#fetchModels{
+ height:46px!important;
+ min-height:46px!important;
+ flex:none!important;
+ margin:0!important;
+ white-space:nowrap!important;
+}
+.model-catalog:not([hidden]){
+ max-height:280px!important;
+ overflow:hidden!important;
+ display:flex!important;
+ flex-direction:column!important;
+ gap:7px!important;
+}
+.model-catalog-head{flex:none!important;margin:0!important;gap:7px!important}
+.model-catalog-head input{min-height:40px!important;height:40px!important;font-size:14px!important;padding:8px 10px!important}
+.model-catalog-list{
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr)!important;
+ gap:5px!important;
+ min-height:0!important;
+ max-height:185px!important;
+ flex:1 1 auto!important;
+ overflow:auto!important;
+ overscroll-behavior:contain!important;
+}
+.model-option{min-height:36px!important;padding:6px 9px!important;transform:none!important}
+@media(max-width:800px){
+ .field .row:has(#modelPicker){grid-template-columns:minmax(0,1fr)!important}
+ #modelPicker{width:100%!important;height:46px!important;min-height:46px!important;max-height:46px!important}
+ #fetchModels{width:100%!important;height:44px!important;min-height:44px!important}
+ .model-catalog:not([hidden]){max-height:255px!important}
+ .model-catalog-list{max-height:155px!important}
+ .model-catalog-head input{font-size:16px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .model-option{transition:none!important}
+}
+</style>
 </body>
 </html>
