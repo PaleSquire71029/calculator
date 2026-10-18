@@ -346,18 +346,22 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     try {
       const data = await readData(env);
       if (!data) return;
-      const stats = data.stats || { totalRequests: 0, failedRequests: 0, promptTokens: 0, completionTokens: 0, recent: [] };
+      const stats = data.stats || { totalRequests: 0, failedRequests: 0, promptTokens: 0, completionTokens: 0, totalTokens: 0, recent: [] };
       stats.totalRequests = (stats.totalRequests || 0) + 1;
       if (!event.ok) stats.failedRequests = (stats.failedRequests || 0) + 1;
       const toTokenCount = value => {
         const number = Number(value ?? 0);
         return Number.isFinite(number) && number > 0 ? Math.floor(number) : 0;
       };
-      const promptTokens = toTokenCount(event.usage?.prompt_tokens ?? event.usage?.input_tokens ?? event.usage?.promptTokens);
-      const completionTokens = toTokenCount(event.usage?.completion_tokens ?? event.usage?.output_tokens ?? event.usage?.completionTokens);
-      if (event.usage) {
+      const usage = event.usage && typeof event.usage === "object" ? event.usage : null;
+      const promptTokens = toTokenCount(usage?.prompt_tokens ?? usage?.input_tokens ?? usage?.promptTokens);
+      const completionTokens = toTokenCount(usage?.completion_tokens ?? usage?.output_tokens ?? usage?.completionTokens);
+      const reportedTotal = toTokenCount(usage?.total_tokens ?? usage?.totalTokens);
+      const totalTokens = reportedTotal || promptTokens + completionTokens;
+      if (usage) {
         stats.promptTokens = (stats.promptTokens || 0) + promptTokens;
         stats.completionTokens = (stats.completionTokens || 0) + completionTokens;
+        stats.totalTokens = (stats.totalTokens || 0) + totalTokens;
       }
       stats.recent = [{
         at: new Date().toISOString(),
@@ -367,8 +371,8 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
         model: event.model || "",
         promptTokens,
         completionTokens,
-        totalTokens: promptTokens + completionTokens,
-        usageAvailable: Boolean(event.usage)
+        totalTokens,
+        usageAvailable: Boolean(usage)
       }, ...(stats.recent || [])].slice(0, 20);
       data.stats = stats;
       await writeData(env, data);
@@ -547,6 +551,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
         failedRequests: 0,
         promptTokens: 0,
         completionTokens: 0,
+        totalTokens: 0,
         recent: [],
         resetAt: new Date().toISOString()
       };
