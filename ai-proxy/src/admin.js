@@ -455,16 +455,25 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       try {
         [subscriptionResponse, tokenResponse] = await Promise.all([
           fetch("https://api.a6api.com/dashboard/billing/subscription", {
-            headers, redirect: "error", signal: AbortSignal.timeout(12000)
+            headers, redirect: "manual", signal: AbortSignal.timeout(12000)
           }),
           fetch("https://api.a6api.com/api/usage/token/", {
-            headers, redirect: "error", signal: AbortSignal.timeout(12000)
+            headers, redirect: "manual", signal: AbortSignal.timeout(12000)
           })
         ]);
       } catch (error) {
         return json({
           error: "连接 A6API 额度接口失败。网络原因：" + describeFetchFailure(error, apiKey) +
             "。请求已固定到官方 API 主机，且不会跟随重定向。"
+        }, 502, cors);
+      }
+      if ((subscriptionResponse.status >= 300 && subscriptionResponse.status < 400) ||
+          (tokenResponse.status >= 300 && tokenResponse.status < 400)) {
+        const redirectStatus = subscriptionResponse.status >= 300 && subscriptionResponse.status < 400
+          ? subscriptionResponse.status : tokenResponse.status;
+        return json({
+          error: "A6API 额度接口返回重定向（HTTP " + redirectStatus +
+            "）。为保护 API Token，Worker 不会跟随重定向。请检查 A6API 接口地址或服务商配置。"
         }, 502, cors);
       }
       const [subscriptionRead, tokenRead] = await Promise.all([
@@ -622,7 +631,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       try {
         response = await fetch(apiBaseUrl.replace(/\/+$/, "") + "/models", {
           headers: { "Authorization": "Bearer " + apiKey, "Accept": "application/json" },
-          redirect: "error",
+          redirect: "manual",
           signal: AbortSignal.timeout(20000)
         });
       } catch (error) {
@@ -631,6 +640,10 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
           error: "无法连接模型列表接口（" + host + "）。网络原因：" +
             describeFetchFailure(error, apiKey) + "。请核对 API 根地址，并检查 Worker 出网、DNS/TLS 与服务商状态。"
         }, 502, cors);
+      }
+      if (response.status >= 300 && response.status < 400) {
+        return json({ error: "模型列表接口返回重定向（HTTP " + response.status +
+          "）。为保护 API Token，Worker 不会跟随重定向。请检查 API 根地址或供应商配置。" }, 502, cors);
       }
       const responseText = await readResponseTextLimited(response, 1024 * 1024);
       if (responseText.error) return json({ error: "模型列表响应体过大或无法读取。" }, 502, cors);
@@ -680,7 +693,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
           method: "POST",
           headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
           body: JSON.stringify({ model, messages: [{ role: "user", content: "请只回复：连接成功" }], temperature: 0, max_tokens: 20, stream: false }),
-          redirect: "error",
+          redirect: "manual",
           signal: AbortSignal.timeout(25000)
         });
       } catch (error) {
@@ -690,6 +703,13 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
           elapsedMs: Date.now() - start,
           error: "连接失败（" + host + "）。网络原因：" + describeFetchFailure(error, apiKey) +
             "。请检查 API 根地址、Worker 出网/DNS/TLS，以及服务商是否发生重定向。"
+        }, 502, cors);
+      }
+      if (response.status >= 300 && response.status < 400) {
+        return json({
+          ok: false, elapsedMs: Date.now() - start,
+          error: "模型服务返回重定向（HTTP " + response.status +
+            "）。为保护 API Token，Worker 不会跟随重定向。请检查 API 根地址或供应商配置。"
         }, 502, cors);
       }
       const responseText = await readResponseTextLimited(response, 256 * 1024);
