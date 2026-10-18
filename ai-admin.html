@@ -1233,18 +1233,150 @@ button,input,select{font-family:inherit!important}
 }
 </style>
 <style id="zx-admin-oppo-sans">
-/* Official OPPO Sans 4.0 is downloaded from OPPO's distribution host and checksum-verified during Pages deployment. */
-@font-face{
- font-family:"OPPO Sans 4.0";
- src:url("/assets/fonts/oppo-sans-4.0.ttf") format("truetype");
- font-style:normal;
- font-weight:100 900;
- font-display:swap;
-}
+/* Font is streamed with byte-level progress, then registered through the FontFace API. */
 html,body,button,input,select,textarea{
  font-family:"OPPO Sans 4.0","OPPO Sans 4.0 SC","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif!important;
 }
-/* Copyright © Guangdong OPPO Mobile Telecommunications Corp., Ltd. */
+#zx-font-loader{
+ position:fixed;z-index:2147483647;top:calc(env(safe-area-inset-top,0px) + 10px);left:50%;
+ transform:translateX(-50%);width:min(340px,calc(100vw - 28px));box-sizing:border-box;
+ padding:11px 13px 10px;border:1px solid rgba(190,198,210,.65);border-radius:14px;
+ background:rgba(255,255,255,.96);color:#343944;
+ box-shadow:0 8px 28px rgba(41,52,72,.12),inset 0 1px 0 rgba(255,255,255,.95);
+ font:13px/1.35 "OPPO Sans 4.0","Noto Sans SC",system-ui,sans-serif;
+ opacity:1;visibility:visible;transition:opacity .24s ease,transform .24s ease,visibility .24s;
+ pointer-events:none;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+#zx-font-loader[hidden]{display:none!important}
+#zx-font-loader.zx-font-done{opacity:0;visibility:hidden;transform:translate(-50%,-7px)}
+#zx-font-loader .zx-font-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px}
+#zx-font-loader .zx-font-name{font-weight:600;letter-spacing:.01em}
+#zx-font-loader .zx-font-state{font-size:12px;color:#707783;white-space:nowrap}
+#zx-font-loader .zx-font-track{height:4px;width:100%;border-radius:999px;overflow:hidden;background:#e9edf3}
+#zx-font-loader .zx-font-fill{height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#9bc9f7 0%,#6da9ec 52%,#8ccfe0 100%);transition:width .12s linear}
+#zx-font-loader.zx-font-indeterminate .zx-font-fill{width:34%;animation:zx-font-sweep 1.1s ease-in-out infinite}
+#zx-font-loader.zx-font-error .zx-font-fill{width:100%;background:#d6a2a2;animation:none}
+@keyframes zx-font-sweep{0%{transform:translateX(-110%)}100%{transform:translateX(330%)}}
+@media(prefers-reduced-motion:reduce){
+ #zx-font-loader,#zx-font-loader .zx-font-fill{transition:none}
+ #zx-font-loader.zx-font-indeterminate .zx-font-fill{animation:none;width:45%}
+}
 </style>
+<script id="zx-font-loading-progress">
+(function(){
+  "use strict";
+  var url = "/assets/fonts/oppo-sans-4.0.ttf";
+  var family = "OPPO Sans 4.0";
+  var loader = document.createElement("div");
+  loader.id = "zx-font-loader";
+  loader.setAttribute("role", "status");
+  loader.setAttribute("aria-live", "polite");
+  loader.innerHTML = '<div class="zx-font-head"><span class="zx-font-name">OPPO Sans 4.0</span><span class="zx-font-state" id="zx-font-state">准备加载…</span></div><div class="zx-font-track" id="zx-font-track" role="progressbar" aria-label="字体加载进度" aria-valuemin="0" aria-valuemax="100"><div class="zx-font-fill" id="zx-font-fill"></div></div>';
+  document.body.appendChild(loader);
+
+  var state = loader.querySelector("#zx-font-state");
+  var track = loader.querySelector("#zx-font-track");
+  var fill = loader.querySelector("#zx-font-fill");
+  var finished = false;
+
+  function setProgress(loaded, total) {
+    if (total > 0) {
+      var pct = Math.max(0, Math.min(100, Math.floor(loaded / total * 100)));
+      loader.classList.remove("zx-font-indeterminate");
+      fill.style.width = pct + "%";
+      track.setAttribute("aria-valuenow", String(pct));
+      state.textContent = pct + "%";
+    } else {
+      loader.classList.add("zx-font-indeterminate");
+      fill.style.width = "";
+      track.removeAttribute("aria-valuenow");
+      state.textContent = "正在加载…";
+    }
+  }
+
+  function hideLoader() {
+    loader.classList.add("zx-font-done");
+    window.setTimeout(function(){ loader.remove(); }, 320);
+  }
+
+  function reportError() {
+    if (finished) return;
+    finished = true;
+    loader.classList.remove("zx-font-indeterminate");
+    loader.classList.add("zx-font-error");
+    fill.style.width = "100%";
+    track.removeAttribute("aria-valuenow");
+    state.textContent = "加载失败，使用备用字体";
+    window.setTimeout(hideLoader, 2600);
+  }
+
+  async function loadFont() {
+    if (document.fonts && document.fonts.check('14px "' + family + '"')) {
+      // A font already registered by the browser can be reused without a new download.
+      try {
+        await document.fonts.load('14px "' + family + '"');
+        finished = true;
+        hideLoader();
+        return;
+      } catch (_) {}
+    }
+
+    try {
+      var response = await fetch(url, { cache: "force-cache", credentials: "same-origin" });
+      if (!response.ok) throw new Error("Font request failed: " + response.status);
+      var total = Number(response.headers.get("content-length")) || 0;
+      var chunks = [];
+      var loaded = 0;
+
+      if (response.body && response.body.getReader) {
+        var reader = response.body.getReader();
+        while (true) {
+          var part = await reader.read();
+          if (part.done) break;
+          chunks.push(part.value);
+          loaded += part.value.byteLength;
+          setProgress(loaded, total);
+        }
+      } else {
+        var single = new Uint8Array(await response.arrayBuffer());
+        chunks.push(single);
+        loaded = single.byteLength;
+        setProgress(loaded, total);
+      }
+
+      if (!loaded) throw new Error("Empty font file");
+      state.textContent = "正在应用字体…";
+      loader.classList.remove("zx-font-indeterminate");
+      fill.style.width = "100%";
+      track.setAttribute("aria-valuenow", "100");
+
+      var bytes = new Uint8Array(loaded);
+      var offset = 0;
+      for (var i = 0; i < chunks.length; i++) {
+        bytes.set(chunks[i], offset);
+        offset += chunks[i].byteLength;
+      }
+
+      var face = new FontFace(family, bytes.buffer, {
+        style: "normal",
+        weight: "100 900",
+        display: "swap"
+      });
+      await face.load();
+      document.fonts.add(face);
+      finished = true;
+      state.textContent = "字体已就绪";
+      fill.style.width = "100%";
+      track.setAttribute("aria-valuenow", "100");
+      window.setTimeout(hideLoader, 500);
+    } catch (error) {
+      reportError();
+      if (window.console && console.warn) console.warn("[OPPO Sans 4.0] Font loading failed; fallback fonts remain active.", error);
+    }
+  }
+
+  loadFont();
+})();
+</script>
 </body>
 </html>
