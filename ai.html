@@ -159,7 +159,7 @@ function formatText(s){
  x=x.replace(new RegExp(tick+tick+tick+'([\\s\\S]*?)'+tick+tick+tick,'g'),(_,code)=>{const n=blocks.push('<pre><code>'+code+'</code></pre>')-1;return 'ZXCODEBLOCK'+n+'END';});
  x=x.replace(new RegExp(tick+'([^'+tick+'\\n]+)'+tick,'g'),(_,code)=>{const n=blocks.push('<code>'+code+'</code>')-1;return 'ZXINLINECODE'+n+'END';});
  x=x.replace(/\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\\begin\{([a-zA-Z*]+)\}[\s\S]+?\\end\{\1\}|\$(?!\$)(?:\\.|[^$\n])+\$(?!\$)/g,formula=>{
-  const n=mathBlocks.push(formula)-1;return 'ZXMATHBLOCK'+n+'END';
+  const n=mathBlocks.push(formula.replace(/&amp;/g,'&'))-1;return 'ZXMATHBLOCK'+n+'END';
  });
  x=x.replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^# (.+)$/gm,'<h1>$1</h1>');
  x=x.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/(^|\n)[-•] (.+)/g,'$1<li>$2</li>');
