@@ -1233,11 +1233,18 @@ button,input,select{font-family:inherit!important}
 }
 </style>
 <style id="zx-admin-oppo-sans">
-/* OPPO Sans 4.0: prefer the exact installed family. Official 4.0 font binaries are not yet bundled in this repository, so other devices use the bundled Noto Sans SC fallback until the official files are added. */
+/* Official OPPO Sans 4.0 is downloaded from OPPO's distribution host and checksum-verified during Pages deployment. */
+@font-face{
+ font-family:"OPPO Sans 4.0";
+ src:url("/assets/fonts/oppo-sans-4.0.ttf") format("truetype");
+ font-style:normal;
+ font-weight:100 900;
+ font-display:swap;
+}
 html,body,button,input,select,textarea{
  font-family:"OPPO Sans 4.0","OPPO Sans 4.0 SC","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif!important;
 }
-/* OPPO Sans 4.0 copyright © Guangdong OPPO Mobile Telecommunications Corp., Ltd. */
+/* Copyright © Guangdong OPPO Mobile Telecommunications Corp., Ltd. */
 </style>
 </body>
 </html>
