@@ -119,7 +119,7 @@ test("admin keeps Zhixing AI settings isolated from the learning and calculator 
   assert.equal(zhixingSettings.status, 200);
   assert.equal(learningSettings.status, 200);
   assert.equal((await zhixingSettings.json()).model, "zhixing-only-model");
-  assert.equal((await learningSettings.json()).model, "vision-model");
+  assert.equal((await learningSettings.json()).model, "legacy-shared-model");
 });
 
 test("admin settings require a valid bearer session", async () => {
