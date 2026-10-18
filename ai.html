@@ -16,7 +16,7 @@ window.MathJax = {
   startup: { typeset: false }
 };
 </script>
-<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.js'"></script>
 <style>
 @font-face{font-family:"Noto Sans SC";font-style:normal;font-weight:400;font-display:swap;src:url("./fonts/NotoSansSC-400.woff2?v=20261016") format("woff2")}
 @font-face{font-family:"Noto Sans SC";font-style:normal;font-weight:700;font-display:swap;src:url("./fonts/NotoSansSC-700.woff2?v=20261016") format("woff2")}
@@ -163,10 +163,26 @@ function formatText(s){
  x=x.replace(/ZXCODEBLOCK(\d+)END/g,(_,i)=>blocks[Number(i)]).replace(/ZXINLINECODE(\d+)END/g,(_,i)=>blocks[Number(i)]);
  return x;
 }
-async function typeset(node){if(window.MathJax&&window.MathJax.typesetPromise){try{await window.MathJax.typesetPromise([node]);}catch(e){}}}
+let mathTypesetQueue=Promise.resolve();
+async function typeset(node){
+ if(!node)return;
+ mathTypesetQueue=mathTypesetQueue.catch(()=>{}).then(async()=>{
+  for(let i=0;i<100&&!(window.MathJax&&window.MathJax.typesetPromise);i++)await new Promise(resolve=>setTimeout(resolve,100));
+  if(!window.MathJax||!window.MathJax.typesetPromise)throw new Error('MathJax failed to load');
+  if(window.MathJax.startup&&window.MathJax.startup.promise)await window.MathJax.startup.promise;
+  if(window.MathJax.typesetClear)window.MathJax.typesetClear([node]);
+  await window.MathJax.typesetPromise([node]);
+ }).catch(err=>{
+  console.warn('LaTeX rendering failed',err);
+  node.classList.add('math-render-failed');
+ });
+ return mathTypesetQueue;
+}
 function welcome(){return '<div class="welcome"><div class="welcome-mark">✳</div><h1>有什么可以帮你？</h1><p>直接提问、追问，或上传题目图片。</p></div>';}
 function render(){
- const host=$('chat');host.innerHTML='';
+ const host=$('chat');
+ if(window.MathJax&&window.MathJax.typesetClear)window.MathJax.typesetClear([host]);
+ host.innerHTML='';
  if(!state.messages.length){host.innerHTML=welcome();return;}
  state.messages.forEach(m=>{
   const node=document.createElement('article');node.className='msg '+m.role;
