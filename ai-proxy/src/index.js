@@ -273,7 +273,7 @@ export default {
         method: "POST",
         headers: { "Authorization": "Bearer " + runtime.apiKey, "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        redirect: "error",
+        redirect: "manual",
         signal: AbortSignal.timeout(90000)
       });
     } catch (error) {
@@ -285,6 +285,13 @@ export default {
       return json({
         error: "无法连接模型服务（" + base.hostname + "）。网络原因：" + detail +
           "。请检查 API 地址、Worker 出网/DNS/TLS 与服务商状态。"
+      }, 502, cors);
+    }
+    if (upstream.status >= 300 && upstream.status < 400) {
+      await adminModule.recordRequest(env, { mode, ok: false, status: 502, model: runtime.model });
+      return json({
+        error: "模型服务返回重定向（HTTP " + upstream.status +
+          "）。为保护 API Token，Worker 不会跟随重定向。请检查 API 根地址或供应商配置。"
       }, 502, cors);
     }
     const upstreamContentType = upstream.headers.get("Content-Type") || "";
