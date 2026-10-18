@@ -803,13 +803,13 @@ table{min-width:0}
       models = Array.isArray(data.models) ? [...new Set(data.models.filter(id => typeof id === "string" && id.trim()).map(id => id.trim()))] : [];
       renderModelPicker($("model").value);
       $("modelsStatus").textContent = models.length
-        ? "已获取 " + models.length + " 个模型。点击上方下拉框即可选择；下方也支持手动输入。"
+        ? "已获取 " + models.length + " 个模型。可点击模型列表直接选择，也可使用下拉框或手动填写。"
         : "接口没有返回可识别的模型 ID，可在下方手动填写。";
-      status("providerStatus", models.length ? "模型列表已更新，可从下拉框选择。" : "接口成功，但没有返回可用的模型 ID。", models.length ? "success" : "warn");
+      status("providerStatus", models.length ? "模型列表已更新，可直接点击模型项选择。" : "接口成功，但没有返回可用的模型 ID。", models.length ? "success" : "warn");
       if (models.length) {
         const picker = $("modelPicker");
         picker.focus({ preventScroll: true });
-        showToast("已获取模型列表，请点下拉框选择");
+        showToast("已获取模型列表，可点击模型项选择");
       } else {
         showToast("未找到可选模型，请手动输入");
       }
