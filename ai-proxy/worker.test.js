@@ -219,7 +219,11 @@ test("calculator inline AI analysis script parses and chat panel is removed", ()
   assert.match(html, /data-zx-ai-action/);
   assert.match(html, /data-zx-ai-ask-form/);
   assert.match(html, /用户针对当前计算结果的追问/);
-  assert.match(html, /if\(el\.type==='hidden'\|\|el\.disabled\|\|!visible\(el\)\)return;/);
+  assert.match(html, /el\.closest\('\.zx-ai-result'\)\|\|el\.type==='hidden'/);
+  assert.match(html, /value\.includes\('\:\/\/'\)/);
+  assert.doesNotMatch(html, /AI 服务设置|data-zx-ai-proxy|data-zx-ai-save-proxy|AI Worker 地址/);
+  assert.doesNotMatch(html, /content\.style\.maxHeight=content\.scrollHeight/);
+  assert.match(html, /transition:opacity \.15s ease,transform \.15s/);
   assert.match(html, /new AbortController\(\)/);
   assert.match(html, /requestTimeout=window\.setTimeout/);
   assert.match(html, /id="zx-light-surface-audit"/);
