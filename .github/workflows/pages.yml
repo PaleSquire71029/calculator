@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -41,6 +41,14 @@ jobs:
           mkdir -p assets/fonts
           unzip -p "$archive" "OPPO_Sans_4.0/OPPO Sans 4.0.ttf" > assets/fonts/oppo-sans-4.0.ttf
           test "$(stat -c%s assets/fonts/oppo-sans-4.0.ttf)" -gt 1000000
+          # Keep the verified asset tracked so branch-based Pages builds can serve it too.
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/fonts/oppo-sans-4.0.ttf
+          if ! git diff --cached --quiet; then
+            git commit -m "Add official OPPO Sans 4.0 font asset"
+            git push origin HEAD:main
+          fi
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
