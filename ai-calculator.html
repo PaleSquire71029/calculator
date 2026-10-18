@@ -4849,6 +4849,7 @@ a{color:#416bd6}
     const allButtons=Array.from(document.querySelectorAll('[data-zx-ai-action], [data-zx-ai-ask-submit]'));
     busy=true;allButtons.forEach(b=>b.disabled=true);
     let partialAnswer='';
+    let requestController=null,requestTimeout=0;
     try{
       const ep=endpoint();
       if(!ep)throw new Error('AI Worker 地址无效，请展开“AI 服务设置”重新配置。');
@@ -4856,7 +4857,9 @@ a{color:#416bd6}
       if(question){
         context.details=(context.details?context.details+'\n':'')+'用户针对当前计算结果的追问：'+String(question).slice(0,1000)+'\n请优先直接回答这条追问，并结合页面已提供的输入、计算结果与选项进行核验；不要只重复通用解释。';
       }
-      const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'analysis',action:action,mode:viewId,context:context,stream:true})});
+      requestController=new AbortController();
+      requestTimeout=window.setTimeout(()=>requestController.abort(),95000);
+      const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'analysis',action:action,mode:viewId,context:context,stream:true}),redirect:'error',signal:requestController.signal});
       if(!response.ok){
         let errorData={};try{errorData=await response.json();}catch(e){}
         throw new Error(errorData.error||('请求失败（HTTP '+response.status+'）'));
@@ -4881,11 +4884,13 @@ a{color:#416bd6}
       panel.querySelector('[data-zx-ai-proxy]').value=proxyValue();
     }catch(e){
       delete statusEl.dataset.loading;
-      setStatus(panel,'请求失败：'+(e&&e.message?e.message:'网络错误')+'。请检查网络或 AI 服务设置。',true);
+      const failure=e&&e.name==='AbortError'?'AI 响应超时或连接已中断，请重试。':(e&&e.message?e.message:'网络错误');
+      setStatus(panel,'请求失败：'+failure+'。请检查网络或 AI 服务设置。',true);
       answerEl.querySelectorAll('[data-streaming="true"]').forEach(el=>delete el.dataset.streaming);
       if(partialAnswer.trim())await typesetAnswer(answerEl);
       else answerEl.hidden=true;
     }finally{
+      if(requestTimeout)window.clearTimeout(requestTimeout);
       delete statusEl.dataset.loading;
       busy=false;allButtons.forEach(b=>b.disabled=false);
     }
