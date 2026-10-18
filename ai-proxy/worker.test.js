@@ -77,11 +77,30 @@ test("admin keeps Zhixing AI settings isolated from the learning and calculator 
   assert.equal(login.status, 200);
   const token = (await login.json()).token;
   const headers = { Origin: origin, Authorization: "Bearer " + token, "Content-Type": "application/json" };
+  const learningDefaultsResponse = await worker.fetch(new Request("https://worker.example.test/admin/defaults?app=learning", { headers }), isolatedEnv);
+  assert.equal(learningDefaultsResponse.status, 200);
+  const learningPrompts = await learningDefaultsResponse.json();
+  const seedLegacy = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=learning", {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({
+      apiBaseUrl: "https://api.example.com/v1",
+      model: "legacy-shared-model",
+      temperature: 0.3,
+      maxTokens: 256,
+      prompts: learningPrompts,
+      apiKey: ""
+    })
+  }), isolatedEnv);
+  assert.equal(seedLegacy.status, 200);
   const defaultsResponse = await worker.fetch(new Request("https://worker.example.test/admin/defaults?app=zhixing-ai", { headers }), isolatedEnv);
   assert.equal(defaultsResponse.status, 200);
   const prompts = await defaultsResponse.json();
   assert.match(prompts.chat.general, /知行AI助手/);
   assert.doesNotMatch(prompts.chat.general, /多学科学习助手/);
+  const inherited = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=zhixing-ai", { headers }), isolatedEnv);
+  assert.equal(inherited.status, 200);
+  assert.equal((await inherited.json()).model, "legacy-shared-model");
   const save = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=zhixing-ai", {
     method: "PUT",
     headers,
