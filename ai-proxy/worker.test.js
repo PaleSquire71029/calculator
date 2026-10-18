@@ -331,4 +331,9 @@ test("AI admin frontend inline JavaScript parses", () => {
   assert.match(html, /function renderUsageCharts\(\)/);
   assert.match(html, /item\.usageAvailable===true/);
   assert.match(html, /renderUsageCharts\(\);/);
+  assert.match(html, /NotoSansSC-400\.woff2\?v=20261018/);
+  assert.match(html, /NotoSansSC-700\.woff2\?v=20261018/);
+  assert.match(html, /#modelPicker\{[\s\S]*?height:46px!important;[\s\S]*?max-height:46px!important;[\s\S]*?flex:none!important;/);
+  assert.match(html, /\.field \.row:has\(#modelPicker\)[\s\S]*?display:grid!important/);
+  assert.match(html, /\.model-catalog-list\{max-height:155px!important\}/);
 });
