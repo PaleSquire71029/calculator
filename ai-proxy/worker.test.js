@@ -222,6 +222,9 @@ test("calculator inline AI analysis script parses and chat panel is removed", ()
   assert.match(html, /if\(el\.type==='hidden'\|\|el\.disabled\|\|!visible\(el\)\)return;/);
   assert.match(html, /new AbortController\(\)/);
   assert.match(html, /requestTimeout=window\.setTimeout/);
+  assert.match(html, /id="zx-light-surface-audit"/);
+  assert.match(html, /\.zx-chem-keyboard,#chemKeyboard:not\(\[hidden\]\).*?background:rgba\(249,252,255,\.97\)!important/s);
+  assert.match(html, /\.function-graph\{background:rgba\(255,255,255,\.94\)!important/);
 });
 
 test("AI frontend inline JavaScript parses without syntax errors", () => {
