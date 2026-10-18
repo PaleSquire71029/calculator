@@ -30,6 +30,17 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure Pages
         uses: actions/configure-pages@v5
+      - name: Download and verify official OPPO Sans 4.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/oppo-sans-4.0.zip"
+          url="https://openfs.oppomobile.com/open/oop/202412/05/0f155015fff7700fbbcef7fa2aad78dc.zip"
+          curl --fail --location --retry 3 --retry-delay 2 "$url" --output "$archive"
+          echo "4a314ad9446d0ba86fde57f18dbe8b7376c32dd5cdf6e3c8119a5d1ccf934ba8  $archive" | sha256sum --check
+          mkdir -p assets/fonts
+          unzip -p "$archive" "OPPO_Sans_4.0/OPPO Sans 4.0.ttf" > assets/fonts/oppo-sans-4.0.ttf
+          test "$(stat -c%s assets/fonts/oppo-sans-4.0.ttf)" -gt 1000000
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
