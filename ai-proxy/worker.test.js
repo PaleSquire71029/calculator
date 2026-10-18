@@ -496,3 +496,20 @@ test("changing the admin password invalidates existing sessions even with a sepa
   }), rotated);
   assert.equal(after.status, 401);
 });
+
+
+test("upstream error messages never echo the configured API key", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    error: { message: "Provider rejected request with key test-key; Authorization: Bearer test-key" }
+  }), { status: 500, headers: { "Content-Type": "application/json" } });
+  try {
+    const response = await worker.fetch(req({ mode: "general", messages: [userMessage] }, "198.51.100.121"), env);
+    assert.equal(response.status, 502);
+    const body = await response.text();
+    assert.doesNotMatch(body, /test-key/);
+    assert.match(body, /已隐藏/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

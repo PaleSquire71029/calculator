@@ -187,11 +187,11 @@ const API_SECURITY_HEADERS = {
   "Referrer-Policy": "no-referrer"
 };
 function sanitizeProviderText(value, apiKey = "", maxLength = 400) {
-  let message = String(value ?? "").replace(/[\\r\\n]+/g, " ").replace(/\\s+/g, " ").trim();
+  let message = String(value ?? "").replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
   if (apiKey) message = message.split(apiKey).join("[已隐藏]");
   message = message
-    .replace(/Bearer\\s+\\S+/gi, "Bearer [已隐藏]")
-    .replace(/(api[_ -]?key|token|secret)(\\s*[:=]\\s*)["']?[^,\\s"'<>]{8,}/gi, "$1$2[已隐藏]");
+    .replace(/Bearer\s+\S+/gi, "Bearer [已隐藏]")
+    .replace(/(api[_ -]?key|token|secret)(\s*[:=]\s*)["']?[^,\s"'<>]{8,}/gi, "$1$2[已隐藏]");
   return message.slice(0, maxLength);
 }
 function json(data, status = 200, headers = {}) {
