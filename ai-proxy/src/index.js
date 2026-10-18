@@ -238,7 +238,7 @@ export default {
       if (rate.unavailable) return json({ error: "健康检查限流暂时不可用，请稍后重试。" }, 503, cors);
       if (!rate.allowed) return json({ error: "健康检查请求过于频繁。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
       const runtime = await adminModule.getRuntimeSettings(env, appId).catch(() => ({ apiKey: "", apiBaseUrl: "", model: "" }));
-      return json({ ok: true, configured: Boolean(runtime.apiKey && runtime.apiBaseUrl && runtime.model), model || null, app: appId }, 200, cors);
+      return json({ ok: true, configured: Boolean(runtime.apiKey && runtime.apiBaseUrl && runtime.model), model: runtime.model || null, app: appId }, 200, cors);
     }
     if (request.method === "GET" && url.pathname === "/api/models") {
       if (!origin || !allowed.includes(origin)) return json({ error: "该网站来源未获授权，请检查 Worker 的 ALLOWED_ORIGINS 配置。" }, 403, cors);
@@ -427,7 +427,7 @@ export default {
       await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model, usage: result?.usage });
       return json({ error: "模型没有返回可显示的文字，请稍后重试。" }, 502, cors);
     }
-    await adminModule.recordRequest(env, { appId, mode, ok: true, status: upstream.status, model: result.model || runtime.model, usage: result.usage });
-    return json({ answer, model: result.model || runtime.model, usage: result.usage || null }, 200, cors);
+    await adminModule.recordRequest(env, { appId, mode, ok: true, status: upstream.status, model: result.model || model, usage: result.usage });
+    return json({ answer, model: result.model || model, usage: result.usage || null }, 200, cors);
   }
 };
