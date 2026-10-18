@@ -337,3 +337,18 @@ test("AI admin frontend inline JavaScript parses", () => {
   assert.match(html, /\.field \.row:has\(#modelPicker\)[\s\S]*?display:grid!important/);
   assert.match(html, /\.model-catalog-list\{max-height:155px!important\}/);
 });
+
+
+test("admin verification and startup requests always time out instead of hanging", () => {
+  const html = readFileSync(new URL("../ai-admin.html", import.meta.url), "utf8");
+  assert.match(html, /new AbortController\(\)/);
+  assert.match(html, /path === "\/admin\/login" \? 12000 : 15000/);
+  assert.match(html, /请求超时/);
+  assert.match(html, /正在加载管理配置/);
+  assert.match(html, /window\.clearTimeout\(timeoutId\)/);
+  assert.match(html, /const \[data, promptDefaults\] = await Promise\.all/);
+  assert.match(html, /加载超时，使用备用字体/);
+
+  const adminSource = readFileSync(new URL("./src/admin.js", import.meta.url), "utf8");
+  assert.equal((adminSource.match(/signal: AbortSignal\.timeout\(8000\)/g) || []).length, 3);
+});
