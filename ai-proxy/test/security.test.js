@@ -43,6 +43,14 @@ function jsonRequest(url, body, headers = {}) {
   });
 }
 
+async function loginAdmin(env, ip = "203.0.113.180") {
+  const response = await worker.fetch(jsonRequest("https://worker.test/admin/login", {
+    password: env.ADMIN_PASSWORD
+  }, { Origin: "https://c.zhixing.us.ci", "CF-Connecting-IP": ip }), env);
+  assert.equal(response.status, 200, "admin login should succeed in tests");
+  return (await response.json()).token;
+}
+
 test("normalizes OpenAI-compatible API roots and removes endpoint suffixes", () => {
   assert.equal(
     normalizeApiBaseUrl("https://api.a6api.com/v1/chat/completions"),
@@ -339,4 +347,127 @@ test("API endpoint returns 400, not 500, for JSON null", async () => {
     body: "null"
   }), env);
   assert.equal(response.status, 400);
+});
+
+test("admin can reveal the saved API token only through an explicit authenticated action", async () => {
+  const { env } = fakeEnvironment({ AI_API_KEY: "sk-worker-secret-token-for-tests" });
+  const token = await loginAdmin(env, "203.0.113.181");
+  const response = await worker.fetch(jsonRequest("https://worker.test/admin/key/reveal", {
+    confirm: "REVEAL_KEY"
+  }, {
+    Origin: "https://c.zhixing.us.ci",
+    Authorization: "Bearer " + token,
+    "CF-Connecting-IP": "203.0.113.181"
+  }), env);
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.apiKey, "sk-worker-secret-token-for-tests");
+  assert.equal(payload.source, "worker");
+});
+
+test("model list endpoint accepts nested compatible response formats", async () => {
+  const { env } = fakeEnvironment({ AI_API_KEY: "sk-model-list-test" });
+  const token = await loginAdmin(env, "203.0.113.182");
+  const originalFetch = globalThis.fetch;
+  let upstreamUrl = "";
+  globalThis.fetch = async url => {
+    upstreamUrl = String(url);
+    return new Response(JSON.stringify({
+      success: true,
+      data: { models: [{ id: "model-alpha" }, { model: "model-beta" }] }
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    const response = await worker.fetch(jsonRequest("https://worker.test/admin/models", {
+      apiBaseUrl: "https://api.example-provider.com/v1"
+    }, {
+      Origin: "https://c.zhixing.us.ci",
+      Authorization: "Bearer " + token,
+      "CF-Connecting-IP": "203.0.113.182"
+    }), env);
+    assert.equal(response.status, 200);
+    assert.equal(upstreamUrl, "https://api.example-provider.com/v1/models");
+    assert.deepEqual((await response.json()).models, ["model-alpha", "model-beta"]);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("New API-compatible balance endpoint returns token quota and converts units when available", async () => {
+  const { env } = fakeEnvironment({ AI_API_KEY: "sk-balance-token", AI_BASE_URL: "https://api.example-provider.com/v1" });
+  const token = await loginAdmin(env, "203.0.113.183");
+  const originalFetch = globalThis.fetch;
+  const requested = [];
+  globalThis.fetch = async url => {
+    const target = String(url);
+    requested.push(target);
+    if (target.endsWith("/api/usage/token/")) {
+      return new Response(JSON.stringify({
+        code: true,
+        message: "ok",
+        data: { name: "test-token", total_granted: 5000000, total_used: 1750000, total_available: 3250000, unlimited_quota: false, expires_at: 0 }
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    if (target.endsWith("/api/status")) {
+      return new Response(JSON.stringify({
+        success: true,
+        data: { quota_per_unit: 500000, display_in_currency: true, display_in_currency_symbol: "$" }
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    throw new Error("unexpected upstream url: " + target);
+  };
+  try {
+    const response = await worker.fetch(jsonRequest("https://worker.test/admin/balance", {
+      apiBaseUrl: "https://api.example-provider.com/v1"
+    }, {
+      Origin: "https://c.zhixing.us.ci",
+      Authorization: "Bearer " + token,
+      "CF-Connecting-IP": "203.0.113.183"
+    }), env);
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.totalGranted, 5000000);
+    assert.equal(payload.totalUsed, 1750000);
+    assert.equal(payload.totalAvailable, 3250000);
+    assert.equal(payload.quotaPerUnit, 500000);
+    assert.equal(payload.currencyEnabled, true);
+    assert.ok(requested.includes("https://api.example-provider.com/api/usage/token/"));
+    assert.ok(requested.includes("https://api.example-provider.com/api/status"));
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("streamed analysis requests usage and adds token counts to statistics and recent records", async () => {
+  const { env } = fakeEnvironment({ AI_API_KEY: "worker-stream-test-key" });
+  const originalFetch = globalThis.fetch;
+  let upstreamBody;
+  const sse = [
+    "data: " + JSON.stringify({ choices: [{ delta: { content: "答案" } }] }) + "\n\n",
+    "data: " + JSON.stringify({ choices: [], usage: { prompt_tokens: 31, completion_tokens: 9, total_tokens: 40 } }) + "\n\n",
+    "data: [DONE]\n\n"
+  ].join("");
+  globalThis.fetch = async (_url, init) => {
+    upstreamBody = JSON.parse(init.body);
+    return new Response(sse, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+  };
+  try {
+    const response = await worker.fetch(jsonRequest("https://worker.test/api/chat", {
+      task: "analysis",
+      action: "extend",
+      mode: "equation",
+      stream: true,
+      context: { title: "方程求解", inputs: "x^2-5x+6=0", outputs: "x=2 或 x=3" }
+    }, { Origin: "https://c.zhixing.us.ci", "CF-Connecting-IP": "203.0.113.184" }), env);
+    assert.equal(response.status, 200);
+    await response.text();
+    assert.deepEqual(upstreamBody.stream_options, { include_usage: true });
+    const token = await loginAdmin(env, "203.0.113.184");
+    const settings = await worker.fetch(new Request("https://worker.test/admin/settings", {
+      headers: { Origin: "https://c.zhixing.us.ci", Authorization: "Bearer " + token }
+    }), env);
+    assert.equal(settings.status, 200);
+    const stats = (await settings.json()).stats;
+    assert.equal(stats.promptTokens, 31);
+    assert.equal(stats.completionTokens, 9);
+    assert.equal(stats.recent[0].promptTokens, 31);
+    assert.equal(stats.recent[0].completionTokens, 9);
+    assert.equal(stats.recent[0].totalTokens, 40);
+  } finally { globalThis.fetch = originalFetch; }
 });
