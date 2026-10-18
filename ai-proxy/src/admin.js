@@ -382,7 +382,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       return { allowed: false, unavailable: true, retryAfter: 60 };
     }
   }
-  async function recordRequest(env, event, appId = "learning") {
+  async function recordRequest(env, event, appId = event?.appId || "learning") {
     try {
       const data = await readData(env);
       if (!data) return;
