@@ -5,12 +5,33 @@ import { Script } from "node:vm";
 import worker, { AdminSettingsStore } from "./src/index.js";
 
 const origin = "https://c.zhixing.us.ci";
-const env = {
-  AI_API_KEY: "test-key",
-  AI_BASE_URL: "https://api.example.test/v1",
-  AI_MODEL: "vision-model",
-  ALLOWED_ORIGINS: origin
-};
+function createStoreBinding() {
+  const values = new Map();
+  let alarm = null;
+  const storage = {
+    get: async key => values.get(key),
+    put: async (key, value) => values.set(key, structuredClone(value)),
+    delete: async key => values.delete(key),
+    list: async ({ prefix = "" } = {}) => new Map([...values].filter(([key]) => key.startsWith(prefix))),
+    transaction: async callback => callback(storage),
+    getAlarm: async () => alarm,
+    setAlarm: async value => { alarm = value; }
+  };
+  const store = new AdminSettingsStore({ storage }, {});
+  const stub = { fetch: request => store.fetch(request) };
+  return { idFromName: () => "worker-tests", get: () => stub };
+}
+function testEnv(overrides = {}) {
+  return {
+    AI_API_KEY: "test-key",
+    AI_BASE_URL: "https://api.example.test/v1",
+    AI_MODEL: "vision-model",
+    ALLOWED_ORIGINS: origin,
+    ...overrides,
+    ADMIN_STORE: overrides.ADMIN_STORE || createStoreBinding()
+  };
+}
+const env = testEnv();
 function req(body, ip = "198.51.100.10", requestOrigin = origin) {
   return new Request("https://worker.example.test/api/chat", {
     method: "POST",
@@ -29,7 +50,7 @@ test("admin login requires an explicitly configured password", async () => {
     method: "POST",
     headers: { "Content-Type": "application/json", "Origin": origin, "CF-Connecting-IP": "198.51.100.70" },
     body: JSON.stringify({ password: "guess" })
-  }), { ALLOWED_ORIGINS: origin });
+  }), testEnv({ ALLOWED_ORIGINS: origin }));
   assert.equal(response.status, 503);
   assert.match((await response.json()).error, /ADMIN_PASSWORD/);
 });
@@ -81,7 +102,7 @@ test("rejects unapproved origins", async () => {
 });
 
 test("reports missing backend configuration without calling provider", async () => {
-  const response = await worker.fetch(req({ mode: "solve", messages: [userMessage] }, "198.51.100.12"), { ALLOWED_ORIGINS: origin });
+  const response = await worker.fetch(req({ mode: "solve", messages: [userMessage] }, "198.51.100.12"), testEnv({ ALLOWED_ORIGINS: origin }));
   assert.equal(response.status, 503);
   assert.match((await response.json()).error, /尚未配置/);
 });
