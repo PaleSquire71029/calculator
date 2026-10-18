@@ -75,10 +75,24 @@ function serializeAnalysisContext(context) {
   return { context: normalized };
 }
 
+const API_SECURITY_HEADERS = {
+  "Cache-Control": "no-store",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "no-referrer"
+};
+function sanitizeProviderText(value, apiKey = "", maxLength = 500) {
+  let message = String(value ?? "").replace(/[\\r\\n]+/g, " ").replace(/\\s+/g, " ").trim();
+  if (apiKey) message = message.split(apiKey).join("[已隐藏]");
+  message = message
+    .replace(/Bearer\\s+\\S+/gi, "Bearer [已隐藏]")
+    .replace(/(api[_ -]?key|token|secret)(\\s*[:=]\\s*)["']?[^,\\s"'<>]{8,}/gi, "$1$2[已隐藏]");
+  return message.slice(0, maxLength);
+}
 function json(data, status, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...headers }
+    headers: { ...API_SECURITY_HEADERS, "Content-Type": "application/json; charset=utf-8", ...headers }
   });
 }
 function limitSseStream(body, maxBytes = MAX_STREAM_BYTES, onFinish = () => {}) {
@@ -226,8 +240,8 @@ export default {
     const origin = request.headers.get("Origin") || "";
     const allowed = getAllowedOrigins(env);
     if (request.method === "OPTIONS") {
-      if (origin && !allowed.includes(origin)) return new Response(null, { status: 403 });
-      return new Response(null, { status: 204, headers: cors });
+      if (origin && !allowed.includes(origin)) return new Response(null, { status: 403, headers: API_SECURITY_HEADERS });
+      return new Response(null, { status: 204, headers: { ...API_SECURITY_HEADERS, ...cors } });
     }
     const url = new URL(request.url);
     if (url.pathname.startsWith("/admin/")) return adminModule.handleRoute(request, env, url, cors);
@@ -269,7 +283,7 @@ export default {
       if (read.error) return json({ error: "模型列表响应过大或无法读取。" }, 502, cors);
       let result;
       try { result = JSON.parse(read.text); } catch { result = null; }
-      if (!upstream.ok) return json({ error: "获取模型列表失败（HTTP " + upstream.status + "）：" + String(result?.error?.message || result?.message || "服务商拒绝请求").slice(0, 350) }, 502, cors);
+      if (!upstream.ok) return json({ error: "获取模型列表失败（HTTP " + upstream.status + "）：" + sanitizeProviderText(result?.error?.message || result?.message || "服务商拒绝请求", runtime.apiKey, 350) }, 502, cors);
       const models = extractModelIds(result);
       if (!models.length) return json({ error: "接口已响应，但没有识别到模型 ID；请检查该 API 的 /models 响应。" }, 502, cors);
       return json({ app: appId, defaultModel: runtime.model || null, count: models.length, models }, 200, { ...cors, "Cache-Control": "no-store" });
@@ -391,6 +405,7 @@ export default {
       ), {
         status: 200,
         headers: {
+          ...API_SECURITY_HEADERS,
           ...cors,
           "Content-Type": "text/event-stream; charset=utf-8",
           "Cache-Control": "no-cache, no-transform",
@@ -407,7 +422,7 @@ export default {
     try { result = JSON.parse(upstreamRead.text); } catch { result = null; }
     if (!upstream.ok) {
       await adminModule.recordRequest(env, { appId, mode, ok: false, status: upstream.status, model });
-      const upstreamMessage = result?.error?.message;
+      const upstreamMessage = sanitizeProviderText(result?.error?.message, runtime.apiKey, 500);
       if (upstream.status === 401) {
         return json({ error: "模型服务鉴权失败（上游 401）。请检查 Cloudflare Worker 的 AI_API_KEY 是否有效、是否已过期，以及密钥是否属于 AI_BASE_URL 对应的服务商。若换过服务商，必须同时核对 AI_BASE_URL、AI_MODEL 和 AI_API_KEY；不要把密钥填进网页。", code: "UPSTREAM_AUTH_FAILED" }, 502, cors);
       }
@@ -420,7 +435,7 @@ export default {
       if (upstream.status === 404) {
         return json({ error: "模型接口或模型名称不存在（上游 404）。请核对 AI_BASE_URL 是否为服务商的 API 根地址，以及 AI_MODEL 是否为该服务商支持的模型 ID。", code: "UPSTREAM_MODEL_NOT_FOUND" }, 502, cors);
       }
-      return json({ error: "模型服务返回错误（" + upstream.status + "）：" + (typeof upstreamMessage === "string" ? upstreamMessage.slice(0, 500) : "请检查模型名称、API 地址和密钥。") }, 502, cors);
+      return json({ error: "模型服务返回错误（" + upstream.status + "）：" + (upstreamMessage || "请检查模型名称、API 地址和密钥。") }, 502, cors);
     }
     const answer = result?.choices?.[0]?.message?.content;
     if (typeof answer !== "string" || !answer.trim()) {

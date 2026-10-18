@@ -180,10 +180,24 @@ function describeFetchFailure(error, apiKey = "") {
   return detail || "未知网络错误";
 }
 
+const API_SECURITY_HEADERS = {
+  "Cache-Control": "no-store",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "no-referrer"
+};
+function sanitizeProviderText(value, apiKey = "", maxLength = 400) {
+  let message = String(value ?? "").replace(/[\\r\\n]+/g, " ").replace(/\\s+/g, " ").trim();
+  if (apiKey) message = message.split(apiKey).join("[已隐藏]");
+  message = message
+    .replace(/Bearer\\s+\\S+/gi, "Bearer [已隐藏]")
+    .replace(/(api[_ -]?key|token|secret)(\\s*[:=]\\s*)["']?[^,\\s"'<>]{8,}/gi, "$1$2[已隐藏]");
+  return message.slice(0, maxLength);
+}
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...headers }
+    headers: { ...API_SECURITY_HEADERS, "Content-Type": "application/json; charset=utf-8", ...headers }
   });
 }
 function encodeBase64Url(bytes) {
@@ -205,8 +219,11 @@ function safeEqual(a, b) {
   return diff === 0;
 }
 async function signPayload(payload, env) {
-  const secret = String(env.ADMIN_SESSION_SECRET || env.ADMIN_PASSWORD || "");
-  if (!secret) throw new Error("未设置管理会话签名密钥");
+  const password = String(env.ADMIN_PASSWORD || "");
+  const sessionSecret = String(env.ADMIN_SESSION_SECRET || "");
+  // Include the password in the signature key so password rotation revokes existing sessions.
+  const secret = sessionSecret ? sessionSecret + "\n" + password : password;
+  if (!secret || !password) throw new Error("未设置管理会话签名密钥或管理密码");
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return encodeBase64Url(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload))));
 }
@@ -525,7 +542,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       try { tokenBody = JSON.parse(tokenRead.text); } catch { tokenBody = null; }
       const providerMessage = body => {
         const nested = body?.data && typeof body.data === "object" ? body.data : body;
-        return String(nested?.error?.message || nested?.message || nested?.msg || body?.message || "").slice(0, 180);
+        return sanitizeProviderText(nested?.error?.message || nested?.message || nested?.msg || body?.message || "", apiKey, 180);
       };
       if (!subscriptionResponse.ok || !tokenResponse.ok) {
         const parts = [];
@@ -692,9 +709,9 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       if (responseText.error) return json({ error: "模型列表响应体过大或无法读取。" }, 502, cors);
       let result;
       try { result = JSON.parse(responseText.text); } catch { result = {}; }
-      if (!response.ok) return json({ error: "获取模型列表失败（HTTP " + response.status + "）：" + String(result?.error?.message || result?.message || "当前供应商可能不支持 /models 接口").slice(0, 400) }, 502, cors);
+      if (!response.ok) return json({ error: "获取模型列表失败（HTTP " + response.status + "）：" + sanitizeProviderText(result?.error?.message || result?.message || "当前供应商可能不支持 /models 接口", apiKey, 400) }, 502, cors);
       if (result && (result.success === false || result.code === false)) {
-        return json({ error: "获取模型列表失败：" + String(result.message || result.msg || "服务商拒绝请求").slice(0, 400) }, 502, cors);
+        return json({ error: "获取模型列表失败：" + sanitizeProviderText(result.message || result.msg || "服务商拒绝请求", apiKey, 400) }, 502, cors);
       }
       const list = [
         Array.isArray(result) ? result : null,
@@ -760,7 +777,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       let result;
       try { result = JSON.parse(responseText.text); } catch { result = {}; }
       const elapsedMs = Date.now() - start;
-      if (!response.ok) return json({ ok: false, elapsedMs, error: "模型服务返回 HTTP " + response.status + "：" + String(result?.error?.message || result?.message || "请检查 API 地址、密钥和模型权限").slice(0, 500) }, 502, cors);
+      if (!response.ok) return json({ ok: false, elapsedMs, error: "模型服务返回 HTTP " + response.status + "：" + sanitizeProviderText(result?.error?.message || result?.message || "请检查 API 地址、密钥和模型权限", apiKey, 500) }, 502, cors);
       return json({ ok: true, elapsedMs, model: result.model || model, preview: String(result?.choices?.[0]?.message?.content || "连接成功").slice(0, 300), usage: result.usage || null }, 200, cors);
     }
     return json({ error: "管理接口不存在" }, 404, cors);

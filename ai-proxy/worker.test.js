@@ -464,3 +464,35 @@ test("admin verification and startup requests always time out instead of hanging
   const adminSource = readFileSync(new URL("./src/admin.js", import.meta.url), "utf8");
   assert.equal((adminSource.match(/signal: AbortSignal\.timeout\(8000\)/g) || []).length, 3);
 });
+
+
+test("API responses set baseline security headers", async () => {
+  const response = await worker.fetch(new Request("https://worker.example.test/health", {
+    headers: { Origin: origin }
+  }), env);
+  assert.equal(response.headers.get("X-Content-Type-Options"), "nosniff");
+  assert.equal(response.headers.get("X-Frame-Options"), "DENY");
+  assert.equal(response.headers.get("Referrer-Policy"), "no-referrer");
+  assert.equal(response.headers.get("Cache-Control"), "no-store");
+});
+
+test("changing the admin password invalidates existing sessions even with a separate session secret", async () => {
+  const store = createStoreBinding();
+  const before = testEnv({
+    ADMIN_PASSWORD: "previous-test-admin-password",
+    ADMIN_SESSION_SECRET: "a-long-independent-session-secret-for-tests",
+    ADMIN_STORE: store
+  });
+  const login = await worker.fetch(new Request("https://worker.example.test/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: origin, "CF-Connecting-IP": "198.51.100.110" },
+    body: JSON.stringify({ password: "previous-test-admin-password" })
+  }), before);
+  assert.equal(login.status, 200);
+  const token = (await login.json()).token;
+  const rotated = { ...before, ADMIN_PASSWORD: "new-test-admin-password" };
+  const after = await worker.fetch(new Request("https://worker.example.test/admin/settings", {
+    headers: { Origin: origin, Authorization: "Bearer " + token }
+  }), rotated);
+  assert.equal(after.status, 401);
+});
