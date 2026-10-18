@@ -1311,16 +1311,6 @@ html,body,button,input,select,textarea{
   }
 
   async function loadFont() {
-    if (document.fonts && document.fonts.check('14px "' + family + '"')) {
-      // A font already registered by the browser can be reused without a new download.
-      try {
-        await document.fonts.load('14px "' + family + '"');
-        finished = true;
-        hideLoader();
-        return;
-      } catch (_) {}
-    }
-
     try {
       var response = await fetch(url, { cache: "force-cache", credentials: "same-origin" });
       if (!response.ok) throw new Error("Font request failed: " + response.status);
