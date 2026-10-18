@@ -1,6 +1,6 @@
 # 知行计算器 AI 后端代理与管理中心
 
-此目录部署到 Cloudflare Workers。模型 API Key 不会通过管理 API 回传到网页；管理员通过有时效的签名会话访问受保护的管理 API。
+此目录部署到 Cloudflare Workers。普通设置接口不会回传模型 API Key；管理员登录后可通过单独的、限流保护的“查看已保存 Token”操作主动显示该 Key。管理 API 使用有时效的签名会话。
 
 **重要隐私边界：**用户提交的文字、对话上下文和图片会被转发给管理中心配置的模型 API 服务商，以便生成回答。当前 Worker 不会主动将问题正文、回答正文或图片写入项目自己的调用统计；但这不代表 Cloudflare、浏览器或模型服务商绝不记录数据。请先阅读 [AI 数据安全与隐私说明](./SECURITY.md)。
 
@@ -32,10 +32,12 @@ Worker 使用一个 SQLite-backed Durable Object 保存后台配置与调用统�
 - **模型与 API**：编辑 OpenAI 兼容 API 根地址、API Key、模型 ID、Temperature 和最大输出 Token；提供 OpenAI、DeepSeek、SiliconFlow、ModelScope 常用地址预设，以及“保存并测试”一键操作和未保存修改提醒。
 - **提示词草稿**：可导入/导出单个提示词；编辑中的提示词草稿可暂存于当前浏览器并在误操作后恢复，保存后才会应用。
 - **统计维护**：调用记录可按成功/失败、模型、场景或 HTTP 状态筛选，并导出 CSV；管理员可清空累计统计和最近 20 条元数据，不影响模型配置与提示词。
-- **自动获取模型列表**：使用当前 API 地址和密钥调用 `GET /models`，将可用模型显示为下拉候选；若服务商不实现该接口，可以直接手动填写模型 ID。
+- **自动获取模型列表**：使用当前 API 地址和密钥调用 `GET /models`，支持常见 OpenAI 兼容返回格式；若服务商不实现该接口，可以直接手动填写模型 ID。
+- **查看已保存 Token**：需管理员主动点击，接口单独限流；普通设置响应不会携带明文密钥。
+- **Token 额度查询**：尝试查询 New API 兼容的 `GET /api/usage/token/`，展示 Token 的总额度、已用与剩余额度；这不是所有供应商的账户钱包余额，服务商不支持该接口时会显示明确错误。
 - **连接测试**：发起一次短回复请求，返回 HTTP 错误、响应耗时与模型预览。
 - **提示词管理**：分别编辑 AI 学习助手通用聊天、数学、函数、化学，以及计算器各题型和分析/扩展动作提示词；保存后无需重新部署。
-- **统计与调用记录**：显示累计请求、失败次数、供应商返回的 Token 用量和最近 20 条元数据。当前统计逻辑不会保存用户题目正文或回答正文。
+- **统计与调用记录**：显示累计请求、失败次数、输入/输出/总 Token 用量和最近 20 条元数据；流式请求会尝试要求供应商回传 usage。当前统计逻辑不会保存用户题目正文或回答正文。
 - **配置备份**：导出/导入 API 地址、模型参数和提示词；导出文件不包含密钥和管理密码。
 
 ## 3. 模型 API 配置
@@ -44,13 +46,13 @@ Worker 使用一个 SQLite-backed Durable Object 保存后台配置与调用统�
 
 `AI_MODEL` 和 `AI_API_KEY` 的 Worker 原有变量/Secret 继续作为默认值；管理页面保存的配置优先使用。密钥输入框留空表示不修改现有密钥；“改用 Worker Secret”会清除后台保存的自定义 Key 并回退至 `AI_API_KEY`。
 
-模型列表通过 `GET /models` 获取，这是 OpenAI 兼容接口的常见行为，但部分服务商可能禁用该接口；此时可以手动输入模型 ID，使用“测试连接”确认权限。
+模型列表通过 `GET /models` 获取，这是 OpenAI 兼容接口的常见行为，但部分服务商可能禁用该接口或使用不同响应格式；页面会显示错误原因，此时可以手动输入模型 ID，使用“测试连接”确认权限。Token 额度查询使用 New API 兼容的 `/api/usage/token/`，不是标准 OpenAI 接口；实际账户钱包余额是否可查，取决于供应商是否提供对应 API。
 
 ## 4. 安全基线
 
 - `ADMIN_PASSWORD`、`ADMIN_SESSION_SECRET`、`ADMIN_ENCRYPTION_KEY` 和 `AI_API_KEY` 应配置为 Cloudflare Worker Secrets；不要写进 `wrangler.toml`、网页、仓库或备份。
 - 管理接口使用允许来源校验、HMAC 签名的 Bearer 会话和到期检查；管理会话约 4 小时有效，并绑定到管理页当前 Worker 地址，地址切换后须重新登录。
-- API Key 不会通过管理 API 回传到浏览器；自定义 Key 使用 AES-GCM 加密后保存在 Durable Object，优先使用 `ADMIN_ENCRYPTION_KEY`。为兼容旧部署，缺少该 Secret 时会回退到 `ADMIN_SESSION_SECRET` 或 `ADMIN_PASSWORD`，因此强烈建议配置独立加密密钥。
+- 普通设置接口不会回传 API Key；只有在已验证的管理会话中主动点击“查看已保存 Token”时，单独限流的 `/admin/key/reveal` 才会返回密钥供管理员临时查看。自定义 Key 使用 AES-GCM 加密后保存在 Durable Object，优先使用 `ADMIN_ENCRYPTION_KEY`。为兼容旧部署，缺少该 Secret 时会回退到 `ADMIN_SESSION_SECRET` 或 `ADMIN_PASSWORD`，因此强烈建议配置独立加密密钥。
 - **密钥轮换顺序：**如果之前未设置独立的 `ADMIN_ENCRYPTION_KEY`，先添加该 Secret，再登录管理页刷新一次，让系统迁移现有密钥；在确认 AI 仍可正常连接前，不要删除或更改原有的 `ADMIN_SESSION_SECRET` / `ADMIN_PASSWORD`。
 - 登录失败限制、普通 AI 请求限制、健康检查和上游模型测试/列表限制使用 Durable Object 持久计数；如果限流存储不可用或没有绑定 `ADMIN_STORE`，请求会失败关闭而不是跳过限流。
 - 调用统计只记录时间、场景、模型、HTTP 状态、成功/失败和可用的 Token 用量；最近记录最多 20 条。流式供应商若不回传 Token 用量，统计可能不完整。
