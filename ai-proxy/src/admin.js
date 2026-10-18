@@ -9,7 +9,11 @@ function readProfile(data, appId) {
   const profile = data?.apps?.[key];
   if (profile && typeof profile === "object") return profile;
   if (key === "learning") return { settings: data?.settings || {}, stats: data?.stats || EMPTY_STATS() };
-  return { settings: {}, stats: EMPTY_STATS() };
+  // Bootstrap the newly separated Zhixing AI profile from the existing shared API connection once.
+  // Keep prompt defaults app-specific and statistics isolated; the first write persists an independent profile.
+  const legacySettings = data?.settings && typeof data.settings === "object" && !Array.isArray(data.settings) ? { ...data.settings } : {};
+  delete legacySettings.prompts;
+  return { settings: legacySettings, stats: EMPTY_STATS() };
 }
 function writeProfile(data, appId, profile) {
   const key = normalizeAppId(appId);
