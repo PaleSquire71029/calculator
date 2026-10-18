@@ -24,7 +24,7 @@ function createStoreBinding() {
 function testEnv(overrides = {}) {
   return {
     AI_API_KEY: "test-key",
-    AI_BASE_URL: "https://api.example.test/v1",
+    AI_BASE_URL: "https://api.example.com/v1",
     AI_MODEL: "vision-model",
     ALLOWED_ORIGINS: origin,
     ...overrides,
@@ -102,7 +102,10 @@ test("rejects unapproved origins", async () => {
 });
 
 test("reports missing backend configuration without calling provider", async () => {
-  const response = await worker.fetch(req({ mode: "solve", messages: [userMessage] }, "198.51.100.12"), testEnv({ ALLOWED_ORIGINS: origin }));
+  const response = await worker.fetch(req({ mode: "solve", messages: [userMessage] }, "198.51.100.12"), {
+    ALLOWED_ORIGINS: origin,
+    ADMIN_STORE: createStoreBinding()
+  });
   assert.equal(response.status, 503);
   assert.match((await response.json()).error, /尚未配置/);
 });
@@ -135,7 +138,7 @@ test("forwards a valid request to the OpenAI-compatible endpoint", async () => {
   try {
     const response = await worker.fetch(req({ mode: "solve", messages: [userMessage] }, "198.51.100.14"), env);
     assert.equal(response.status, 200);
-    assert.equal(calledUrl, "https://api.example.test/v1/chat/completions");
+    assert.equal(calledUrl, "https://api.example.com/v1/chat/completions");
     assert.equal(sentBody.model, "vision-model");
     assert.equal(sentBody.messages[0].role, "system");
     assert.match((await response.json()).answer, /x=3/);
