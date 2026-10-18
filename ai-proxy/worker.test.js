@@ -18,7 +18,7 @@ function createStoreBinding() {
     setAlarm: async value => { alarm = value; }
   };
   const store = new AdminSettingsStore({ storage }, {});
-  const stub = { fetch: request => store.fetch(request) };
+  const stub = { fetch: (input, init) => store.fetch(input instanceof Request ? input : new Request(input, init)) };
   return { idFromName: () => "worker-tests", get: () => stub };
 }
 function testEnv(overrides = {}) {
