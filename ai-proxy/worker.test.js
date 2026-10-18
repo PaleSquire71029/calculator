@@ -225,13 +225,13 @@ test("calculator inline AI analysis script parses and chat panel is removed", ()
   assert.match(html, /id="zx-light-surface-audit"/);
   assert.match(html, /\.zx-chem-keyboard,#chemKeyboard:not\(\[hidden\]\).*?background:rgba\(249,252,255,\.97\)!important/s);
   assert.match(html, /\.function-graph\{background:rgba\(255,255,255,\.94\)!important/);
-  assert.match(html, /function setResultCollapsed\\(panel,collapsed\\)/);
+  assert.match(html, /function setResultCollapsed\(panel,collapsed\)/);
   assert.match(html, /class="zx-ai-result-content"/);
   assert.match(html, /data-zx-ai-collapsed-preview/);
-  assert.match(html, /setResultCollapsed\\(panel,panel\\.dataset\\.collapsed!=='true'\\)/);
+  assert.match(html, /setResultCollapsed\(panel,panel\.dataset\.collapsed!=='true'\)/);
   assert.match(html, /@keyframes zx-ai-status-spin/);
   assert.match(html, /@keyframes zx-ai-card-in/);
-  assert.doesNotMatch(html, /addEventListener\\('click',\\(\\)=>\\{panel\\.hidden=true;\\}\\)/);
+  assert.doesNotMatch(html, /addEventListener\('click',\(\)=>\{panel\.hidden=true;\}\)/);
 });
 
 test("AI frontend inline JavaScript parses without syntax errors", () => {
