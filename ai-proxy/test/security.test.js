@@ -373,8 +373,10 @@ test("model list endpoint accepts nested compatible response formats", async () 
   const token = await loginAdmin(env, "203.0.113.182");
   const originalFetch = globalThis.fetch;
   let upstreamUrl = "";
-  globalThis.fetch = async url => {
+  let upstreamRedirect = "";
+  globalThis.fetch = async (url, init) => {
     upstreamUrl = String(url);
+    upstreamRedirect = init?.redirect || "";
     return new Response(JSON.stringify({
       success: true,
       data: { models: [{ id: "model-alpha" }, { model: "model-beta" }] }
@@ -390,7 +392,34 @@ test("model list endpoint accepts nested compatible response formats", async () 
     }), env);
     assert.equal(response.status, 200);
     assert.equal(upstreamUrl, "https://api.example-provider.com/v1/models");
+    assert.equal(upstreamRedirect, "manual");
     assert.deepEqual((await response.json()).models, ["model-alpha", "model-beta"]);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("model list rejects redirects without following or disclosing credentials", async () => {
+  const { env } = fakeEnvironment({ AI_API_KEY: "sk-redirect-token" });
+  const token = await loginAdmin(env, "203.0.113.184");
+  const originalFetch = globalThis.fetch;
+  const requested = [];
+  globalThis.fetch = async (url, init) => {
+    requested.push({ url: String(url), redirect: init?.redirect, authorization: init?.headers?.Authorization });
+    return new Response("", { status: 302, headers: { Location: "https://redirect.example/collect" } });
+  };
+  try {
+    const response = await worker.fetch(jsonRequest("https://worker.test/admin/models", {
+      apiBaseUrl: "https://api.example-provider.com/v1", apiKey: "sk-redirect-token"
+    }, {
+      Origin: "https://c.zhixing.us.ci",
+      Authorization: "Bearer " + token,
+      "CF-Connecting-IP": "203.0.113.184"
+    }), env);
+    assert.equal(response.status, 502);
+    assert.match((await response.json()).error, /重定向/);
+    assert.equal(requested.length, 1);
+    assert.equal(requested[0].redirect, "manual");
+    assert.equal(requested[0].url, "https://api.example-provider.com/v1/models");
+    assert.equal(requested[0].authorization, "Bearer sk-redirect-token");
   } finally { globalThis.fetch = originalFetch; }
 });
 
@@ -427,7 +456,7 @@ test("A6API balance combines hard USD limit and token usage units", async () => 
     assert.equal(payload.availableUsd, 7.5);
     assert.equal(payload.currencySymbol, "$");
     assert.ok(requested.every(row => row.authorization === "Bearer sk-balance-token"));
-    assert.ok(requested.every(row => row.redirect === "error"));
+    assert.ok(requested.every(row => row.redirect === "manual"));
     assert.deepEqual(requested.map(row => row.target).sort(), [
       "https://api.a6api.com/api/usage/token/",
       "https://api.a6api.com/dashboard/billing/subscription"
