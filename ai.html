@@ -153,14 +153,19 @@ document.addEventListener('click',e=>{if(!e.target.closest('.attachment-area'))c
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function formatText(s){
  let x=escapeHtml(s);
- const blocks=[];
- x=x.replace(/```([\s\S]*?)```/g,(_,code)=>{const n=blocks.push('<pre><code>'+code+'</code></pre>')-1;return 'ZXCODEBLOCK'+n+'END';});
- x=x.replace(/`([^`\n]+)`/g,(_,code)=>{const n=blocks.push('<code>'+code+'</code>')-1;return 'ZXINLINECODE'+n+'END';});
+ const blocks=[],mathBlocks=[];
+ const tick=String.fromCharCode(96);
+ x=x.replace(new RegExp(tick+tick+tick+'([\\s\\S]*?)'+tick+tick+tick,'g'),(_,code)=>{const n=blocks.push('<pre><code>'+code+'</code></pre>')-1;return 'ZXCODEBLOCK'+n+'END';});
+ x=x.replace(new RegExp(tick+'([^'+tick+'\\n]+)'+tick,'g'),(_,code)=>{const n=blocks.push('<code>'+code+'</code>')-1;return 'ZXINLINECODE'+n+'END';});
+ x=x.replace(/\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\\begin\{([a-zA-Z*]+)\}[\s\S]+?\\end\{\1\}|\$(?!\$)(?:\\.|[^$\n])+\$(?!\$)/g,formula=>{
+  const n=mathBlocks.push(formula)-1;return 'ZXMATHBLOCK'+n+'END';
+ });
  x=x.replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^# (.+)$/gm,'<h1>$1</h1>');
  x=x.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/(^|\n)[-•] (.+)/g,'$1<li>$2</li>');
  x=x.replace(/\n/g,'<br>');
  x=x.replace(/(?:<br>){2,}/g,'<br><br>');
  x=x.replace(/ZXCODEBLOCK(\d+)END/g,(_,i)=>blocks[Number(i)]).replace(/ZXINLINECODE(\d+)END/g,(_,i)=>blocks[Number(i)]);
+ x=x.replace(/ZXMATHBLOCK(\d+)END/g,(_,i)=>mathBlocks[Number(i)]||'');
  return x;
 }
 let mathTypesetQueue=Promise.resolve();
