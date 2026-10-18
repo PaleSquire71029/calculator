@@ -4597,6 +4597,42 @@ a{color:#416bd6}
 .zx-mathpad-tabs button.is-active{background:#e8efff!important;color:#315fc5!important;border-color:#c7d7fb!important}
 .zx-chem-keyboard .zx-btn,.zx-chem-toolbar .zx-btn{color:#4165b7!important;background:#eef3ff!important;border-color:#d4e0f8!important}
 </style>
+<style id="zx-ai-result-motion">
+/* AI 结果交互：保留结果状态，不用 display:none 把整张卡片永久藏掉。 */
+.zx-ai-result{animation:zx-ai-panel-in .48s cubic-bezier(.2,.75,.25,1) both}
+.zx-ai-result-head button[data-zx-ai-hide]{transition:transform .22s cubic-bezier(.2,.75,.25,1),background .22s ease,border-color .22s ease,color .22s ease}
+.zx-ai-result-head button[data-zx-ai-hide]:hover{transform:translateY(-1px);background:rgba(231,238,255,.96)!important;border-color:rgba(92,128,217,.38)!important;color:#315fc6!important}
+.zx-ai-result-content{overflow:hidden;max-height:none;opacity:1;transform:translateY(0);transition:max-height .42s cubic-bezier(.22,.75,.25,1),opacity .25s ease,transform .34s cubic-bezier(.22,.75,.25,1);will-change:max-height,opacity,transform}
+.zx-ai-result[data-collapsed="true"] .zx-ai-result-content{overflow:hidden;pointer-events:none}
+.zx-ai-collapsed-preview{display:none;margin-top:0;padding-top:0;max-width:100%;overflow:hidden;color:#71829b;font-size:12px;line-height:1.65;overflow-wrap:anywhere}
+.zx-ai-result[data-collapsed="true"] .zx-ai-result-head{padding-bottom:0!important;border-bottom-color:transparent!important}
+.zx-ai-result[data-collapsed="true"] .zx-ai-collapsed-preview{display:block;padding-top:9px;animation:zx-ai-preview-in .32s cubic-bezier(.2,.75,.25,1) both}
+.zx-ai-result-status[data-loading="true"]{display:flex!important;align-items:center;gap:9px}
+.zx-ai-result-status[data-loading="true"]::before{content:"";display:block;flex:0 0 14px;width:14px;height:14px;border:2px solid rgba(84,123,226,.18);border-top-color:#547be2;border-right-color:#81d8ce;border-radius:50%;box-shadow:0 0 0 4px rgba(84,123,226,.07);animation:zx-ai-status-spin .86s cubic-bezier(.5,.12,.4,.88) infinite}
+.zx-ai-result-status[data-state="error"]::before{display:none}
+.zx-ai-result-body>.zx-ai-answer-section{animation:zx-ai-card-in .46s cubic-bezier(.2,.75,.25,1) both}
+.zx-ai-result-body>.zx-ai-answer-section:first-child{animation-delay:.025s}
+.zx-ai-result-body>.zx-ai-answer-details{animation:zx-ai-card-in .4s cubic-bezier(.2,.75,.25,1) .08s both}
+.zx-ai-answer-details[open] .zx-ai-answer-section{animation:zx-ai-card-in .42s cubic-bezier(.2,.75,.25,1) both}
+.zx-ai-answer-details[open] .zx-ai-answer-section:nth-child(2){animation-delay:.04s}
+.zx-ai-answer-details[open] .zx-ai-answer-section:nth-child(3){animation-delay:.08s}
+.zx-ai-answer-details[open] .zx-ai-answer-section:nth-child(4){animation-delay:.12s}
+.zx-ai-answer-details[open] .zx-ai-answer-section:nth-child(5){animation-delay:.16s}
+.zx-ai-answer-details[open] .zx-ai-answer-section:nth-child(6){animation-delay:.20s}
+@keyframes zx-ai-panel-in{from{opacity:0;transform:translateY(9px) scale(.995)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes zx-ai-card-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes zx-ai-preview-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes zx-ai-status-spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){
+ .zx-ai-result-content{transition:max-height .36s cubic-bezier(.22,.75,.25,1),opacity .22s ease,transform .28s ease}
+ .zx-ai-collapsed-preview{font-size:12px;line-height:1.7}
+}
+@media(prefers-reduced-motion:reduce){
+ .zx-ai-result,.zx-ai-collapsed-preview,.zx-ai-answer-section,.zx-ai-answer-details{animation:none!important}
+ .zx-ai-result-content,.zx-ai-result-head button[data-zx-ai-hide]{transition:none!important}
+ .zx-ai-result-status[data-loading="true"]::before{animation:none!important}
+}
+</style>
 <script id="zx-ai-inline-controller">
 (function(){
   'use strict';
@@ -4635,6 +4671,51 @@ a{color:#416bd6}
     try{localStorage.setItem('zx-ai-proxy-url',raw);sessionStorage.setItem('zx-ai-proxy',raw);}catch(e){}
     return true;
   }
+  function setResultCollapsed(panel,collapsed){
+    const content=panel&&panel.querySelector('.zx-ai-result-content');
+    const toggle=panel&&panel.querySelector('[data-zx-ai-hide]');
+    if(!content||!toggle)return;
+    if(panel._zxAiCollapseFrame)cancelAnimationFrame(panel._zxAiCollapseFrame);
+    panel._zxAiCollapseFrame=0;
+    if(collapsed){
+      if(panel.dataset.collapsed==='true')return;
+      content.style.maxHeight=content.scrollHeight+'px';
+      content.style.opacity='1';
+      content.style.transform='translateY(0)';
+      void content.offsetHeight;
+      panel.dataset.collapsed='true';
+      toggle.textContent='展开结果';
+      toggle.setAttribute('aria-expanded','false');
+      panel._zxAiCollapseFrame=requestAnimationFrame(()=>{
+        content.style.maxHeight='0px';
+        content.style.opacity='0';
+        content.style.transform='translateY(-7px)';
+      });
+      return;
+    }
+    if(panel.dataset.collapsed!=='true'){
+      toggle.textContent='收起结果';
+      toggle.setAttribute('aria-expanded','true');
+      return;
+    }
+    panel.dataset.collapsed='false';
+    toggle.textContent='收起结果';
+    toggle.setAttribute('aria-expanded','true');
+    content.style.maxHeight='0px';
+    content.style.opacity='0';
+    content.style.transform='translateY(-7px)';
+    const onExpandEnd=event=>{
+      if(event.target!==content||event.propertyName!=='max-height'||panel.dataset.collapsed==='true')return;
+      content.style.maxHeight='none';
+      content.removeEventListener('transitionend',onExpandEnd);
+    };
+    content.addEventListener('transitionend',onExpandEnd);
+    panel._zxAiCollapseFrame=requestAnimationFrame(()=>{
+      content.style.maxHeight=content.scrollHeight+'px';
+      content.style.opacity='1';
+      content.style.transform='translateY(0)';
+    });
+  }
   function makeResult(section){
     let panel=section.querySelector('.zx-ai-result');
     if(panel)return panel;
@@ -4642,10 +4723,10 @@ a{color:#416bd6}
     panel.className='zx-ai-result';
     panel.hidden=true;
     panel.setAttribute('aria-live','polite');
-    panel.innerHTML='<div class="zx-ai-result-head"><div class="zx-ai-result-title"><i aria-hidden="true">✦</i><span>知行 AI 分析</span></div><button type="button" data-zx-ai-hide>收起结果</button></div><div class="zx-ai-result-status" data-zx-ai-status>等待分析</div><div class="zx-ai-result-body" data-zx-ai-answer hidden></div><form class="zx-ai-ask-form" data-zx-ai-ask-form><input type="text" maxlength="1000" data-zx-ai-question placeholder="围绕当前结果继续提问…" aria-label="针对当前计算结果追问 AI" autocomplete="off"><button type="submit" data-zx-ai-ask-submit>追问 AI</button></form><div class="zx-ai-result-footer"><span>仅发送当前页面相关内容到已配置的模型服务商；不要输入隐私信息。</span><a href="https://github.com/PaleSquire71029/calculator/blob/main/ai-proxy/SECURITY.md" target="_blank" rel="noopener noreferrer">数据安全说明</a><details class="zx-ai-result-settings"><summary>AI 服务设置</summary><div class="zx-ai-proxy-row"><input type="url" inputmode="url" data-zx-ai-proxy placeholder="https://你的-worker.workers.dev" aria-label="AI Worker 地址"><button type="button" data-zx-ai-save-proxy>保存地址</button></div></details></div>';
+    panel.innerHTML='<div class="zx-ai-result-head"><div class="zx-ai-result-title"><i aria-hidden="true">✦</i><span>知行 AI 分析</span></div><button type="button" data-zx-ai-hide aria-expanded="true">收起结果</button></div><div class="zx-ai-collapsed-preview" data-zx-ai-collapsed-preview>AI 分析结果已就绪，点击展开查看</div><div class="zx-ai-result-content"><div class="zx-ai-result-status" data-zx-ai-status>等待分析</div><div class="zx-ai-result-body" data-zx-ai-answer hidden></div><form class="zx-ai-ask-form" data-zx-ai-ask-form><input type="text" maxlength="1000" data-zx-ai-question placeholder="围绕当前结果继续提问…" aria-label="针对当前计算结果追问 AI" autocomplete="off"><button type="submit" data-zx-ai-ask-submit>追问 AI</button></form><div class="zx-ai-result-footer"><span>仅发送当前页面相关内容到已配置的模型服务商；不要输入隐私信息。</span><a href="https://github.com/PaleSquire71029/calculator/blob/main/ai-proxy/SECURITY.md" target="_blank" rel="noopener noreferrer">数据安全说明</a><details class="zx-ai-result-settings"><summary>AI 服务设置</summary><div class="zx-ai-proxy-row"><input type="url" inputmode="url" data-zx-ai-proxy placeholder="https://你的-worker.workers.dev" aria-label="AI Worker 地址"><button type="button" data-zx-ai-save-proxy>保存地址</button></div></details></div></div>';
     const head=section.querySelector('.view-head');
     if(head)head.insertAdjacentElement('afterend',panel);
-    panel.querySelector('[data-zx-ai-hide]').addEventListener('click',()=>{panel.hidden=true;});
+    panel.querySelector('[data-zx-ai-hide]').addEventListener('click',()=>setResultCollapsed(panel,panel.dataset.collapsed!=='true'));
     const askForm=panel.querySelector('[data-zx-ai-ask-form]');
     askForm.addEventListener('submit',event=>{
       event.preventDefault();
@@ -4722,6 +4803,9 @@ a{color:#416bd6}
   function setStatus(panel,text,error){
     const el=panel.querySelector('[data-zx-ai-status]');
     el.textContent=text;el.dataset.state=error?'error':'ready';
+    const preview=panel.querySelector('[data-zx-ai-collapsed-preview]');
+    if(preview&&error)preview.textContent='分析未完成 · 展开查看详情';
+    else if(preview&&text&&!el.dataset.loading)preview.textContent=text;
   }
   function setThinkingText(statusEl,action){
     if(!statusEl)return;
@@ -4792,8 +4876,20 @@ a{color:#416bd6}
     card.append(title,body);
     return card;
   }
+  function updateCollapsedPreview(node,answer,viewId){
+    const panel=node&&node.closest('.zx-ai-result');
+    const preview=panel&&panel.querySelector('[data-zx-ai-collapsed-preview]');
+    if(!preview)return;
+    const raw=String(answer||'').trim();
+    if(!raw){preview.textContent='AI 正在整理分析…';return;}
+    const sections=splitAnswerSections(raw,viewId);
+    const core=sections.find(item=>answerSectionKind(item.title)==='result')||sections[0];
+    const summary=String(core&&core.content||raw).replace(/\\s+/g,' ').trim();
+    preview.textContent=summary?(summary.length>124?summary.slice(0,124)+'…':summary):'AI 正在整理分析…';
+  }
   function updateStreamPreview(node,answer,viewId){
     const raw=String(answer||'');
+    updateCollapsedPreview(node,raw,viewId);
     const sections=splitAnswerSections(raw,viewId);
     let core=sections.find(x=>answerSectionKind(x.title)==='result')||sections[0];
     let coreText=core&&core.content?core.content:'';
@@ -4901,12 +4997,15 @@ a{color:#416bd6}
     if(busy)return;
     const panel=makeResult(section);
     panel.hidden=false;
+    setResultCollapsed(panel,false);
     const answerEl=panel.querySelector('[data-zx-ai-answer]');
     answerEl.hidden=true;answerEl.replaceChildren();
     const statusEl=panel.querySelector('[data-zx-ai-status]');
     setStatus(panel,'',false);
     statusEl.dataset.loading='true';
     setThinkingText(statusEl,action);
+    const collapsedPreview=panel.querySelector('[data-zx-ai-collapsed-preview]');
+    if(collapsedPreview)collapsedPreview.textContent='AI 正在整理分析…';
     const allButtons=Array.from(document.querySelectorAll('[data-zx-ai-action], [data-zx-ai-ask-submit]'));
     busy=true;allButtons.forEach(b=>b.disabled=true);
     let partialAnswer='';
@@ -4940,6 +5039,7 @@ a{color:#416bd6}
       setStatus(panel,(question?'追问回答完成':(action==='extend'?'扩展分析完成':'分析完成'))+(model?' · '+model:''),false);
       renderStructuredAnswer(answerEl,answer,viewId);
       answerEl.hidden=false;
+      updateCollapsedPreview(answerEl,answer,viewId);
       if(question){const questionInput=panel.querySelector('[data-zx-ai-question]');if(questionInput)questionInput.value='';}
       await typesetAnswer(answerEl);
       panel.querySelector('[data-zx-ai-proxy]').value=proxyValue();
