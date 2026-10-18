@@ -310,6 +310,7 @@ test("authenticated stats reset clears counters and recent metadata only", async
   assert.equal(data.stats.failedRequests, 0);
   assert.equal(data.stats.promptTokens, 0);
   assert.equal(data.stats.completionTokens, 0);
+  assert.equal(data.stats.totalTokens, 0);
   assert.deepEqual(data.stats.recent, []);
   assert.equal(data.settings.model, "example-model");
   assert.ok(data.stats.resetAt);
@@ -466,6 +467,7 @@ test("streamed analysis requests usage and adds token counts to statistics and r
     const stats = (await settings.json()).stats;
     assert.equal(stats.promptTokens, 31);
     assert.equal(stats.completionTokens, 9);
+    assert.equal(stats.totalTokens, 40);
     assert.equal(stats.recent[0].promptTokens, 31);
     assert.equal(stats.recent[0].completionTokens, 9);
     assert.equal(stats.recent[0].totalTokens, 40);
