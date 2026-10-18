@@ -93,7 +93,64 @@ test("admin settings durable object persists JSON", async () => {
 test("health endpoint does not expose secret values", async () => {
   const response = await worker.fetch(new Request("https://worker.example.test/health", { headers: { Origin: origin } }), env);
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { ok: true, configured: true, model: "vision-model" });
+  assert.deepEqual(await response.json(), { ok: true, configured: true, model: "vision-model", app: "learning" });
+});
+
+test("public model picker returns provider model IDs without exposing the API key", async () => {
+  const originalFetch = globalThis.fetch;
+  const appOrigin = "https://ai.zhixing.us.ci";
+  let requestedUrl = "";
+  globalThis.fetch = async (url, init) => {
+    requestedUrl = String(url);
+    assert.equal(init.headers.Authorization, "Bearer test-key");
+    return new Response(JSON.stringify({ data: [{ id: "z-model" }, { id: "a-model" }, { id: "z-model" }] }), {
+      status: 200, headers: { "Content-Type": "application/json" }
+    });
+  };
+  try {
+    const isolatedEnv = testEnv({ ALLOWED_ORIGINS: origin + "," + appOrigin });
+    const response = await worker.fetch(new Request("https://worker.example.test/api/models?app=zhixing-ai", {
+      headers: { Origin: appOrigin, "CF-Connecting-IP": "198.51.100.91" }
+    }), isolatedEnv);
+    assert.equal(response.status, 200);
+    assert.equal(requestedUrl, "https://api.example.com/v1/models");
+    const body = await response.json();
+    assert.deepEqual(body.models, ["a-model", "z-model"]);
+    assert.equal(body.app, "zhixing-ai");
+    assert.equal(JSON.stringify(body).includes("test-key"), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("Zhixing AI can pick a model and append a lightweight custom prompt without changing learning prompts", async () => {
+  const originalFetch = globalThis.fetch;
+  let sentBody;
+  globalThis.fetch = async (url, init) => {
+    sentBody = JSON.parse(init.body);
+    return new Response(JSON.stringify({
+      model: sentBody.model,
+      choices: [{ message: { content: "好的。" } }]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    const isolatedEnv = testEnv();
+    const response = await worker.fetch(req({
+      app: "zhixing-ai",
+      mode: "general",
+      model: "custom-model-id",
+      systemPrompt: "回答尽量简洁。",
+      messages: [userMessage]
+    }, "198.51.100.92"), isolatedEnv);
+    assert.equal(response.status, 200);
+    assert.equal(sentBody.model, "custom-model-id");
+    assert.match(sentBody.messages[0].content, /知行AI助手/);
+    assert.match(sentBody.messages[0].content, /回答尽量简洁/);
+    assert.doesNotMatch(sentBody.messages[0].content, /多学科学习助手/);
+    assert.equal((await response.json()).model, "custom-model-id");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("rejects unapproved origins", async () => {
