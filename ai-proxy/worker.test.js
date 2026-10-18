@@ -317,4 +317,13 @@ test("AI admin frontend inline JavaScript parses", () => {
   assert.match(html, /id="modelCatalogList"/);
   assert.match(html, /function renderModelCatalog/);
   assert.match(html, /modelSearch/);
+  assert.match(html, /id="zx-admin-layout-analytics"/);
+  assert.match(html, /margin-left:calc\(50% - 50vw - var\(--admin-inline-pad\)\)/);
+  assert.match(html, /id="chartTraffic"/);
+  assert.match(html, /id="chartStatus"/);
+  assert.match(html, /id="chartModes"/);
+  assert.match(html, /id="chartTokens"/);
+  assert.match(html, /function renderUsageCharts\(\)/);
+  assert.match(html, /item\.usageAvailable===true/);
+  assert.match(html, /renderUsageCharts\(\);/);
 });
