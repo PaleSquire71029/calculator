@@ -4960,14 +4960,14 @@ a{color:#416bd6}
   async function typesetAnswer(node){
     if(!node)return;
     try{
-      // 已经排版过的区域不要重新用 textContent 覆盖 MathJax 生成的节点。
-      if(node.querySelector('mjx-container'))return;
+      // 等待引擎就绪；只规范化尚未排版的文本区，避免覆盖 MathJax 生成的节点。
       for(let i=0;i<100&&!(window.MathJax&&window.MathJax.typesetPromise);i++)await new Promise(resolve=>setTimeout(resolve,100));
       if(!window.MathJax||!window.MathJax.typesetPromise)throw new Error('数学公式引擎加载失败（已尝试备用 CDN）');
       if(window.MathJax.startup&&window.MathJax.startup.promise)await window.MathJax.startup.promise;
       node.querySelectorAll('.zx-ai-answer-section-content').forEach(el=>{
         if(!el.querySelector('mjx-container'))el.textContent=normalizeLatexSource(el.textContent);
       });
+      // 同一区域可能在流式输出、展开详情后再次排版，先清除 MathJax 缓存再统一重排。
       if(window.MathJax.typesetClear)window.MathJax.typesetClear([node]);
       await window.MathJax.typesetPromise([node]);
     }catch(err){
