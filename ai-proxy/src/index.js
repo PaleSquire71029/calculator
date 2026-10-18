@@ -5,7 +5,9 @@ export { AdminSettingsStore };
  * API 密钥必须通过 Cloudflare Worker Secret 配置，不要写入仓库。
  */
 const DEFAULT_ORIGINS = [
+  "https://ai.zhixing.us.ci",
   "https://c.zhixing.us.ci",
+  "https://zhixingai.pages.dev",
   "https://zhixingjsq.pages.dev",
   "https://palesquire71029.github.io"
 ];
@@ -158,6 +160,20 @@ function getAllowedOrigins(env) {
   const raw = typeof env.ALLOWED_ORIGINS === "string" ? env.ALLOWED_ORIGINS : "";
   return (raw ? raw.split(",") : DEFAULT_ORIGINS).map(s => s.trim()).filter(Boolean);
 }
+function normalizeAppId(value) { return value === "zhixing-ai" ? "zhixing-ai" : "learning"; }
+function extractModelIds(result) {
+  const list = [
+    Array.isArray(result) ? result : null,
+    Array.isArray(result?.data) ? result.data : null,
+    Array.isArray(result?.models) ? result.models : null,
+    Array.isArray(result?.items) ? result.items : null,
+    Array.isArray(result?.data?.models) ? result.data.models : null,
+    Array.isArray(result?.result?.data) ? result.result.data : null,
+    Array.isArray(result?.result?.models) ? result.result.models : null
+  ].find(Array.isArray) || [];
+  return [...new Set(list.map(item => typeof item === "string" ? item : item?.id || item?.model || item?.name)
+    .filter(item => typeof item === "string" && item.trim().length > 0).map(item => item.trim()))].sort();
+}
 function corsHeaders(request, env) {
   const origin = request.headers.get("Origin") || "";
   const allowed = getAllowedOrigins(env);
@@ -190,12 +206,18 @@ function validateMessages(messages) {
 }
 const adminModule = createAdminModule({
   getAllowedOrigins,
-  defaultPrompts: () => ({
-    chat: { ...MODE_PROMPTS },
-    analysisBase: ANALYSIS_BASE_PROMPT,
-    analysisModes: { ...ANALYSIS_MODE_PROMPTS },
-    analysisActions: { ...ANALYSIS_ACTION_PROMPTS }
-  })
+  defaultPrompts: (appId = "learning") => {
+    const chat = { ...MODE_PROMPTS };
+    if (appId === "zhixing-ai") {
+      chat.general = "你是知行AI助手。优先使用中文，认真理解用户的任务与上下文，直接提供有用的回答。仅在确有必要时追问；不确定的内容说明不确定，不要编造。遵循用户给出的格式、语气和长度要求。";
+    }
+    return {
+      chat,
+      analysisBase: ANALYSIS_BASE_PROMPT,
+      analysisModes: { ...ANALYSIS_MODE_PROMPTS },
+      analysisActions: { ...ANALYSIS_ACTION_PROMPTS }
+    };
+  }
 });
 
 export default {
@@ -210,12 +232,47 @@ export default {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/admin/")) return adminModule.handleRoute(request, env, url, cors);
     if (request.method === "GET" && url.pathname === "/health") {
+      const appId = normalizeAppId(url.searchParams.get("app"));
       const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-      const rate = await adminModule.checkRateLimit(env, "health:" + ip, 120, 60 * 1000);
+      const rate = await adminModule.checkRateLimit(env, "health:" + appId + ":" + ip, 120, 60 * 1000);
       if (rate.unavailable) return json({ error: "健康检查限流暂时不可用，请稍后重试。" }, 503, cors);
       if (!rate.allowed) return json({ error: "健康检查请求过于频繁。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
-      const runtime = await adminModule.getRuntimeSettings(env).catch(() => ({ apiKey: env.AI_API_KEY || "", apiBaseUrl: env.AI_BASE_URL || "", model: env.AI_MODEL || "" }));
-      return json({ ok: true, configured: Boolean(runtime.apiKey && runtime.apiBaseUrl && runtime.model), model: runtime.model || null }, 200, cors);
+      const runtime = await adminModule.getRuntimeSettings(env, appId).catch(() => ({ apiKey: "", apiBaseUrl: "", model: "" }));
+      return json({ ok: true, configured: Boolean(runtime.apiKey && runtime.apiBaseUrl && runtime.model), model || null, app: appId }, 200, cors);
+    }
+    if (request.method === "GET" && url.pathname === "/api/models") {
+      if (!origin || !allowed.includes(origin)) return json({ error: "该网站来源未获授权，请检查 Worker 的 ALLOWED_ORIGINS 配置。" }, 403, cors);
+      const appId = normalizeAppId(url.searchParams.get("app"));
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await adminModule.checkRateLimit(env, "public-models:" + appId + ":" + ip, 30, 15 * 60 * 1000);
+      if (rate.unavailable) return json({ error: "模型列表限流暂时不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return json({ error: "模型列表请求过于频繁，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
+      let runtime;
+      try { runtime = await adminModule.getRuntimeSettings(env, appId); }
+      catch { return json({ error: "无法读取 AI 配置，请检查 Worker 后端存储。" }, 503, cors); }
+      if (!runtime.apiKey || !runtime.apiBaseUrl) return json({ error: "该 AI 产品尚未配置 API 地址和密钥，请先打开后端管理页。" }, 503, cors);
+      let base;
+      try { base = new URL(normalizeApiBaseUrl(runtime.apiBaseUrl)); }
+      catch { return json({ error: "后台 API 地址无效，请先在管理页修正。" }, 503, cors); }
+      let upstream;
+      try {
+        upstream = await fetch(base.toString().replace(/\/+$/, "") + "/models", {
+          headers: { "Authorization": "Bearer " + runtime.apiKey, "Accept": "application/json" },
+          redirect: "manual", signal: AbortSignal.timeout(20000)
+        });
+      } catch (error) {
+        const detail = String(error?.cause?.code || error?.cause?.message || error?.message || "网络错误").replace(/\s+/g, " ").slice(0, 140);
+        return json({ error: "获取模型列表失败（" + base.hostname + "）：" + detail }, 502, cors);
+      }
+      if (upstream.status >= 300 && upstream.status < 400) return json({ error: "模型列表接口返回重定向，为保护 Token 已拒绝跟随。" }, 502, cors);
+      const read = await readResponseTextLimited(upstream, 1024 * 1024);
+      if (read.error) return json({ error: "模型列表响应过大或无法读取。" }, 502, cors);
+      let result;
+      try { result = JSON.parse(read.text); } catch { result = null; }
+      if (!upstream.ok) return json({ error: "获取模型列表失败（HTTP " + upstream.status + "）：" + String(result?.error?.message || result?.message || "服务商拒绝请求").slice(0, 350) }, 502, cors);
+      const models = extractModelIds(result);
+      if (!models.length) return json({ error: "接口已响应，但没有识别到模型 ID；请检查该 API 的 /models 响应。" }, 502, cors);
+      return json({ app: appId, defaultModel: runtime.model || null, count: models.length, models }, 200, { ...cors, "Cache-Control": "no-store" });
     }
     if (url.pathname !== "/api/chat" || request.method !== "POST") return json({ error: "Not found" }, 404, cors);
     if (!origin || !allowed.includes(origin)) return json({ error: "该网站来源未获授权，请检查 Worker 的 ALLOWED_ORIGINS 配置。" }, 403, cors);
@@ -229,12 +286,18 @@ export default {
       return json({ error: message }, parsed.status, cors);
     }
     const body = parsed.data;
-    let runtime;
-    try { runtime = await adminModule.getRuntimeSettings(env); }
-    catch { return json({ error: "无法读取 AI 配置存储，请稍后重试。" }, 503, cors); }
-    if (!runtime.apiKey || !runtime.apiBaseUrl || !runtime.model) {
-      return json({ error: "AI 后端尚未配置。请打开 AI 后端管理页配置 API 地址、模型和密钥。" }, 503, cors);
+    const appId = normalizeAppId(body.app);
+    if (body.model !== undefined && (typeof body.model !== "string" || !body.model.trim() || body.model.trim().length > 200)) {
+      return json({ error: "模型 ID 无效。" }, 400, cors);
     }
+    const selectedModel = typeof body.model === "string" && body.model.trim() ? body.model.trim() : "";
+    let runtime;
+    try { runtime = await adminModule.getRuntimeSettings(env, appId); }
+    catch { return json({ error: "无法读取 AI 配置存储，请稍后重试。" }, 503, cors); }
+    if (!runtime.apiKey || !runtime.apiBaseUrl || (!runtime.model && !selectedModel)) {
+      return json({ error: "AI 后端尚未配置。请打开对应产品的 AI 后端管理页配置 API 地址、模型和密钥。" }, 503, cors);
+    }
+    const model = selectedModel || runtime.model;
     let mode = "general";
     let upstreamMessages;
     if (body.task === "analysis") {
@@ -272,7 +335,11 @@ export default {
       mode = Object.hasOwn(MODE_PROMPTS, body.mode) ? body.mode : "general";
       const messageError = validateMessages(body.messages);
       if (messageError) return json({ error: messageError }, 400, cors);
-      upstreamMessages = [{ role: "system", content: runtime.prompts.chat[mode] || MODE_PROMPTS[mode] }, ...body.messages];
+      if (body.systemPrompt !== undefined && (typeof body.systemPrompt !== "string" || body.systemPrompt.length > 6000)) {
+        return json({ error: "自定义提示词最多 6000 字符。" }, 400, cors);
+      }
+      const extraPrompt = typeof body.systemPrompt === "string" ? body.systemPrompt.trim() : "";
+      upstreamMessages = [{ role: "system", content: [runtime.prompts.chat[mode] || MODE_PROMPTS[mode], extraPrompt].filter(Boolean).join("\n\n") }, ...body.messages];
     }
     let base;
     try {
@@ -281,9 +348,9 @@ export default {
       return json({ error: "API 地址必须是安全的公开 HTTPS 域名，且不能使用 IP 地址、自定义端口或内网主机。" }, 500, cors);
     }
     const endpoint = base.toString().replace(/\/+$/, "") + "/chat/completions";
-    const wantsStream = body.task === "analysis" && body.stream === true;
+    const wantsStream = body.stream === true;
     const payload = {
-      model: runtime.model,
+      model,
       messages: upstreamMessages,
       temperature: runtime.temperature,
       stream: wantsStream,
@@ -300,7 +367,7 @@ export default {
         signal: AbortSignal.timeout(90000)
       });
     } catch (error) {
-      await adminModule.recordRequest(env, { mode, ok: false, status: 502, model: runtime.model });
+      await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model });
       const cause = error && typeof error === "object" ? error.cause : null;
       let detail = String(cause?.code || cause?.message || error?.message || error?.name || "未知网络错误")
         .replace(/\s+/g, " ").slice(0, 160);
@@ -311,7 +378,7 @@ export default {
       }, 502, cors);
     }
     if (upstream.status >= 300 && upstream.status < 400) {
-      await adminModule.recordRequest(env, { mode, ok: false, status: 502, model: runtime.model });
+      await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model });
       return json({
         error: "模型服务返回重定向（HTTP " + upstream.status +
           "）。为保护 API Token，Worker 不会跟随重定向。请检查 API 根地址或供应商配置。"
@@ -320,7 +387,7 @@ export default {
     const upstreamContentType = upstream.headers.get("Content-Type") || "";
     if (wantsStream && upstream.ok && upstream.body && upstreamContentType.includes("text/event-stream")) {
       return new Response(limitSseStream(upstream.body, MAX_STREAM_BYTES, (ok, usage) =>
-        adminModule.recordRequest(env, { mode, ok, status: ok ? upstream.status : 502, model: runtime.model, usage })
+        adminModule.recordRequest(env, { appId, mode, ok, status: ok ? upstream.status : 502, model, usage })
       ), {
         status: 200,
         headers: {
@@ -333,13 +400,13 @@ export default {
     }
     const upstreamRead = await readResponseTextLimited(upstream, 4 * 1024 * 1024);
     if (upstreamRead.error) {
-      await adminModule.recordRequest(env, { mode, ok: false, status: 502, model: runtime.model });
+      await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model });
       return json({ error: "模型服务响应体过大或无法读取，请检查 API 服务配置后重试。" }, 502, cors);
     }
     let result;
     try { result = JSON.parse(upstreamRead.text); } catch { result = null; }
     if (!upstream.ok) {
-      await adminModule.recordRequest(env, { mode, ok: false, status: upstream.status, model: runtime.model });
+      await adminModule.recordRequest(env, { appId, mode, ok: false, status: upstream.status, model });
       const upstreamMessage = result?.error?.message;
       if (upstream.status === 401) {
         return json({ error: "模型服务鉴权失败（上游 401）。请检查 Cloudflare Worker 的 AI_API_KEY 是否有效、是否已过期，以及密钥是否属于 AI_BASE_URL 对应的服务商。若换过服务商，必须同时核对 AI_BASE_URL、AI_MODEL 和 AI_API_KEY；不要把密钥填进网页。", code: "UPSTREAM_AUTH_FAILED" }, 502, cors);
@@ -357,10 +424,10 @@ export default {
     }
     const answer = result?.choices?.[0]?.message?.content;
     if (typeof answer !== "string" || !answer.trim()) {
-      await adminModule.recordRequest(env, { mode, ok: false, status: 502, model: runtime.model, usage: result?.usage });
+      await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model, usage: result?.usage });
       return json({ error: "模型没有返回可显示的文字，请稍后重试。" }, 502, cors);
     }
-    await adminModule.recordRequest(env, { mode, ok: true, status: upstream.status, model: result.model || runtime.model, usage: result.usage });
+    await adminModule.recordRequest(env, { appId, mode, ok: true, status: upstream.status, model: result.model || runtime.model, usage: result.usage });
     return json({ answer, model: result.model || runtime.model, usage: result.usage || null }, 200, cors);
   }
 };
