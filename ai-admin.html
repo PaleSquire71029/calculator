@@ -139,6 +139,32 @@ table{min-width:0}
   .provider-actions .btn{font-size:12px;padding:10px 6px}
 }
 
+
+/* Token access and quota panel */
+.key-reveal-panel{display:grid;gap:10px;margin-top:10px;padding:12px;border:1px solid #dfe7f4;border-radius:14px;background:rgba(245,248,255,.8)}
+.key-reveal-panel .actions{margin-top:0}
+.key-reveal-panel input{font-family:ui-monospace,"SFMono-Regular",Consolas,monospace;font-size:12px}
+.balance-card{display:grid;gap:13px}
+.balance-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.balance-head strong{font-size:14px}
+.balance-head .btn{flex:none;min-height:42px}
+.balance-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.balance-item{min-width:0;padding:13px;border:1px solid #e7ecf4;border-radius:13px;background:rgba(255,255,255,.8)}
+.balance-item span{display:block;color:var(--muted);font-size:11px}
+.balance-item strong{display:block;margin-top:5px;overflow-wrap:anywhere;font-size:clamp(16px,2.3vw,22px);line-height:1.3}
+.balance-item small{display:block;min-height:15px;margin-top:5px;color:#8993a5;font-size:10px;overflow-wrap:anywhere}
+@media(max-width:520px){
+  .balance-head{align-items:flex-start}
+  .balance-grid{grid-template-columns:1fr}
+  .balance-item{display:grid;grid-template-columns:minmax(80px,.42fr) minmax(0,1fr);gap:2px 12px;align-items:center;padding:10px 12px}
+  .balance-item span{grid-row:1/3}
+  .balance-item strong{margin-top:0;text-align:right;font-size:18px}
+  .balance-item small{text-align:right;margin-top:2px}
+  .key-reveal-actions .btn{width:100%}
+  .key-reveal-panel .actions{display:grid;grid-template-columns:1fr 1fr}
+  .key-reveal-panel .actions .btn{min-width:0}
+}
+
 </style>
 </head>
 <body>
@@ -206,10 +232,15 @@ table{min-width:0}
             <div class="kv">
               <div class="field wide"><label for="providerPreset">服务商快捷预设</label><select id="providerPreset"><option value="custom">自定义 / 不修改地址</option><option value="openai">OpenAI 兼容 · OpenAI</option><option value="deepseek">DeepSeek</option><option value="siliconflow">SiliconFlow</option><option value="modelscope">ModelScope API</option></select><div class="hint">只填入地址，不会更换密钥或模型。</div></div>
               <div class="field wide"><label for="apiBaseUrl">API 根地址</label><input id="apiBaseUrl" type="url" placeholder="https://api.example.com/v1" autocomplete="url" required><div class="hint">填写 HTTPS 根地址。</div></div>
-              <div class="field wide"><label for="apiKey">API Key <span style="font-weight:400;color:#8792a4">（不回显）</span></label><input id="apiKey" type="password" autocomplete="new-password" placeholder="留空表示不修改已保存的密钥" spellcheck="false"><div id="keyState" class="key-state missing">读取密钥状态中…</div><div class="hint">保存后输入框会清空；留空表示不修改。</div></div>
+              <div class="field wide"><label for="apiKey">API Key</label><input id="apiKey" type="password" autocomplete="new-password" placeholder="留空表示不修改已保存的 Token" spellcheck="false"><div id="keyState" class="key-state missing">读取密钥状态中…</div><div class="hint">留空不修改。查看 Token 需要主动点击下方按钮。</div><div class="actions key-reveal-actions" style="margin-top:8px"><button class="btn" id="viewSavedToken" type="button">查看已保存 Token</button></div><div id="keyRevealPanel" class="key-reveal-panel" hidden><div class="field"><label for="revealedKey">已保存的 Token</label><input id="revealedKey" type="text" readonly autocomplete="off" spellcheck="false></div><div class="actions"><button class="btn" id="copyRevealedKey" type="button">复制 Token</button><button class="btn" id="hideRevealedKey" type="button">隐藏</button></div></div>
               <div class="field wide"><label for="model">模型名称 / Model ID</label><div class="row"><input style="flex:1.6" id="model" list="modelOptions" placeholder="例如 gpt-6-luna" required><datalist id="modelOptions"></datalist><button class="btn" id="fetchModels" type="button">↻ 获取模型列表</button></div><div id="modelsStatus" class="hint">可直接输入模型 ID，也可以自动获取。</div></div>
               <div class="field"><label for="temperature">Temperature：<span id="tempValue">0.2</span></label><input id="temperature" type="range" min="0" max="2" step="0.1" value="0.2"><div class="hint">越低越稳定。</div></div>
               <div class="field"><label for="maxTokens">最大输出 Token</label><input id="maxTokens" type="number" min="0" max="32768" step="1" value="0"><div class="hint">0 = 使用服务商默认值。</div></div>
+            </div>
+            <div class="section-card balance-card" style="margin-top:14px">
+              <div class="balance-head"><div><strong>API Token 额度</strong><div class="hint">查询当前密钥的可用额度；需服务商支持兼容额度接口。</div></div><button class="btn" id="refreshBalance" type="button">查询余额</button></div>
+              <div id="balanceValues" class="balance-grid" hidden><div class="balance-item"><span>可用额度</span><strong id="balanceRemaining">—</strong><small id="balanceRemainingMoney"></small></div><div class="balance-item"><span>已用额度</span><strong id="balanceUsed">—</strong><small>服务商返回</small></div><div class="balance-item"><span>总额度</span><strong id="balanceTotal">—</strong><small id="balanceExpires"></small></div></div>
+              <div class="status" id="balanceStatus" role="status" aria-live="polite">点击“查询余额”获取最新额度。</div>
             </div>
             <div class="actions provider-actions"><button class="btn primary" id="saveSettings" type="button">保存配置</button><button class="btn primary" id="saveAndTest" type="button">保存并测试</button><button class="btn" id="testConnection" type="button">仅测试当前输入</button><button class="btn danger" id="useWorkerKey" type="button">改用 Worker Secret</button></div>
             <div class="status" id="draftStatus" role="status">修改后记得保存。</div>
@@ -237,7 +268,7 @@ table{min-width:0}
           <h2 class="panel-title">调用记录</h2><p class="panel-desc">最近 20 条请求记录。</p>
           <div class="row record-filters" style="margin-bottom:14px"><div class="field"><label for="recordSearch">搜索记录</label><input id="recordSearch" type="search" placeholder="按模型、场景或 HTTP 状态搜索"></div><div class="field"><label for="recordFilter">请求状态</label><select id="recordFilter"><option value="all">全部状态</option><option value="ok">仅成功</option><option value="fail">仅失败</option></select></div></div>
           <div class="actions record-actions" style="margin-top:0;margin-bottom:14px"><button class="btn" id="refreshRecords" type="button">刷新记录</button><button class="btn" id="exportRecords" type="button">导出调用记录 CSV</button><button class="btn danger" id="resetStats" type="button">重置统计</button></div>
-          <div class="table-wrap"><table><thead><tr><th>时间</th><th>场景</th><th>模型</th><th>状态</th><th>HTTP</th></tr></thead><tbody id="recentRows"><tr><td colspan="5">加载中…</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>时间</th><th>场景</th><th>模型</th><th>状态</th><th>HTTP</th><th>Token 入/出</th></tr></thead><tbody id="recentRows"><tr><td colspan="6">加载中…</td></tr></tbody></table></div>
           <div class="hint" id="recordCount" style="margin-top:10px">显示最近调用记录</div><div class="status" id="recordsStatus" role="status"></div>
         </section>
 
@@ -432,7 +463,7 @@ table{min-width:0}
     if (!rows.length) {
       const tr = document.createElement("tr"), td = document.createElement("td");
       tr.className = "empty-row";
-      td.colSpan = 5; td.textContent = recentRowsData.length ? "没有符合筛选条件的记录。" : "暂无记录。产生请求后会显示最近 20 条元数据。";
+      td.colSpan = 6; td.textContent = recentRowsData.length ? "没有符合筛选条件的记录。" : "暂无记录。产生请求后会显示最近 20 条元数据。";
       tr.append(td); body.append(tr);
     } else rows.forEach(item => {
       const tr = document.createElement("tr");
@@ -443,6 +474,9 @@ table{min-width:0}
       const state = document.createElement("td"), badge = document.createElement("span");
       state.dataset.label = "状态"; badge.className = "badge " + (item.ok ? "ok" : "fail"); badge.textContent = item.ok ? "成功" : "失败"; state.append(badge); tr.append(state);
       const code = document.createElement("td"); code.dataset.label = "HTTP"; code.textContent = item.status || "—"; tr.append(code);
+      const usage = document.createElement("td"); usage.dataset.label = "Token 入/出";
+      usage.textContent = item.usageAvailable ? (Number(item.promptTokens || 0).toLocaleString() + " / " + Number(item.completionTokens || 0).toLocaleString()) : "—";
+      tr.append(usage);
       body.append(tr);
     });
     $("recordCount").textContent = "显示 " + rows.length + " / " + recentRowsData.length + " 条记录（后端仅保留最近 20 条）";
@@ -597,6 +631,62 @@ table{min-width:0}
     try { await saveAll(false,true); status("providerStatus","已切换为使用 Worker Secret。","success"); showToast("密钥来源已切换"); }
     catch(e) { status("providerStatus",e.message,"error"); }
     finally { setBusy($("useWorkerKey"),false); }
+  });
+  $("viewSavedToken").addEventListener("click", async () => {
+    setBusy($("viewSavedToken"), true, "读取中…");
+    try {
+      const data = await api("/admin/key/reveal", { method: "POST", body: { confirm: "REVEAL_KEY" } });
+      $("revealedKey").value = data.apiKey || "";
+      $("keyRevealPanel").hidden = false;
+      $("viewSavedToken").textContent = "已显示 Token";
+      showToast("已读取 Token，仅显示在当前页面");
+    } catch (e) {
+      status("providerStatus", e.message, "error");
+    } finally { setBusy($("viewSavedToken"), false); }
+  });
+  $("copyRevealedKey").addEventListener("click", async () => {
+    const value = $("revealedKey").value;
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      showToast("Token 已复制到剪贴板");
+    } catch {
+      $("revealedKey").focus();
+      $("revealedKey").select();
+      showToast("已选中 Token，请使用系统复制");
+    }
+  });
+  $("hideRevealedKey").addEventListener("click", () => {
+    $("revealedKey").value = "";
+    $("keyRevealPanel").hidden = true;
+    $("viewSavedToken").textContent = "查看已保存 Token";
+  });
+  function displayQuota(value) {
+    return value === null || value === undefined ? "服务商未返回" : Number(value).toLocaleString("zh-CN", { maximumFractionDigits: 2 });
+  }
+  $("refreshBalance").addEventListener("click", async () => {
+    setBusy($("refreshBalance"), true, "查询中…");
+    $("balanceValues").hidden = true;
+    status("balanceStatus", "正在查询 Token 额度…");
+    try {
+      const data = await api("/admin/balance", { method: "POST", body: {
+        apiBaseUrl: $("apiBaseUrl").value.trim(),
+        apiKey: $("apiKey").value.trim()
+      }});
+      $("balanceValues").hidden = false;
+      $("balanceRemaining").textContent = data.unlimited ? "无限额度" : displayQuota(data.totalAvailable) + " 点";
+      $("balanceUsed").textContent = displayQuota(data.totalUsed) + " 点";
+      $("balanceTotal").textContent = data.unlimited ? "无限额度" : displayQuota(data.totalGranted) + " 点";
+      $("balanceRemainingMoney").textContent = !data.unlimited && data.currencyEnabled && data.totalAvailable !== null
+        ? "约 " + data.currencySymbol + (data.totalAvailable / data.quotaPerUnit).toFixed(2) + "（按站点比例）"
+        : (data.unlimited ? "此 Token 不限制总额度" : "额度单位由服务商决定");
+      $("balanceExpires").textContent = data.expiresAt
+        ? "到期 " + new Date(data.expiresAt * 1000).toLocaleDateString()
+        : "未提供到期时间";
+      status("balanceStatus", (data.name ? "Token：" + data.name + " · " : "") + "额度已更新。", "success");
+    } catch (e) {
+      status("balanceStatus", e.message, "error");
+    } finally { setBusy($("refreshBalance"), false); }
   });
   $("fetchModels").addEventListener("click", async () => {
     const button=$("fetchModels");setBusy(button,true,"获取中…");status("providerStatus","");
