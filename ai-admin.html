@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f8fbff">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'self'; script-src 'sha256-k8QUZt6nGlyxQX8laPjAkjQ0Q7ClyxLdVhB5Pw+ARlc=' 'sha256-KlMdjGgEDDGxFverkfihYq09Uv0jrAHuIUkmTCH0v2w='; style-src 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' https://zhixing-calculator-ai.xiaoshirong2023.workers.dev; object-src 'none'; frame-src 'none'; worker-src 'none'; upgrade-insecure-requests">
 <title>知行学习产品 · 后端管理</title>
 <style>
 :root{color-scheme:light;--ink:#202938;--muted:#718096;--line:#e1e7f0;--paper:rgba(255,255,255,.82);--blue:#4169e1;--blue2:#7192f4;--mint:#dff7ed;--gold:#d8b878;--danger:#c44747;--shadow:0 16px 45px rgba(46,66,110,.09)}
@@ -180,7 +183,7 @@ table{min-width:0}
     <h1 class="h1">管理学习产品 AI 服务</h1>
     <p class="lead">统一配置模型供应商、模型列表、提示词和调用状态。密钥仅发送至你的 Worker，不会回显到页面。</p>
     <form id="loginForm" class="stack" style="margin-top:24px">
-      <div class="field"><label for="workerUrl">AI Worker 地址</label><input id="workerUrl" type="url" inputmode="url" value="https://zhixing-calculator-ai.xiaoshirong2023.workers.dev" required autocomplete="url"><div class="hint">需为已部署的知行 AI Worker 地址。</div></div>
+      <div class="field"><label for="workerUrl">AI Worker 地址</label><input id="workerUrl" type="url" inputmode="url" value="https://zhixing-calculator-ai.xiaoshirong2023.workers.dev" required autocomplete="url" readonly aria-readonly="true"><div class="hint">已锁定官方 Worker，避免管理密码或会话令牌被发送到其他地址。</div></div>
       <div class="field"><label for="password">管理密码</label><input id="password" type="password" required autocomplete="current-password" placeholder="输入你在 Cloudflare 中设置的管理密码"></div>
       <button class="btn primary full" id="loginButton" type="submit">解锁管理中心 <span aria-hidden="true">→</span></button>
       <div class="status" id="loginStatus" role="status" aria-live="polite"></div>
@@ -307,6 +310,7 @@ table{min-width:0}
             <div class="help-item"><span class="step">3</span><div><strong>密钥处理</strong><p>自定义 API Key 加密保存且不会回显；“改用 Worker Secret”会切回后端的 <span class="code">AI_API_KEY</span>。</p></div></div>
             <div class="help-item"><span class="step">4</span><div><strong>导出 / 导入配置</strong><p>备份不包含 API Key，但会包含提示词。</p></div></div>
             <div class="help-item"><span class="step">5</span><div><strong>安全边界</strong><p>提问和图片会发送到所选模型服务商。发现异常用量时请轮换 API Key。</p></div></div>
+            <div class="help-item"><span class="step">6</span><div><strong>独立密钥（推荐）</strong><p>在 Worker Secrets 中分别设置随机的 ADMIN_SESSION_SECRET 与 ADMIN_ENCRYPTION_KEY，建议各至少 32 个随机字符并妥善保管。添加后重新打开本页一次，让旧的自定义 API Key 自动迁移加密，再轮换管理密码；不要把这些密钥写入仓库。</p></div></div>
           </div>
           <div class="section-card" style="margin-top:16px">
             <div class="subhead" style="margin-top:0">配置文件与维护</div>
@@ -338,13 +342,14 @@ table{min-width:0}
   let recentRowsData = [];
   let settingsDirty = false;
   function workerUrl() {
-    const raw = ($("workerUrl").value || localStorage.getItem(WORKER_KEY) || DEFAULT_WORKER).trim();
+    const raw = ($("workerUrl").value || DEFAULT_WORKER).trim();
     if (!raw) return "";
     try {
       const url = new URL(raw);
-      const localDevelopment = url.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
-      if ((url.protocol !== "https:" && !localDevelopment) || url.username || url.password || url.search || url.hash) return "";
-      return url.toString().replace(/\/+$/, "");
+      const expectedHost = new URL(DEFAULT_WORKER).hostname;
+      if (url.protocol !== "https:" || url.hostname.toLowerCase() !== expectedHost ||
+          url.port || url.pathname !== "/" || url.username || url.password || url.search || url.hash) return "";
+      return url.origin;
     } catch { return ""; }
   }
   function showToast(message) {
@@ -451,17 +456,14 @@ table{min-width:0}
     $("app").hidden = false;
     status("loginStatus", "");
   }
-  $("workerUrl").value = localStorage.getItem(WORKER_KEY) || DEFAULT_WORKER;
+  // Ignore and remove any previously stored custom endpoint; only the official Worker is trusted.
+  try { localStorage.removeItem(WORKER_KEY); } catch {}
+  $("workerUrl").value = DEFAULT_WORKER;
   if (token && sessionStorage.getItem(TOKEN_WORKER_KEY) !== workerUrl()) {
     token = "";
     sessionStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(TOKEN_WORKER_KEY);
   }
-  $("workerUrl").addEventListener("change", () => {
-    const base = workerUrl();
-    if (base) localStorage.setItem(WORKER_KEY, base);
-    if (token && sessionStorage.getItem(TOKEN_WORKER_KEY) !== base) logout(false);
-  });
   $("loginForm").addEventListener("submit", async event => {
     event.preventDefault();
     const button = $("loginButton");
@@ -469,7 +471,7 @@ table{min-width:0}
     status("loginStatus", "");
     try {
       const base = workerUrl();
-      if (!base) throw new Error("Worker 地址无效，请检查是否为正确的 HTTPS 地址。");
+      if (!base) throw new Error("为保护密码与会话令牌，管理页只允许连接官方知行 AI Worker。");
       localStorage.setItem(WORKER_KEY, base);
 
       const data = await api("/admin/login", {
