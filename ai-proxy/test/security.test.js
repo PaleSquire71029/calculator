@@ -30,7 +30,7 @@ function fakeEnvironment(extra = {}) {
     ...extra
   };
   const durableObject = new AdminSettingsStore({ storage }, env);
-  const stub = { fetch: request => durableObject.fetch(request) };
+  const stub = { fetch: (input, init) => durableObject.fetch(input instanceof Request ? input : new Request(input, init)) };
   env.ADMIN_STORE = { idFromName: () => "settings-v1", get: () => stub };
   return { env, storage, durableObject };
 }
