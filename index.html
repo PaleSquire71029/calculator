@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>知行计算器 | 知行导航</title>
+    <title>知行计算器 AI 版 | 知行</title>
     <link rel="canonical" href="https://zhixingjsq.pages.dev/">
-    <meta name="description" content="知行计算器：基础计算、方程与不等式求解、函数工具箱、单位换算与计算历史。纯前端本地计算，与知行导航同一套设计风格。">
-    <meta name="theme-color" content="#08090C">
-    <meta name="color-scheme" content="dark">
+    <meta name="description" content="知行计算器 AI 版：集成科学计算、方程函数工具与 AI 学习助手，支持结合当前计算页面进行讲解。">
+    <meta name="theme-color" content="#f4f7ff">
+    <meta name="color-scheme" content="light">
 
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
 
@@ -1477,6 +1477,22 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
   }
 }
 </style>
+    <!-- MathJax：渲染 AI 分析返回的 LaTeX 数学公式 -->
+    <script>
+      window.MathJax = {
+        tex: { inlineMath: [['\\(', '\\)'], ['$', '$']], displayMath: [['\\[', '\\]'], ['$$', '$$']], processEscapes: true },
+        options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] },
+        chtml: { scale: 1, matchFontHeight: false },
+        startup: { typeset: false }
+      };
+</script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.js'"></script>
+    <style id="zx-ai-mathjax-fix">
+      .zx-ai-result-body { display:block; white-space:pre-wrap; overflow-wrap:anywhere; word-break:normal; }
+      .zx-ai-result-body mjx-container { max-width:100%; overflow-x:auto; overflow-y:hidden; }
+      .zx-ai-result-body mjx-container[display="true"] { display:block; margin:.8em 0; text-align:left; }
+    </style>
+
 </head>
 <body class="text-slate-300 antialiased">
 
@@ -1487,7 +1503,7 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
                 <div class="zx-brand-mark"><i class="fa-solid fa-calculator text-base"></i></div>
                 <div class="min-w-0">
                     <div class="text-sm font-serif font-bold text-white leading-tight whitespace-nowrap">知行计算器</div>
-                    <div class="text-[10px] text-slate-500 font-light leading-tight hidden sm:block">纯本地计算 · 数据不出本机</div>
+                    <div class="text-[10px] text-slate-500 font-light leading-tight hidden sm:block">本地优先 · AI 按需协同</div>
                 </div>
             </div>
 
@@ -1537,9 +1553,9 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
                 <div>
                     <div class="workspace-eyebrow">ZHIXING · MATH WORKSPACE</div>
                     <h1 class="workspace-title">让每一步计算，都清晰可循。</h1>
-                    <p class="workspace-copy">从快速运算到方程、函数与单位换算。输入、推导、结果与历史记录在同一工作区完成。</p>
+                    <p class="workspace-copy">本地计算负责准确求值，AI 负责解释、核验与继续推导。结果始终留在当前工具页。</p>
                 </div>
-                <div class="workspace-status">本地计算 · 数据留在设备</div>
+                <div class="workspace-status">本地计算 · AI 随时协同</div>
             </section>
 
             <!-- ========== 界面 1：基础计算 ========== -->
@@ -1826,7 +1842,7 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
                 </div>
             </section>
 
-<section class="view" data-view="knowledge"><div class="glass-panel view-card"><div class="view-head"><div class="view-head-mark knowledge-mark"><svg viewBox="0 0 64 64" width="42" height="42" fill="none" aria-hidden="true"><path d="M8 13Q21 9 32 17Q43 9 56 13V49Q43 45 32 53Q21 45 8 49Z" stroke="currentColor" stroke-width="3"/><path d="M32 17V53M15 24h12M15 32h12M38 24h12M38 32h12" stroke="currentColor" stroke-width="2.5"/></svg></div><div><div class="view-title">知行知识库</div><div class="view-sub">知识点、公式解析、教材章节与化学方程式已统一迁移至独立页面，计算器仅保留入口。</div></div></div><div class="knowledge-standalone-link" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:16px 0;padding:18px;border:1px solid #3b4a5d;border-radius:16px;background:linear-gradient(110deg,#182432,#171d29)"><div style="display:flex;align-items:center;gap:12px;min-width:0"><span style="display:grid;place-items:center;width:46px;height:46px;flex:0 0 46px;border-radius:13px;background:#203a42;color:#8de0d0"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 5.5Q7.5 3 12 6q4.5-3 9-0.5v13Q16.5 16 12 19q-4.5-3-9-0.5zM12 6v13"/></svg></span><div><strong style="display:block;color:#e6d2a4;font-size:16px">知行知识库 · 独立学习空间</strong><span style="display:block;color:#aebbd0;font-size:12px;margin-top:4px">初高中数学、化学知识卡、详细解析、教材章节目录与方程式速查</span></div></div><a class="zx-btn" href="https://k.zhixing.us.ci" style="text-decoration:none;white-space:nowrap">进入知行知识库 ↗</a></div></div></section>
+<section class="view" data-view="knowledge"><div class="glass-panel view-card"><div class="view-head"><div class="view-head-mark knowledge-mark"><svg viewBox="0 0 64 64" width="42" height="42" fill="none" aria-hidden="true"><path d="M8 13Q21 9 32 17Q43 9 56 13V49Q43 45 32 53Q21 45 8 49Z" stroke="currentColor" stroke-width="3"/><path d="M32 17V53M15 24h12M15 32h12M38 24h12M38 32h12" stroke="currentColor" stroke-width="2.5"/></svg></div><div><div class="view-title">知行知识库</div><div class="view-sub">知识点、公式解析、教材章节与化学方程式已统一迁移至独立页面，计算器仅保留入口。</div></div></div><div class="knowledge-standalone-link" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:16px 0;padding:18px;border:1px solid #dce6f5;border-radius:16px;background:linear-gradient(110deg,#f8fbff,#edf5ff)"><div style="display:flex;align-items:center;gap:12px;min-width:0"><span style="display:grid;place-items:center;width:46px;height:46px;flex:0 0 46px;border-radius:13px;background:#e4f4f1;color:#238b7e"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 5.5Q7.5 3 12 6q4.5-3 9-0.5v13Q16.5 16 12 19q-4.5-3-9-0.5zM12 6v13"/></svg></span><div><strong style="display:block;color:#263c59;font-size:16px">知行知识库 · 独立学习空间</strong><span style="display:block;color:#71839b;font-size:12px;margin-top:4px">初高中数学、化学知识卡、详细解析、教材章节目录与方程式速查</span></div></div><a class="zx-btn" href="https://k.zhixing.us.ci" style="text-decoration:none;white-space:nowrap">进入知行知识库 ↗</a></div></div></section>
             <section class="view" data-view="history">
                 <div class="glass-panel view-card">
                     <div class="view-head">
@@ -1854,7 +1870,7 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
 
     <footer class="max-w-[1180px] mx-auto px-4 pb-10 text-center">
         <p class="text-[11px] text-slate-500 font-light leading-relaxed">
-            知行计算器 · 全部计算在浏览器本地完成，不上传任何数据；历史记录保存在本机 localStorage 中，清空浏览器数据即会丢失。
+            知行计算器 · 普通计算在浏览器本地执行。只有点击 AI 分析/AI 扩展时，才会把当前工具必要的输入与结果发送给配置的 AI Worker；历史记录保存在本机 localStorage。
         </p>
         <p class="text-[11px] text-slate-600 font-light mt-2">
             计算引擎与主站完全一致 ·
@@ -4258,5 +4274,912 @@ function zxFnAdvance(f,xValue,rangeText){
         else boot();
     ;
 </script>
+
+<style id="zx-ai-inline-edition">
+/* AI 分析结果直接出现在当前工具页中，不创建聊天窗口。 */
+.zx-ai-inline-actions{display:flex;flex:0 0 auto;align-items:center;gap:7px;margin-left:auto;padding-left:6px}
+.zx-ai-inline-actions button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:7px 11px;border:1px solid rgba(216,184,120,.3);border-radius:10px;background:rgba(216,184,120,.09);color:#efd9a6;font:600 11px/1.25 var(--zx-font,system-ui);white-space:nowrap;cursor:pointer;transition:background .16s,border-color .16s,transform .16s}
+.zx-ai-inline-actions button[data-zx-ai-action="extend"]{background:rgba(125,224,176,.08);border-color:rgba(125,224,176,.24);color:#a8e8c8}
+.zx-ai-inline-actions button:hover{background:rgba(216,184,120,.17);border-color:rgba(216,184,120,.56);transform:translateY(-1px)}
+.zx-ai-inline-actions button:disabled{opacity:.55;cursor:wait;transform:none}
+.zx-ai-result{margin:0 0 20px;padding:16px 17px;border:1px solid rgba(216,184,120,.25);border-radius:13px;background:linear-gradient(145deg,rgba(31,34,38,.97),rgba(18,21,25,.97));box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 9px 24px rgba(0,0,0,.2);color:#e8e6df}
+.zx-ai-result[hidden]{display:none!important}
+.zx-ai-result-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:10px;border-bottom:1px solid rgba(216,184,120,.16)}
+.zx-ai-result-title{display:flex;align-items:center;gap:8px;color:#f0d7a0;font-size:13px;font-weight:750}
+.zx-ai-result-title i{color:#d8b878}
+.zx-ai-result-head button,.zx-ai-result-footer button{border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.045);color:#aeb7c2;padding:6px 9px;font:11px var(--zx-font,system-ui);cursor:pointer}
+.zx-ai-result-status{padding:12px 0 0;color:#c4ad7e;font-size:12px;line-height:1.75}
+.zx-ai-result-status[data-state="error"]{color:#ffaaa2!important;background:none!important;animation:none!important}
+.zx-ai-result-status[data-loading="true"]{display:block}
+.zx-ai-result-body{margin:8px 0 0;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;color:#e1e5e9;font:13px/1.9 var(--zx-font,"Noto Sans SC",system-ui,sans-serif)}
+.zx-ai-answer-section{min-width:0;padding:12px 13px;border:1px solid rgba(255,255,255,.09);border-radius:11px;background:rgba(255,255,255,.025)}
+.zx-ai-answer-section[data-kind="result"]{border-color:rgba(216,184,120,.26);background:linear-gradient(135deg,rgba(216,184,120,.07),rgba(255,255,255,.018))}
+.zx-ai-answer-section-title{display:flex;align-items:center;gap:8px;margin:0 0 7px;color:#d8c18e;font-size:12px;font-weight:750;letter-spacing:.02em}
+.zx-ai-answer-section-title:before{content:"";width:3px;height:13px;flex:0 0 3px;border-radius:3px;background:#bda16a}
+.zx-ai-answer-section[data-kind="result"] .zx-ai-answer-section-title{color:#f0d7a0}
+.zx-ai-answer-section-content{display:block;min-width:0;color:#e1e5e9;font:13px/1.85 var(--zx-font,"Noto Sans SC",system-ui,sans-serif);white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal}
+.zx-ai-answer-section-content mjx-container{max-width:100%;overflow-x:auto;overflow-y:hidden}
+.zx-ai-answer-section-content mjx-container[display="true"]{display:block;margin:.65em 0;text-align:left}
+.zx-ai-thinking-stream,.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-content{color:transparent!important;background-image:linear-gradient(100deg,#cbd0d7 0%,#cbd0d7 35%,#fff0bf 47%,#d8b878 50%,#fff0bf 53%,#cbd0d7 66%,#cbd0d7 100%);background-size:260% 100%;background-position:100% 0;background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:zx-ai-text-flow 2.2s linear infinite}
+@keyframes zx-ai-text-flow{from{background-position:100% 0}to{background-position:-160% 0}}
+.zx-ai-answer-details{min-width:0;border:1px solid rgba(255,255,255,.075);border-radius:10px;background:rgba(255,255,255,.018);overflow:hidden}
+.zx-ai-answer-details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:12px 13px;color:#c4b58f;font-size:12px;font-weight:650}
+.zx-ai-answer-details>summary::-webkit-details-marker{display:none}
+.zx-ai-answer-details>summary:after{content:"＋";margin-left:auto;color:#bca875;font-size:15px;font-weight:400}
+.zx-ai-answer-details[open]>summary:after{content:"−"}
+.zx-ai-answer-details-content{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;padding:0 9px 10px}
+.zx-ai-answer-details-content .zx-ai-answer-section{background:rgba(0,0,0,.08)}
+.zx-ai-answer-details-content mjx-container{max-width:100%;overflow-x:auto;overflow-y:hidden}
+@media(min-width:760px){.zx-ai-answer-details-content{grid-template-columns:repeat(2,minmax(0,1fr))}.zx-ai-answer-details-content .zx-ai-answer-section[data-wide="true"]{grid-column:1/-1}}
+@media(prefers-reduced-motion:reduce){.zx-ai-thinking-stream,.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-content{animation:none!important;background:none!important;color:inherit!important;-webkit-text-fill-color:currentColor}}
+
+.zx-ai-result-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:13px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07);color:#7f8997;font-size:10px}
+.view-head>.zx-ai-inline-actions{align-self:flex-start}
+@media(max-width:720px){
+ .view-head{flex-wrap:wrap}
+ .view-head>.zx-ai-inline-actions{width:100%;margin:7px 0 0;padding-left:0;justify-content:flex-start}
+ .zx-ai-inline-actions button{min-height:35px;flex:0 0 auto}
+ .zx-ai-result{padding:13px 12px;margin-bottom:15px}
+ .zx-ai-result-body{font-size:12px;line-height:1.85}
+ .zx-ai-result-footer{align-items:flex-start;flex-direction:column}
+}
+</style>
+<style id="zx-liquid-glass-redesign">
+/* 知行 AI 计算器 · 全浅色液态玻璃系统。覆盖旧主题视觉，保留计算器引擎与布局语义。 */
+:root{
+ color-scheme:light;
+ --zx-bg:#f4f7fc;--zx-panel:rgba(255,255,255,.72);--zx-panel-raised:rgba(255,255,255,.88);--zx-panel-soft:rgba(248,251,255,.76);
+ --zx-line:rgba(125,148,184,.22);--zx-line-soft:rgba(125,148,184,.14);
+ --zx-text:#1e2c42;--zx-muted:#65758c;--zx-dim:#8491a4;
+ --zx-gold:#426bd8;--zx-gold-soft:rgba(66,107,216,.09);--zx-green:#128b78;--zx-red:#c23e56;
+ --zx-radius:23px;--zx-ease:cubic-bezier(.22,.72,.22,1);
+}
+html,body{background:#f4f7fc!important;color:var(--zx-text)!important;max-width:100%;overflow-x:clip}
+html{color-scheme:light!important;scroll-behavior:smooth}
+body{
+ font-family:var(--zx-font)!important;letter-spacing:0;
+ background:
+  radial-gradient(ellipse at 8% 0%,rgba(153,187,255,.30),transparent 34rem),
+  radial-gradient(ellipse at 92% 12%,rgba(160,229,220,.28),transparent 32rem),
+  linear-gradient(160deg,#f8faff 0%,#f0f5fc 48%,#f8fbff 100%)!important;
+ color:#24344b!important;
+}
+body::before{
+ opacity:.28!important;
+ background-image:radial-gradient(rgba(111,139,183,.21) .7px,transparent .7px)!important;
+ background-size:20px 20px!important;
+}
+*,*::before,*::after{box-sizing:border-box}
+body :where(*, *::before, *::after){writing-mode:horizontal-tb!important;text-orientation:mixed!important}
+a{color:#416bd6}
+.zx-header{
+ position:sticky!important;top:0;z-index:80!important;
+ background:rgba(249,252,255,.72)!important;
+ border-bottom:1px solid rgba(139,162,197,.22)!important;
+ box-shadow:0 8px 30px rgba(55,82,125,.055)!important;
+ backdrop-filter:blur(26px) saturate(155%)!important;-webkit-backdrop-filter:blur(26px) saturate(155%)!important;
+}
+.zx-header-inner{min-height:70px!important}
+.zx-brand-mark{
+ color:#315fd1!important;border:1px solid rgba(93,130,221,.25)!important;
+ background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(218,231,255,.8))!important;
+ box-shadow:0 7px 20px rgba(74,112,197,.14),inset 0 1px rgba(255,255,255,.96)!important;
+}
+.zx-header .text-white,.zx-header .text-slate-400,.zx-header .text-slate-500{color:#34445c!important}
+.zx-back,.zx-icon-btn{
+ color:#50627c!important;border-color:rgba(128,151,190,.24)!important;
+ background:rgba(255,255,255,.72)!important;box-shadow:0 3px 12px rgba(57,82,125,.04)!important;
+}
+.zx-back:hover,.zx-icon-btn:hover{color:#315fd1!important;background:rgba(255,255,255,.96)!important;border-color:rgba(82,120,215,.35)!important}
+.zx-layout{max-width:1520px!important;padding-top:28px!important;gap:24px!important}
+.zx-menu{
+ background:rgba(255,255,255,.60)!important;border:1px solid rgba(255,255,255,.94)!important;
+ border-radius:23px!important;box-shadow:0 18px 50px rgba(69,91,132,.10),inset 0 1px rgba(255,255,255,.98)!important;
+ backdrop-filter:blur(24px) saturate(150%)!important;-webkit-backdrop-filter:blur(24px) saturate(150%)!important;
+}
+.zx-menu-group+.zx-menu-group{border-top-color:rgba(132,153,189,.14)!important}
+.zx-menu-title{color:#8290a5!important;letter-spacing:.12em!important}
+.zx-menu-item{color:#52627a!important;border-radius:12px!important;min-height:44px!important;transition:background .24s var(--zx-ease),color .24s var(--zx-ease),transform .24s var(--zx-ease),border-color .24s var(--zx-ease)!important}
+.zx-menu-item:hover{color:#284fba!important;background:rgba(229,237,255,.75)!important;border-color:rgba(104,139,220,.15)!important;transform:translateX(2px)}
+.zx-menu-item.is-active{color:#2d58c4!important;background:linear-gradient(105deg,rgba(219,231,255,.95),rgba(240,246,255,.8))!important;border:1px solid rgba(100,137,222,.20)!important;box-shadow:inset 3px 0 #5c83e2,0 5px 16px rgba(91,126,199,.07)!important}
+.zx-menu-item.is-active>i,.zx-menu-item.is-active>svg,.zx-menu-item.is-active>.zx-menu-icon{color:#416bd6!important}
+.workspace-intro{
+ position:relative;isolation:isolate;overflow:hidden;margin-bottom:20px!important;padding:clamp(23px,3.2vw,37px)!important;
+ border:1px solid rgba(255,255,255,.94)!important;border-radius:27px!important;
+ background:linear-gradient(120deg,rgba(255,255,255,.88),rgba(239,246,255,.72) 62%,rgba(229,246,244,.72))!important;
+ box-shadow:0 22px 54px rgba(65,91,138,.09),inset 0 1px 0 rgba(255,255,255,.98)!important;
+ backdrop-filter:blur(28px) saturate(155%)!important;-webkit-backdrop-filter:blur(28px) saturate(155%)!important;
+}
+.workspace-intro:after{content:"";position:absolute;z-index:-1;width:360px;height:360px;right:-105px;top:-200px;border-radius:50%;background:radial-gradient(circle,rgba(126,163,244,.23),rgba(141,218,216,.10) 48%,transparent 72%);filter:blur(3px);pointer-events:none}
+.workspace-eyebrow{color:#6681bd!important;font-size:10px!important;letter-spacing:.18em!important;font-weight:750}
+.workspace-title{color:#1e304a!important;font-size:clamp(27px,3.5vw,42px)!important;letter-spacing:-.04em!important;line-height:1.22!important;font-weight:800!important}
+.workspace-copy{max-width:660px!important;color:#64758e!important;font-size:13px!important;line-height:1.85!important}
+.workspace-status{border:1px solid rgba(111,151,226,.20)!important;background:rgba(255,255,255,.73)!important;color:#496bb2!important;border-radius:99px!important;padding:8px 12px!important;box-shadow:inset 0 1px rgba(255,255,255,.95)!important}
+.glass-panel,.view-card,.view.is-active>.glass-panel{
+ background:rgba(255,255,255,.68)!important;border:1px solid rgba(255,255,255,.96)!important;
+ border-radius:24px!important;box-shadow:0 18px 50px rgba(67,88,129,.075),inset 0 1px rgba(255,255,255,.98)!important;
+ backdrop-filter:blur(24px) saturate(145%)!important;-webkit-backdrop-filter:blur(24px) saturate(145%)!important;
+}
+.view-card{padding:clamp(18px,2.5vw,30px)!important}
+.view-head{gap:13px!important;margin-bottom:20px!important}
+.view-head-mark{background:linear-gradient(145deg,#e6eeff,#f6f9ff)!important;color:#416bd6!important;border:1px solid rgba(98,135,219,.18)!important;border-radius:15px!important;box-shadow:0 7px 18px rgba(78,112,187,.07),inset 0 1px rgba(255,255,255,.95)!important}
+.view-title{color:#233650!important;font-weight:800!important;letter-spacing:-.02em}
+.view-sub{color:#6e7f96!important;line-height:1.75!important}
+.zx-label,.structured-field span,.structured-select span,.solve-keypad-title,.unit-label,.zx-field-label{color:#687b96!important}
+.calc-screen,.calc-display,.zx-input-panel{
+ background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(242,247,255,.84))!important;
+ border:1px solid rgba(144,166,204,.24)!important;border-radius:20px!important;
+ box-shadow:inset 0 2px 5px rgba(72,98,144,.035),0 8px 24px rgba(67,91,132,.045)!important;
+}
+.calc-input,.view input:not([type=checkbox]):not([type=radio]):not([type=range]),.view select,.view textarea,.structured-select select,.structured-field input,.zx-ai-result input{
+ color:#233650!important;background:rgba(255,255,255,.86)!important;border:1px solid rgba(132,154,190,.25)!important;border-radius:13px!important;
+}
+.calc-input{font-family:"JetBrains Mono",monospace!important;font-weight:550!important}
+.view input:focus,.view select:focus,.view textarea:focus,.calc-input:focus,.zx-ai-result input:focus{
+ outline:none!important;border-color:rgba(79,119,218,.55)!important;box-shadow:0 0 0 4px rgba(82,126,224,.10)!important;
+}
+.calc-hint,.structured-hint,.hint{color:#8190a5!important}
+.calc-key,.zx-btn,.zx-chip,.solve-keypad button,.zx-mobile-mathpad-grid button,.zx-mathpad-tabs button{
+ border-color:rgba(133,156,194,.22)!important;background:rgba(255,255,255,.82)!important;color:#415571!important;
+ box-shadow:0 3px 9px rgba(56,81,122,.035),inset 0 1px rgba(255,255,255,.98)!important;
+ transition:transform .22s var(--zx-ease),background .22s var(--zx-ease),border-color .22s var(--zx-ease),box-shadow .22s var(--zx-ease)!important;
+}
+.calc-key.is-op,.zx-btn.is-go,.zx-btn.primary,.zx-btn.is-primary,.solve-keypad button.key-next{
+ background:linear-gradient(135deg,#557fe5,#4269d2)!important;color:white!important;border-color:rgba(255,255,255,.55)!important;
+ box-shadow:0 8px 20px rgba(67,105,206,.20),inset 0 1px rgba(255,255,255,.25)!important;
+}
+.calc-key.is-fn,.solve-keypad button.key-action{background:rgba(230,238,255,.86)!important;color:#426bd6!important}
+.calc-key:hover,.zx-btn:hover,.zx-chip:hover,.solve-keypad button:hover,.zx-mobile-mathpad-grid button:hover{
+ transform:translateY(-2px);border-color:rgba(79,119,218,.38)!important;box-shadow:0 8px 20px rgba(72,104,169,.11)!important
+}
+.calc-key:active,.zx-btn:active,.zx-chip:active,.solve-keypad button:active{transform:scale(.98)}
+.zx-out,.zx-steps,.structured-equation,.structured-point,.function-expression-panel,.function-value-note,.function-graph-note,.zx-chem-equation,.zx-chem-candidate{
+ background:rgba(247,250,255,.86)!important;border-color:rgba(133,157,197,.20)!important;color:#324761!important;border-radius:15px!important;
+}
+.structured-equation{color:#355fbe!important;background:linear-gradient(120deg,rgba(230,238,255,.9),rgba(249,251,255,.84))!important}
+.structured-point>b,.function-expression-panel strong{color:#3f66c8!important}
+.zx-mobile-mathpad,.zx-mobile-mathpad.is-visible{
+ background:rgba(248,251,255,.96)!important;border:1px solid rgba(255,255,255,.97)!important;
+ box-shadow:0 -12px 35px rgba(63,88,134,.12)!important;backdrop-filter:blur(24px)!important;-webkit-backdrop-filter:blur(24px)!important;
+}
+.zx-mobile-mathpad-head{color:#455a77!important}
+.zx-mobile-mathpad-grid button[data-value="DONE"]{background:linear-gradient(135deg,#557fe5,#4269d2)!important;color:#fff!important}
+.zx-ai-inline-actions button{
+ border:1px solid rgba(84,120,209,.20)!important;background:rgba(231,238,255,.83)!important;color:#365fbd!important;
+ border-radius:12px!important;padding:9px 12px!important;min-height:38px!important;font-size:12px!important;
+ box-shadow:0 4px 12px rgba(68,97,156,.055)!important;
+}
+.zx-ai-inline-actions button[data-zx-ai-action="extend"]{color:#138171!important;background:rgba(222,246,240,.88)!important;border-color:rgba(33,146,127,.19)!important}
+.zx-ai-inline-actions button:hover{transform:translateY(-2px)!important;box-shadow:0 9px 20px rgba(70,99,159,.10)!important}
+.zx-ai-inline-actions button:disabled,.zx-ai-result button:disabled{opacity:.58;cursor:wait}
+.zx-ai-result{
+ margin:0 0 20px!important;padding:clamp(15px,2vw,22px)!important;
+ color:#263953!important;border:1px solid rgba(255,255,255,.98)!important;border-radius:22px!important;
+ background:linear-gradient(140deg,rgba(255,255,255,.94),rgba(239,246,255,.86) 64%,rgba(231,248,245,.82))!important;
+ box-shadow:0 18px 48px rgba(61,88,139,.09),inset 0 1px rgba(255,255,255,.99)!important;
+ backdrop-filter:blur(24px) saturate(145%)!important;-webkit-backdrop-filter:blur(24px) saturate(145%)!important;
+}
+.zx-ai-result-head{border-bottom-color:rgba(123,149,195,.19)!important;padding-bottom:12px!important}
+.zx-ai-result-title{color:#315fc6!important;font-size:14px!important}
+.zx-ai-result-title i{color:#567fe0!important}
+.zx-ai-result-head button,.zx-ai-result-footer button{
+ color:#536883!important;background:rgba(255,255,255,.78)!important;border-color:rgba(129,153,192,.22)!important;border-radius:10px!important;
+}
+.zx-ai-result-status{color:#5475bd!important;line-height:1.7!important}
+.zx-ai-result-status[data-state="error"]{color:#c13b52!important;animation:none!important;background:none!important}
+.zx-ai-result-body{color:#344a66!important;line-height:1.9!important}
+.zx-ai-answer-section{
+ background:rgba(255,255,255,.72)!important;border-color:rgba(125,151,193,.19)!important;border-radius:15px!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.98)!important;
+}
+.zx-ai-answer-section[data-kind="result"]{background:linear-gradient(130deg,rgba(232,239,255,.94),rgba(255,255,255,.82))!important;border-color:rgba(92,128,217,.28)!important}
+.zx-ai-answer-section-title{color:#496ab0!important}
+.zx-ai-answer-section-title:before{background:linear-gradient(180deg,#7295ea,#4e70cf)!important;width:4px!important}
+.zx-ai-answer-section-content{color:#354a65!important;line-height:1.9!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:normal!important}
+.zx-ai-answer-details{border-color:rgba(125,151,193,.2)!important;background:rgba(255,255,255,.5)!important;border-radius:13px!important}
+.zx-ai-answer-details>summary{color:#526c9e!important}
+.zx-ai-answer-details-content .zx-ai-answer-section{background:rgba(255,255,255,.76)!important}
+.zx-ai-thinking-stream,.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-content{
+ color:transparent!important;background-image:linear-gradient(100deg,#8c9db9 0%,#8c9db9 35%,#fff 45%,#7ea1f6 50%,#fff 55%,#8c9db9 66%,#8c9db9 100%)!important;
+ background-size:260% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important;
+ animation:zx-ai-text-flow 2.8s linear infinite!important;
+}
+.zx-ai-result-footer{border-top-color:rgba(125,151,193,.18)!important;color:#7a8aa0!important;font-size:11px!important;line-height:1.7!important}
+.zx-ai-result-settings{color:#657b99!important}
+.zx-ai-result input{background:rgba(255,255,255,.92)!important;color:#263953!important}
+.zx-ai-proxy-row button{background:rgba(230,238,255,.92)!important;border-color:rgba(84,120,209,.20)!important;color:#365fbd!important;border-radius:10px!important}
+.zx-ai-ask-form{display:flex;align-items:stretch;gap:8px;margin-top:14px;padding:9px;border:1px solid rgba(128,153,197,.18);border-radius:16px;background:rgba(255,255,255,.58);box-shadow:inset 0 1px rgba(255,255,255,.98)}
+.zx-ai-ask-form input{flex:1;min-width:0;min-height:43px;padding:10px 12px;border:1px solid rgba(132,154,190,.20);border-radius:12px;background:rgba(255,255,255,.91);color:#263953;font:13px/1.4 "Noto Sans SC",system-ui,sans-serif;outline:none}
+.zx-ai-ask-form input::placeholder{color:#9aa7ba}
+.zx-ai-ask-form input:focus{border-color:rgba(79,119,218,.52);box-shadow:0 0 0 3px rgba(82,126,224,.09)}
+.zx-ai-ask-form button{flex:0 0 auto;min-width:84px;padding:0 15px;border:1px solid rgba(255,255,255,.55);border-radius:12px;background:linear-gradient(135deg,#557fe5,#4269d2);color:white;font:650 12px "Noto Sans SC",system-ui,sans-serif;box-shadow:0 6px 14px rgba(67,105,206,.18);cursor:pointer;transition:transform .2s var(--zx-ease),box-shadow .2s var(--zx-ease)}
+.zx-ai-ask-form button:hover{transform:translateY(-1px);box-shadow:0 9px 18px rgba(67,105,206,.22)}
+.zx-ai-ask-form button:disabled{opacity:.58;cursor:wait}
+.workspace-status,.zx-count,.zx-ai-inline-actions button,.zx-ai-result button,.zx-ai-result input{writing-mode:horizontal-tb!important;text-orientation:mixed!important}
+.zx-count{color:#416bd6!important;background:#e9efff!important}
+:focus-visible{outline:3px solid rgba(85,126,226,.38)!important;outline-offset:2px}
+@media(max-width:850px){
+ .zx-layout{grid-template-columns:minmax(0,1fr)!important;padding:15px 13px calc(32px + env(safe-area-inset-bottom))!important;gap:14px!important}
+ .zx-menu{position:fixed!important;z-index:100!important;top:76px!important;left:12px!important;right:12px!important;max-height:calc(100dvh - 92px)!important;overflow:auto!important;display:none!important;background:rgba(249,252,255,.94)!important}
+ .zx-menu.is-mobile-open{display:block!important}
+ .workspace-intro{padding:22px 19px!important;margin-bottom:14px!important;border-radius:22px!important}
+ .workspace-title{font-size:clamp(25px,7vw,34px)!important}
+ .workspace-status{margin-top:14px;align-self:flex-start}
+ .view-card{padding:17px!important;border-radius:21px!important}
+ .view-head{align-items:flex-start!important;flex-wrap:wrap!important}
+ .zx-ai-inline-actions{display:flex!important;width:100%!important;margin:7px 0 0!important;padding-left:0!important;gap:8px!important;flex-wrap:wrap}
+ .zx-ai-inline-actions button{min-height:39px!important}
+ .zx-ai-result{padding:13px!important;border-radius:18px!important}
+ .zx-ai-ask-form{gap:6px;padding:7px}
+ .zx-ai-ask-form input{font-size:16px!important;min-height:44px}
+ .zx-ai-ask-form button{min-width:76px;padding:0 11px}
+ .zx-ai-result-body{font-size:13px!important}
+ .calc-pad{gap:8px}
+}
+@media(max-width:420px){
+ .zx-layout{padding-inline:10px!important}
+ .workspace-intro{padding:18px 15px!important}
+ .workspace-copy{font-size:12px!important}
+ .view-card{padding:14px!important}
+ .view-head-mark{width:39px;height:39px}
+ .zx-ai-inline-actions button{flex:1 1 auto;min-width:0;padding:8px 9px!important;font-size:11px!important}
+ .zx-ai-result-head{align-items:flex-start}
+ .zx-ai-result-title{font-size:13px!important}
+ .zx-ai-result-footer{gap:8px}
+ .zx-ai-proxy-row{flex-wrap:wrap}
+ .zx-ai-result input{flex:1 1 100%}
+ .zx-ai-ask-form{align-items:stretch}
+ .zx-ai-ask-form button{min-width:70px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+<style id="zx-light-surface-audit">
+/* Final light-only surface audit for legacy calculation and chemistry widgets. */
+:root{color-scheme:light!important}
+::selection{background:rgba(103,143,235,.24)!important;color:#203550!important}
+::-webkit-scrollbar-track{background:rgba(226,234,246,.72)!important}
+::-webkit-scrollbar-thumb{background:#c2cee1!important;border-color:#edf3fb!important}
+::-webkit-scrollbar-thumb:hover{background:#9bafd0!important}
+.zx-out,.zx-steps,.solve-mode-tabs,.structured-mode-tabs,.solve-keypad-wrap,.function-expression-panel,.function-graph,.zx-hist-item,.zx-unit-table,.zx-mobile-mathpad,.zx-mobile-mathpad.is-visible{
+ color:#344a65!important;background:rgba(255,255,255,.78)!important;border-color:rgba(130,153,191,.22)!important;
+ box-shadow:0 8px 22px rgba(59,83,128,.045),inset 0 1px rgba(255,255,255,.98)!important;
+}
+.zx-result-head{background:linear-gradient(100deg,rgba(91,129,220,.08),transparent)!important;border-color:rgba(130,153,191,.20)!important}
+.zx-result-title,.zx-result-main,.zx-out-v,.zx-process-title,.zx-step-text,.zx-hist-in,.zx-result-meta,.structured-form-title,.zx-mobile-mathpad-head{color:#354b67!important}
+.zx-out-v.is-big,.zx-result-main{color:#263f60!important}
+.zx-out-k,.zx-result-meta,.function-graph-note,.zx-hist-meta,.zx-chem-meta{color:#75869e!important}
+.zx-out-row,.zx-process,.zx-step{border-color:rgba(130,153,191,.16)!important}
+.zx-step-no{background:#edf2ff!important;border-color:#dce6fb!important;color:#446bd0!important}
+.zx-badge{background:#f0f4fc!important;border-color:#dfe7f4!important;color:#667b98!important}
+.zx-hist-item{background:rgba(255,255,255,.86)!important}
+.zx-hist-item:hover{background:#f1f5ff!important;border-color:#c7d5f0!important}
+.zx-unit-table th{background:#eef3fb!important;color:#536b8c!important}
+.zx-unit-table td{background:rgba(255,255,255,.75)!important;color:#435974!important;border-color:#e3eaf5!important}
+.solve-mode-tab{background:rgba(255,255,255,.82)!important;color:#657791!important;border-color:rgba(130,153,191,.15)!important}
+.solve-mode-tab:hover{background:#eff4ff!important;color:#365fb8!important}
+.solve-mode-tab.is-active{background:#e7eeff!important;color:#365fbe!important;border-color:#c9d7f8!important;box-shadow:inset 0 -2px #5e82dd!important}
+.structured-examples button,.function-task-tabs button,.function-expr-examples button{background:rgba(255,255,255,.9)!important;color:#526883!important;border-color:rgba(130,153,191,.22)!important}
+.function-task-tabs button.is-active{background:#e8efff!important;color:#375fbd!important;border-color:#c9d8fa!important}
+.function-expression-panel{background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(242,247,255,.86))!important}
+.function-graph{background:rgba(255,255,255,.94)!important;border-color:rgba(130,153,191,.25)!important}
+.function-graph-head{color:#304963!important;background:rgba(241,246,255,.94)!important;border-bottom-color:#e1e9f7!important}
+.function-graph svg{color:#415a78!important}
+.function-graph-empty{color:#7789a1!important}
+.zx-chem-keyboard,#chemKeyboard:not([hidden]){color:#304660!important;background:rgba(249,252,255,.97)!important;border-color:rgba(130,153,191,.26)!important;box-shadow:0 -14px 40px rgba(54,84,138,.14),inset 0 1px rgba(255,255,255,.98)!important;backdrop-filter:blur(25px) saturate(150%)!important;-webkit-backdrop-filter:blur(25px) saturate(150%)!important}
+.zx-chem-keyrow button,.zx-chem-tabs button,.zx-chem-symbols button,.zx-chem-ime-inline,#chemKeyboardClose,.zx-mobile-mathpad-head button{color:#405774!important;background:rgba(255,255,255,.94)!important;border-color:rgba(130,153,191,.24)!important;box-shadow:0 3px 9px rgba(57,82,125,.045),inset 0 1px white!important}
+.zx-chem-keyrow button:active,.zx-chem-symbols button:active{background:#edf3ff!important;border-color:#8ea8e8!important}
+.zx-chem-keyrow button[data-chemkey=" -> "],.zx-chem-keyrow button[data-chemkey="+"]{color:#416bd6!important}
+.zx-chem-tabs button[aria-selected="true"]{background:#e6eeff!important;color:#315fc5!important;border-color:#bfcff4!important}
+.zx-chem-symbols button small,.zx-chem-symbol-grid button small{color:#8595ac!important}
+.zx-chem-tools{background:transparent!important;color:#536a87!important}
+#chemKeyboard:not([hidden]) .zx-chem-tools{background:rgba(249,252,255,.97)!important;border-bottom-color:#e1e9f5!important}
+#chemKeyboard:not([hidden]) .zx-chem-tools input,.zx-chem-search{background:#fff!important;color:#304660!important;border-color:#d9e3f2!important}
+[data-view="chemistry"] .view-head-mark{background:linear-gradient(145deg,#edf3ff,#fff)!important;color:#426bd6!important;border-color:#d5e1fa!important;box-shadow:0 7px 18px rgba(69,101,167,.10)!important}
+[data-view="chemistry"] .view-head-mark i{color:#426bd6!important}
+#chemProductSuggestNote>span:first-child{color:#426bd6!important}
+.zx-chem-candidate{background:rgba(255,255,255,.88)!important;border-color:rgba(130,153,191,.22)!important}
+.zx-chem-candidate-index{background:#e9efff!important;color:#416bd6!important}
+.zx-chem-candidate-name{color:#2e4562!important}
+.zx-chem-equation{background:linear-gradient(110deg,#edf3ff,#f9fbff)!important;color:#305bb9!important;border-color:#d7e3fb!important}
+.zx-chem-meta{color:#70829b!important}
+@media(max-width:768px){#chemKeyboard:not([hidden]){background:rgba(249,252,255,.97)!important}#chemKeyboard:not([hidden]) .zx-chem-tools{background:rgba(249,252,255,.97)!important}.zx-mobile-mathpad-head button{min-height:38px!important}}
+.structured-point{background:rgba(249,252,255,.84)!important;border-color:rgba(130,153,191,.20)!important;color:#344a65!important;box-shadow:inset 0 1px rgba(255,255,255,.98)!important}
+.structured-point>b{color:#416bd6!important}
+.structured-point span,.structured-field span,.structured-select span{color:#71829b!important}
+.zx-mathpad-tabs button.is-active{background:#e8efff!important;color:#315fc5!important;border-color:#c7d7fb!important}
+.zx-chem-keyboard .zx-btn,.zx-chem-toolbar .zx-btn{color:#4165b7!important;background:#eef3ff!important;border-color:#d4e0f8!important}
+</style>
+<style id="zx-ai-result-motion">
+/* AI 结果交互：保留结果状态，不用 display:none 把整张卡片永久藏掉。 */
+.zx-ai-result{animation:zx-ai-panel-in .48s cubic-bezier(.2,.75,.25,1) both}
+.zx-ai-result-head button[data-zx-ai-hide]{transition:transform .22s cubic-bezier(.2,.75,.25,1),background .22s ease,border-color .22s ease,color .22s ease}
+.zx-ai-result-head button[data-zx-ai-hide]:hover{transform:translateY(-1px);background:rgba(231,238,255,.96)!important;border-color:rgba(92,128,217,.38)!important;color:#315fc6!important}
+.zx-ai-result-content{overflow:visible;max-height:none;opacity:1;transform:translateY(0);transition:opacity .15s ease,transform .15s cubic-bezier(.22,.75,.25,1);will-change:opacity,transform}
+.zx-ai-result-content[hidden]{display:none!important}
+.zx-ai-generate-details{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;margin-top:12px;padding:10px 15px;border:1px solid #cbdafa;border-radius:13px;background:#edf3ff;color:#365fbd;font:650 12px/1.4 var(--zx-font,system-ui);cursor:pointer;transition:background .16s ease,color .16s ease,transform .16s ease}
+.zx-ai-generate-details:before{content:"✧";font-size:16px}
+.zx-ai-generate-details:hover{background:#e2ebff;color:#274da8;transform:translateY(-1px)}
+.zx-ai-generate-details:disabled{opacity:.65;cursor:wait;transform:none}
+.zx-ai-generated-details{display:grid;gap:10px;margin-top:12px}
+.zx-ai-generated-details-heading{display:flex;align-items:center;gap:8px;color:#486db8;font-size:12px;font-weight:750;padding:3px 1px}
+.zx-ai-generated-details-heading:before{content:"";width:4px;height:14px;border-radius:8px;background:linear-gradient(180deg,#7396eb,#4f70cf)}
+.zx-ai-detail-pending .zx-ai-answer-section-content{color:#6780b7!important}
+@media(prefers-reduced-motion:reduce){.zx-ai-generate-details{transition:none!important}}
+
+.zx-ai-result[data-collapsed="true"] .zx-ai-result-content{overflow:hidden;pointer-events:none}
+.zx-ai-collapsed-preview{display:none;margin-top:0;padding-top:0;max-width:100%;overflow:hidden;color:#71829b;font-size:12px;line-height:1.65;overflow-wrap:anywhere}
+.zx-ai-result[data-collapsed="true"] .zx-ai-result-head{padding-bottom:0!important;border-bottom-color:transparent!important}
+.zx-ai-result[data-collapsed="true"] .zx-ai-collapsed-preview{display:block;padding-top:9px;animation:zx-ai-preview-in .32s cubic-bezier(.2,.75,.25,1) both}
+.zx-ai-result-status[data-loading="true"]{display:flex!important;align-items:center;gap:9px}
+.zx-ai-result-status[data-loading="true"]::before{content:"";display:block;flex:0 0 14px;width:14px;height:14px;border:2px solid rgba(84,123,226,.18);border-top-color:#547be2;border-right-color:#81d8ce;border-radius:50%;box-shadow:0 0 0 4px rgba(84,123,226,.07);animation:zx-ai-status-spin .86s cubic-bezier(.5,.12,.4,.88) infinite}
+.zx-ai-result-status[data-state="error"]::before{display:none}
+.zx-ai-result-body>.zx-ai-answer-section{animation:zx-ai-card-in .46s cubic-bezier(.2,.75,.25,1) both}
+.zx-ai-result-body>.zx-ai-answer-section:first-child{animation-delay:.025s}
+.zx-ai-result-body>.zx-ai-answer-details{animation:zx-ai-card-in .4s cubic-bezier(.2,.75,.25,1) .08s both}
+.zx-ai-answer-details[open] .zx-ai-answer-section{animation:zx-ai-card-in .42s cubic-bezier(.2,.75,.25,1) both}
+.zx-ai-answer-details[open] .zx-ai-answer-section:nth-child(2){animation-delay:.04s}
+.zx-ai-answer-details[open] .zx-ai-answer-section:nth-child(3){animation-delay:.08s}
+.zx-ai-answer-details[open] .zx-ai-answer-section:nth-child(4){animation-delay:.12s}
+.zx-ai-answer-details[open] .zx-ai-answer-section:nth-child(5){animation-delay:.16s}
+.zx-ai-answer-details[open] .zx-ai-answer-section:nth-child(6){animation-delay:.20s}
+@keyframes zx-ai-panel-in{from{opacity:0;transform:translateY(9px) scale(.995)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes zx-ai-card-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes zx-ai-preview-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes zx-ai-status-spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){
+ .zx-ai-result-content{transition:opacity .15s ease,transform .15s ease}
+ .zx-ai-collapsed-preview{font-size:12px;line-height:1.7}
+}
+@media(prefers-reduced-motion:reduce){
+ .zx-ai-result,.zx-ai-collapsed-preview,.zx-ai-answer-section,.zx-ai-answer-details{animation:none!important}
+ .zx-ai-result-content,.zx-ai-result-head button[data-zx-ai-hide]{transition:none!important}
+ .zx-ai-result-status[data-loading="true"]::before{animation:none!important}
+}
+</style>
+<script id="zx-ai-inline-controller">
+(function(){
+  'use strict';
+  const DEFAULT_PROXY='https://zhixing-calculator-ai.xiaoshirong2023.workers.dev';
+  const VIEW_TITLES={basic:'基础计算',equation:'方程求解',inequality:'不等式',fit:'函数分析与绘图',units:'单位换算',chemistry:'化学方程式配平',knowledge:'知识库',history:'历史记录'};
+  const EXTEND_ACTIONS={
+    basic:{label:'✧ AI 化简/推导',title:'补充符号化简、因式分解与相关推导'},
+    equation:{label:'✧ AI 解复杂方程',title:'尝试求解本地暂未覆盖的复杂方程'},
+    inequality:{label:'✧ AI 扩展求解',title:'尝试处理高次、分式或复杂不等式'},
+    fit:{label:'✧ AI 深度函数分析',title:'补充函数性质、极值、反函数与参数讨论'},
+    units:{label:'✧ AI 复合换算',title:'处理扩展单位、复合单位与量纲分析'},
+    chemistry:{label:'✧ AI 预测反应',title:'预测可能产物、条件、现象、配平和离子方程式'}
+  };
+  const ENABLED_VIEWS=['basic','equation','inequality','fit','units','chemistry'];
+  const $=id=>document.getElementById(id);
+  let busy=false;
+  function proxyValue(){
+    try{return localStorage.getItem('zx-ai-proxy-url')||sessionStorage.getItem('zx-ai-proxy')||DEFAULT_PROXY;}
+    catch(e){return DEFAULT_PROXY;}
+  }
+  function endpoint(){
+    const raw=String(proxyValue()||'').trim();
+    if(!raw)return '';
+    try{
+      const u=new URL(raw);
+      if(!['https:','http:'].includes(u.protocol))return '';
+      if(u.protocol==='http:'&&u.hostname!=='localhost'&&u.hostname!=='127.0.0.1')return '';
+      return u.toString().replace(/\/$/,'').replace(/\/api\/chat$/,'')+'/api/chat';
+    }catch(e){return '';}
+  }
+  function setResultCollapsed(panel,collapsed){
+    const content=panel&&panel.querySelector('.zx-ai-result-content');
+    const toggle=panel&&panel.querySelector('[data-zx-ai-hide]');
+    if(!content||!toggle)return;
+    if(panel._zxAiCollapseTimer){clearTimeout(panel._zxAiCollapseTimer);panel._zxAiCollapseTimer=0;}
+    if(panel._zxAiCollapseFrame){cancelAnimationFrame(panel._zxAiCollapseFrame);panel._zxAiCollapseFrame=0;}
+    const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(collapsed){
+      if(panel.dataset.collapsed==='true')return;
+      panel.dataset.collapsed='true';
+      toggle.textContent='展开结果';
+      toggle.setAttribute('aria-expanded','false');
+      if(reduced){content.hidden=true;content.style.opacity='';content.style.transform='';return;}
+      content.style.opacity='0';
+      content.style.transform='translateY(-3px)';
+      panel._zxAiCollapseTimer=window.setTimeout(()=>{
+        if(panel.dataset.collapsed==='true'){
+          content.hidden=true;
+          content.style.opacity='';
+          content.style.transform='';
+        }
+        panel._zxAiCollapseTimer=0;
+      },150);
+      return;
+    }
+    if(panel.dataset.collapsed!=='true'){
+      toggle.textContent='收起结果';
+      toggle.setAttribute('aria-expanded','true');
+      return;
+    }
+    panel.dataset.collapsed='false';
+    toggle.textContent='收起结果';
+    toggle.setAttribute('aria-expanded','true');
+    content.hidden=false;
+    if(reduced){content.style.opacity='';content.style.transform='';return;}
+    content.style.opacity='0';
+    content.style.transform='translateY(-3px)';
+    panel._zxAiCollapseFrame=requestAnimationFrame(()=>{
+      panel._zxAiCollapseFrame=0;
+      if(panel.dataset.collapsed!=='true'){
+        content.style.opacity='1';
+        content.style.transform='translateY(0)';
+      }
+    });
+  }
+  function makeResult(section){
+    let panel=section.querySelector('.zx-ai-result');
+    if(panel)return panel;
+    panel=document.createElement('section');
+    panel.className='zx-ai-result';
+    panel.hidden=true;
+    panel.setAttribute('aria-live','polite');
+    panel.innerHTML='<div class="zx-ai-result-head"><div class="zx-ai-result-title"><i aria-hidden="true">✦</i><span>知行 AI 分析</span></div><button type="button" data-zx-ai-hide aria-expanded="true">收起结果</button></div><div class="zx-ai-collapsed-preview" data-zx-ai-collapsed-preview>AI 分析结果已就绪，点击展开查看</div><div class="zx-ai-result-content"><div class="zx-ai-result-status" data-zx-ai-status>等待分析</div><div class="zx-ai-result-body" data-zx-ai-answer hidden></div><form class="zx-ai-ask-form" data-zx-ai-ask-form><input type="text" maxlength="1000" data-zx-ai-question placeholder="围绕当前结果继续提问…" aria-label="针对当前计算结果追问 AI" autocomplete="off"><button type="submit" data-zx-ai-ask-submit>追问 AI</button></form><div class="zx-ai-result-footer"><span>只发送当前计算任务所需的输入、结果与选项；请勿输入个人隐私。</span><a href="https://github.com/PaleSquire71029/calculator/blob/main/ai-proxy/SECURITY.md" target="_blank" rel="noopener noreferrer">数据安全说明</a></div></div>';
+    const head=section.querySelector('.view-head');
+    if(head)head.insertAdjacentElement('afterend',panel);
+    panel.querySelector('[data-zx-ai-hide]').addEventListener('click',()=>setResultCollapsed(panel,panel.dataset.collapsed!=='true'));
+    const askForm=panel.querySelector('[data-zx-ai-ask-form]');
+    askForm.addEventListener('submit',event=>{
+      event.preventDefault();
+      const input=panel.querySelector('[data-zx-ai-question]');
+      const question=String(input.value||'').trim();
+      if(!question){input.focus();return;}
+      analyze(section,section.getAttribute('data-view'), 'extend',panel.querySelector('[data-zx-ai-ask-submit]'),question,'followup');
+    });
+    return panel;
+  }
+  function textOf(node,max){
+    if(!node)return '';
+    const text=String(node.innerText||node.textContent||'').replace(/\u00a0/g,' ').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+    return text.slice(0,max||2400);
+  }
+  function visible(node){
+    if(!node||node.hidden||node.closest('[hidden]'))return false;
+    let current=node;
+    while(current&&current.nodeType===1){
+      const style=window.getComputedStyle(current);
+      if(style.display==='none'||style.visibility==='hidden'||style.contentVisibility==='hidden')return false;
+      current=current.parentElement;
+    }
+    return true;
+  }
+  function inputLabel(el){
+    return el.getAttribute('aria-label')||el.getAttribute('data-math-field')||el.getAttribute('placeholder')||el.id||el.name||'输入项';
+  }
+  function collectContext(viewId,section){
+    const title=VIEW_TITLES[viewId]||textOf(section.querySelector('.view-title'),80)||'当前计算任务';
+    const inputLines=[];
+    const controls=Array.from(section.querySelectorAll('input,select,textarea'));
+    controls.forEach(el=>{
+      /* AI panel lives inside the tool section, but its controls are never calculator inputs. */
+      if(el.closest('.zx-ai-result')||el.type==='hidden'||el.disabled||!visible(el))return;
+      const label=inputLabel(el);
+      if(/worker|service|服务地址|服务设置|api.?key|token|密钥|endpoint/i.test(label))return;
+      const value=el.tagName==='SELECT'?(el.selectedOptions&&el.selectedOptions[0]?el.selectedOptions[0].textContent:el.value):String(el.value||'');
+      if(!value.trim()||value.includes('://')||/workers\.dev|api\.a6api\.com/i.test(value))return;
+      inputLines.push(label+' = '+value.trim().slice(0,600));
+    });
+    const selectionLines=[];
+    section.querySelectorAll('[data-fit].is-active,[data-fit-task].is-active,[data-fit-input-mode].is-active,[data-cat].is-active,[aria-pressed="true"]').forEach(el=>{
+      if(el.closest('.zx-ai-result'))return;
+      const text=textOf(el,100);
+      if(text)selectionLines.push(text);
+    });
+    const outputSelectors='.zx-out, .zx-steps, .function-expression-panel, .function-value-note, .function-graph-note, .zx-chem-candidate, .zx-chem-equation';
+    const outputLines=[];
+    section.querySelectorAll(outputSelectors).forEach(el=>{
+      if(el.closest('.zx-ai-result')||!visible(el))return;
+      const text=textOf(el,1800);
+      if(text&&!text.includes('://')&&!/workers\.dev|api\.a6api\.com/i.test(text)&&!outputLines.includes(text))outputLines.push(text);
+    });
+    let details=selectionLines.length?'当前选项：'+selectionLines.join('；'):'';
+    if(viewId==='fit'){
+      const graph=section.querySelector('.function-graph');
+      const graphText=graph?textOf(graph,500):'';
+      if(graphText)details+=(details?'\n':'')+'函数图像摘要：'+graphText;
+    }
+    const context={
+      title:title,
+      view:viewId,
+      inputs:(inputLines.join('\n')||'当前页面未找到非空输入'),
+      outputs:(outputLines.join('\n\n')||'当前页面未找到已显示的计算结果'),
+      details:(details||'用户点击了当前工具的 AI 分析入口；请仅依据提供的输入与输出推理。')
+    };
+    return context;
+  }
+  function setStatus(panel,text,error){
+    const el=panel.querySelector('[data-zx-ai-status]');
+    el.textContent=text;el.dataset.state=error?'error':'ready';
+    const preview=panel.querySelector('[data-zx-ai-collapsed-preview]');
+    if(preview&&error)preview.textContent='分析未完成 · 展开查看详情';
+    else if(preview&&text&&!el.dataset.loading)preview.textContent=text;
+  }
+  function setThinkingText(statusEl,action){
+    if(!statusEl)return;
+    statusEl.replaceChildren();
+    const textNode=document.createElement('span');
+    textNode.className='zx-ai-thinking-stream';
+    textNode.textContent=action==='details'?'正在生成补充推导与核验':action==='followup'?'正在回答你的追问':'正在生成核心结论';
+    statusEl.append(textNode);
+  }
+  function answerSectionKind(title){
+    const t=String(title||'').replace(/[：:。 \t]/g,'');
+    if(/核心结论|关键结论|最终答案|结论|答案|配平结果|换算结果|计算结果|解集|反应方程式|配平方程式|净离子方程式/.test(t))return 'result';
+    if(/推导|步骤|计算过程|解题过程|求解过程/.test(t))return 'steps';
+    if(/公式|定理|依据|离子方程式|反应条件|现象/.test(t))return 'formula';
+    if(/核验|限制|易错|注意|检查|条件|定义域|警告/.test(t))return 'notes';
+    if(/关键信息|已知条件|输入条件/.test(t))return 'info';
+    if(/分析|思路|原理|说明|解释|判断|讨论|扩展能力/.test(t))return 'analysis';
+    return 'other';
+  }
+  function splitAnswerSections(answer,viewId){
+    const raw=String(answer||'').replace(/\r\n?/g,'\n').trim();
+    const lines=raw.split('\n');
+    const sections=[];let current=null;
+    const add=(title,content)=>{current={title:String(title||'分析说明').trim(),content:content||''};sections.push(current);};
+    const known=/^(核心结论|关键结论|最终答案|答案|结果|结论|配平结果|计算结果|换算结果|解集|关键信息|已知条件|输入条件|推导与依据|推导|步骤|解题步骤|计算过程|求解过程|关键公式|公式|原理|易错点|注意事项|注意|核验与限制|限制条件|条件|定义域|反应方程式|配平方程式|离子方程式|净离子方程式|现象|反应条件|分析|分析说明|思路|补充说明|总结|AI扩展能力)[：:]?$/;
+    const isKnown=t=>known.test(String(t||'').replace(/\*\*/g,'').trim().replace(/[：:]$/,''));
+    for(const line of lines){
+      const trimmed=line.trim();
+      if(!trimmed){if(current&&current.content&&!current.content.endsWith('\n'))current.content+='\n';continue;}
+      let title='',content='',m;
+      m=trimmed.match(/^(?:【([^】]{1,48})】|\[([^\]]{1,48})\])\s*(.*)$/);
+      if(m){title=(m[1]||m[2]).trim();content=m[3]||'';}
+      else if((m=trimmed.match(/^#{1,4}\s+(.+?)\s*#*$/))){title=m[1].replace(/\*\*/g,'').trim();}
+      else if((m=trimmed.match(/^\*\*([^*]{1,40})\*\*\s*[：:]?\s*(.*)$/))&&isKnown(m[1])){title=m[1].trim();content=m[2]||'';}
+      else if((m=trimmed.match(/^([^：:]{2,24})[：:]\s*(.*)$/))&&isKnown(m[1])){title=m[1].trim();content=m[2]||'';}
+      if(title){add(title,content);}
+      else if(current){current.content+=(current.content?'\n':'')+line;}
+      else{add('核心结论',line);}
+    }
+    sections.forEach(x=>x.content=x.content.trim());
+    let useful=sections.filter(x=>x.title||x.content);
+    if(!useful.length)useful=[{title:viewId==='chemistry'?'反应结果':'核心结论',content:raw}];
+    if(useful.length===1 && !raw.match(/(?:【[^】]+】|\[[^\]]+\]|^#{1,4}\s)/m)){
+      const paragraphs=raw.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
+      if(paragraphs.length>1){
+        useful=[{title:viewId==='chemistry'?'反应结果':'核心结论',content:paragraphs[0]}];
+        paragraphs.slice(1).forEach((p,i)=>useful.push({title:i===0?'分析说明':'补充说明',content:p}));
+      }
+    }
+    if(!useful.some(x=>answerSectionKind(x.title)==='result')){
+      const first=useful.find(x=>x.content);
+      if(first)first.title=viewId==='chemistry'?'反应结果':'核心结论';
+    }
+    return useful;
+  }
+  function createAnswerSection(item,streaming){
+    const card=document.createElement('section');
+    card.className='zx-ai-answer-section';
+    card.dataset.kind=answerSectionKind(item.title);
+    if(streaming)card.dataset.streaming='true';
+    if(card.dataset.kind==='formula'||card.dataset.kind==='steps'||item.content.length>420)card.dataset.wide='true';
+    const title=document.createElement('h4');
+    title.className='zx-ai-answer-section-title';
+    title.textContent=item.title||'分析说明';
+    const body=document.createElement('div');
+    body.className='zx-ai-answer-section-content';
+    body.textContent=item.content||'';
+    card.append(title,body);
+    return card;
+  }
+  function updateCollapsedPreview(node,answer,viewId){
+    const panel=node&&node.closest('.zx-ai-result');
+    const preview=panel&&panel.querySelector('[data-zx-ai-collapsed-preview]');
+    if(!preview)return;
+    const raw=String(answer||'').trim();
+    if(!raw){preview.textContent='AI 正在整理分析…';return;}
+    const sections=splitAnswerSections(raw,viewId);
+    const core=sections.find(item=>answerSectionKind(item.title)==='result')||sections[0];
+    const summary=String(core&&core.content||raw).replace(/\s+/g,' ').trim();
+    preview.textContent=summary?(summary.length>124?summary.slice(0,124)+'…':summary):'AI 正在整理分析…';
+  }
+  function updateStreamPreview(node,answer,viewId){
+    const raw=String(answer||'');
+    updateCollapsedPreview(node,raw,viewId);
+    const sections=splitAnswerSections(raw,viewId);
+    let core=sections.find(x=>answerSectionKind(x.title)==='result')||sections[0];
+    let coreText=core&&core.content?core.content:'';
+    let coreTitle=core&&answerSectionKind(core.title)==='result'?core.title:(viewId==='chemistry'?'反应结果':'核心结论');
+    if(/^\s*(?:【[^】]*| \[[^\]]*)$/.test(raw)||(/^\s*[【\[]/.test(raw)&&!raw.includes('】')&&!raw.includes(']'))){
+      coreText='';coreTitle=viewId==='chemistry'?'反应结果':'核心结论';
+    }
+    let card=node.querySelector('.zx-ai-live-core');
+    if(!card){
+      node.replaceChildren();
+      card=document.createElement('section');
+      card.className='zx-ai-answer-section zx-ai-live-core';
+      card.dataset.kind='result';
+      card.dataset.streaming='true';
+      const title=document.createElement('h4');
+      title.className='zx-ai-answer-section-title';
+      const body=document.createElement('div');
+      body.className='zx-ai-answer-section-content';
+      card.append(title,body);
+      node.append(card);
+    }
+    card.querySelector('.zx-ai-answer-section-title').textContent=coreTitle;
+    card.querySelector('.zx-ai-answer-section-content').textContent=coreText||'正在生成核心结论…';
+    card.dataset.streaming='true';
+  }
+  function getCoreAnswerText(answer,viewId){
+    const sections=splitAnswerSections(answer,viewId);
+    const core=sections.find(item=>answerSectionKind(item.title)==='result')||sections[0]||{title:'核心结论',content:String(answer||'').trim()};
+    return '【核心结论】\\n'+String(core.content||answer||'').trim();
+  }
+  function renderAdditionalAnswer(node,answer,viewId,pendingNode,removeGenerateButton=true){
+    if(pendingNode&&pendingNode.parentNode)pendingNode.remove();
+    const parsed=splitAnswerSections(answer,viewId);
+    let extra=parsed.filter(item=>item.content.trim()&&answerSectionKind(item.title)!=='result');
+    if(!extra.length&&String(answer||'').trim())extra=[{title:'补充分析',content:String(answer).trim()}];
+    if(!extra.length)throw new Error('AI 没有返回可显示的补充分析。');
+    node.querySelector('.zx-ai-generated-details')?.remove();
+    const wrapper=document.createElement('div');
+    wrapper.className='zx-ai-generated-details';
+    const heading=document.createElement('div');
+    heading.className='zx-ai-generated-details-heading';
+    heading.textContent='完整分析';
+    wrapper.append(heading);
+    extra.forEach(item=>wrapper.append(createAnswerSection(item,false)));
+    node.append(wrapper);
+    const generate=node.querySelector('[data-zx-ai-generate-details]');
+    if(removeGenerateButton&&generate)generate.remove();
+  }
+  function updateDetailsStreamPreview(node,answer){
+    if(!node)return;
+    const body=node.querySelector('.zx-ai-answer-section-content');
+    if(body)body.textContent=String(answer||'')||'正在生成补充分析…';
+  }
+  function renderStructuredAnswer(node,answer,viewId,stage='full',action='analyze'){
+    node.replaceChildren();
+    const sections=splitAnswerSections(answer,viewId);
+    let coreIndex=sections.findIndex(x=>answerSectionKind(x.title)==='result');
+    if(coreIndex<0)coreIndex=0;
+    const core=sections[coreIndex]||{title:'核心结论',content:String(answer||'')};
+    const coreCard=createAnswerSection(core,false);
+    coreCard.dataset.kind='result';
+    node.append(coreCard);
+    if(stage==='core'){
+      const generate=document.createElement('button');
+      generate.type='button';
+      generate.className='zx-ai-generate-details';
+      generate.dataset.zxAiGenerateDetails='true';
+      generate.textContent='生成完整分析';
+      generate.setAttribute('aria-label','点击后再让 AI 生成推导、核验与补充分析');
+      generate.addEventListener('click',()=>{
+        const panel=node.closest('.zx-ai-result');
+        const section=panel&&panel.closest('.view[data-view]');
+        if(section)analyze(section,viewId,panel.dataset.zxAiAction||action,generate,'','details');
+      });
+      node.append(generate);
+      return;
+    }
+    const extra=sections.filter((_,i)=>i!==coreIndex&&sections[i].content.trim());
+    if(extra.length){
+      const details=document.createElement('details');
+      details.className='zx-ai-answer-details';
+      const summary=document.createElement('summary');
+      summary.textContent='查看完整分析（'+extra.length+' 项）';
+      const body=document.createElement('div');
+      body.className='zx-ai-answer-details-content';
+      extra.forEach(item=>body.append(createAnswerSection(item,false)));
+      details.append(summary,body);
+      details.addEventListener('toggle',()=>{if(details.open)typesetAnswer(details);});
+      node.append(details);
+    }
+  }
+  function extractDeltaContent(obj){
+    const choice=obj&&obj.choices&&obj.choices[0];
+    let value=choice&&(choice.delta&&choice.delta.content!==undefined?choice.delta.content:choice.message&&choice.message.content);
+    if(Array.isArray(value))value=value.map(p=>typeof p==='string'?p:(p&&p.text)||'').join('');
+    return typeof value==='string'?value:'';
+  }
+  async function readAnalysisStream(response,onText){
+    const reader=response.body&&response.body.getReader?response.body.getReader():null;
+    if(!reader)throw new Error('当前浏览器无法读取流式响应');
+    const decoder=new TextDecoder();
+    let buffer='',answer='',model='',streamError='';
+    const consumeBlock=block=>{
+      const data=block.split(/\r?\n/).filter(line=>line.startsWith('data:')).map(line=>line.slice(5).trimStart()).join('\n');
+      if(!data||data==='[DONE]')return;
+      let obj;try{obj=JSON.parse(data);}catch(e){return;}
+      if(obj.error)streamError=typeof obj.error==='string'?obj.error:(obj.error.message||'模型流式输出失败');
+      if(obj.model)model=obj.model;
+      const delta=extractDeltaContent(obj);
+      if(delta){answer+=delta;onText(answer);}
+    };
+    while(true){
+      const part=await reader.read();
+      buffer+=decoder.decode(part.value||new Uint8Array(),{stream:!part.done});
+      const blocks=buffer.split(/\r?\n\r?\n/);
+      buffer=blocks.pop()||'';
+      blocks.forEach(consumeBlock);
+      if(part.done){if(buffer.trim())consumeBlock(buffer);break;}
+    }
+    if(streamError)throw new Error(streamError);
+    return {answer,model};
+  }
+  function normalizeLatexSource(value){
+    return String(value||'')
+      .replace(/\\\\(\(|\)|\[|\])/g,(_,ch)=>'\\'+ch)
+      .replace(/\\\\(mathrm|mathbf|mathbb|text|frac|sqrt|left|right|rightarrow|leftrightarrow|cdot|times|neq|leq|geq|pm|alpha|beta|infty|begin|end)\b/g,(_,cmd)=>'\\'+cmd);
+  }
+  async function typesetAnswer(node){
+    if(!node)return;
+    try{
+      // 等待引擎就绪；只规范化尚未排版的文本区，避免覆盖 MathJax 生成的节点。
+      for(let i=0;i<100&&!(window.MathJax&&window.MathJax.typesetPromise);i++)await new Promise(resolve=>setTimeout(resolve,100));
+      if(!window.MathJax||!window.MathJax.typesetPromise)throw new Error('数学公式引擎加载失败（已尝试备用 CDN）');
+      if(window.MathJax.startup&&window.MathJax.startup.promise)await window.MathJax.startup.promise;
+      node.querySelectorAll('.zx-ai-answer-section-content').forEach(el=>{
+        if(!el.querySelector('mjx-container'))el.textContent=normalizeLatexSource(el.textContent);
+      });
+      // 同一区域可能在流式输出、展开详情后再次排版，先清除 MathJax 缓存再统一重排。
+      if(window.MathJax.typesetClear)window.MathJax.typesetClear([node]);
+      await window.MathJax.typesetPromise([node]);
+    }catch(err){
+      console.warn('AI 公式渲染失败：',err);
+      const status=node.closest('.zx-ai-result')?.querySelector('[data-zx-ai-status]');
+      if(status&&status.dataset.state!=='error')status.textContent+=' · 公式渲染失败，请检查网络连接';
+    }
+  }
+  async function analyze(section,viewId,action,button,question='',phase='core'){
+    if(busy)return;
+    const panel=makeResult(section);
+    const isDetails=phase==='details';
+    const isFollowup=phase==='followup'||Boolean(question);
+    const stage=isDetails?'details':'core';
+    if(!isDetails&&!question)delete panel.dataset.zxAiLastQuestion;
+    if(question)panel.dataset.zxAiLastQuestion=String(question).slice(0,1000);
+    panel.hidden=false;
+    panel.dataset.zxAiAction=action;
+    setResultCollapsed(panel,false);
+    const answerEl=panel.querySelector('[data-zx-ai-answer]');
+    if(!isDetails){answerEl.hidden=true;answerEl.replaceChildren();}
+    else answerEl.hidden=false;
+    const statusEl=panel.querySelector('[data-zx-ai-status]');
+    setStatus(panel,'',false);
+    statusEl.dataset.loading='true';
+    setThinkingText(statusEl,isDetails?'details':isFollowup?'followup':action);
+    const collapsedPreview=panel.querySelector('[data-zx-ai-collapsed-preview]');
+    if(collapsedPreview)collapsedPreview.textContent=isDetails?'AI 正在生成补充分析…':'AI 正在整理核心结论…';
+    let detailStreamNode=null;
+    const detailButton=isDetails?answerEl.querySelector('[data-zx-ai-generate-details]'):null;
+    if(isDetails){
+      answerEl.querySelector('.zx-ai-generated-details')?.remove();
+      if(detailButton){detailButton.disabled=true;detailButton.textContent='正在生成完整分析…';}
+      detailStreamNode=createAnswerSection({title:'补充分析',content:'正在生成补充分析…'},true);
+      detailStreamNode.classList.add('zx-ai-detail-pending');
+      answerEl.append(detailStreamNode);
+    }
+    const allButtons=Array.from(document.querySelectorAll('[data-zx-ai-action], [data-zx-ai-ask-submit]'));
+    busy=true;allButtons.forEach(b=>b.disabled=true);
+    let partialAnswer='';
+    let requestController=null,requestTimeout=0;
+    try{
+      const ep=endpoint();
+      if(!ep)throw new Error('AI 服务暂时不可用，请稍后重试。');
+      const context=collectContext(viewId,section);
+      if(question){
+        context.details=(context.details?context.details+'\n':'')+'用户针对当前计算结果的追问：'+String(question).slice(0,1000)+'\n请优先直接回答这条追问，并结合页面已提供的输入、计算结果与选项进行核验；不要只重复通用解释。';
+      }else if(isDetails&&panel.dataset.zxAiLastQuestion){
+        context.details=(context.details?context.details+'\n':'')+'本次核心结论对应的用户追问：'+panel.dataset.zxAiLastQuestion+'。请围绕这个问题补充推导、核验和必要限制。';
+      }
+      const coreAnswer=String(panel.dataset.zxAiCoreAnswer||'').trim();
+      if(isDetails&&!coreAnswer)throw new Error('请先生成核心结论，再生成完整分析。');
+      requestController=new AbortController();
+      requestTimeout=window.setTimeout(()=>requestController.abort(),95000);
+      const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'analysis',action:action,mode:viewId,context:context,analysisStage:stage,coreAnswer:isDetails?coreAnswer:undefined,question:question||undefined,stream:true}),redirect:'error',signal:requestController.signal});
+      if(!response.ok){
+        let errorData={};try{errorData=await response.json();}catch(e){}
+        throw new Error(errorData.error||('请求失败（HTTP '+response.status+'）'));
+      }
+      let answer='',model='';
+      const contentType=response.headers.get('content-type')||'';
+      if(contentType.includes('text/event-stream')){
+        answerEl.hidden=false;
+        const streamed=await readAnalysisStream(response,text=>{
+          partialAnswer=text;
+          if(isDetails)updateDetailsStreamPreview(detailStreamNode,text);
+          else updateStreamPreview(answerEl,text,viewId);
+        });
+        answer=streamed.answer;model=streamed.model;
+      }else{
+        const data=await response.json();
+        answer=data.answer||'';model=data.model||'';
+      }
+      if(typeof answer!=='string'||!answer.trim())throw new Error('AI 没有返回可显示的文字内容。');
+      delete statusEl.dataset.loading;
+      if(isDetails){
+        renderAdditionalAnswer(answerEl,answer,viewId,detailStreamNode);
+        setStatus(panel,'完整分析已生成'+(model?' · '+model:''),false);
+      }else{
+        renderStructuredAnswer(answerEl,answer,viewId,'core',action);
+        answerEl.hidden=false;
+        panel.dataset.zxAiCoreAnswer=getCoreAnswerText(answer,viewId);
+        setStatus(panel,(isFollowup?'追问核心回答已生成':(action==='extend'?'核心结论已生成（扩展任务）':'核心结论已生成'))+(model?' · '+model:''),false);
+        updateCollapsedPreview(answerEl,answer,viewId);
+      }
+      if(question){const questionInput=panel.querySelector('[data-zx-ai-question]');if(questionInput)questionInput.value='';}
+      await typesetAnswer(answerEl);
+    }catch(e){
+      delete statusEl.dataset.loading;
+      const failure=e&&e.name==='AbortError'?'AI 响应超时或连接已中断，请重试。':(e&&e.message?e.message:'网络错误');
+      setStatus(panel,'请求失败：'+failure+'。请重试。',true);
+      answerEl.querySelectorAll('[data-streaming="true"]').forEach(el=>delete el.dataset.streaming);
+      if(isDetails){
+        if(detailStreamNode&&detailStreamNode.parentNode)detailStreamNode.remove();
+        if(detailButton){detailButton.disabled=false;detailButton.textContent='重试生成完整分析';}
+        if(partialAnswer.trim()){
+          try{renderAdditionalAnswer(answerEl,partialAnswer,viewId,null,false);await typesetAnswer(answerEl);}catch(_){}
+        }
+      }else if(partialAnswer.trim()){
+        await typesetAnswer(answerEl);
+      }else answerEl.hidden=true;
+    }finally{
+      if(requestTimeout)window.clearTimeout(requestTimeout);
+      delete statusEl.dataset.loading;
+      busy=false;allButtons.forEach(b=>b.disabled=false);
+    }
+  }
+  function init(){
+    document.querySelectorAll('.view[data-view]').forEach(section=>{
+      const viewId=section.getAttribute('data-view');
+      if(!ENABLED_VIEWS.includes(viewId)||!section.querySelector('.view-head'))return;
+      const head=section.querySelector('.view-head');
+      if(head.querySelector('.zx-ai-inline-actions'))return;
+      const actions=document.createElement('div');actions.className='zx-ai-inline-actions';
+      const makeButton=(action,label,title)=>{
+        const b=document.createElement('button');b.type='button';b.dataset.zxAiAction=action;b.textContent=label;b.title=title;
+        b.addEventListener('click',()=>analyze(section,viewId,action,b));
+        return b;
+      };
+      actions.appendChild(makeButton('analyze','✦ AI 分析','分析并核验当前输入与本地结果'));
+      const extend=EXTEND_ACTIONS[viewId]||{label:'✧ AI 扩展',title:'尝试执行本地工具尚未覆盖的学科推理'};
+      actions.appendChild(makeButton('extend',extend.label,extend.title));
+      head.appendChild(actions);
+      makeResult(section);
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else init();
+})();
+</script>
+
+<style id="zx-final-light-no-shadow">
+:root,html,body{color-scheme:light!important}
+html,html.light,html:not(.dark){background:#f4f9ff!important;color:#263953!important}
+body,html.light body{background:linear-gradient(180deg,#f4f9ff 0%,#eaf5ff 52%,#f7fbff 100%)!important;color:#263953!important}
+body::before,body::after{box-shadow:none!important;text-shadow:none!important}
+*,*::before,*::after{box-shadow:none!important;text-shadow:none!important}
+.zx-header,html.light .zx-header{background:rgba(248,252,255,.97)!important;border-color:#e0eaf7!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
+.zx-menu,html.light .zx-menu,.zx-menu[style*="display: block"]{background:#f8fbff!important;border-color:#e1eaf6!important}
+.glass-panel.view-card,.view-card,html.light .glass-panel.view-card,html.light .view-card{background:rgba(250,253,255,.94)!important;border-color:#dfe9f6!important}
+.knowledge-standalone-link{background:linear-gradient(110deg,#f8fbff,#edf5ff)!important;border-color:#dce6f5!important}
+.knowledge-standalone-link strong{color:#263c59!important}.knowledge-standalone-link span{color:#71839b!important}
+.knowledge-standalone-link>div>span{background:#e4f4f1!important;color:#238b7e!important}
+.knowledge-standalone-link .zx-btn{background:#eaf1ff!important;border-color:#cbdafa!important;color:#365fbd!important}
+.zx-ai-result,.zx-ai-answer-section,.zx-ai-answer-details,.zx-ai-ask-form{background:#f9fcff!important;color:#263953!important;border-color:#dfe8f4!important}
+.zx-ai-answer-details-content .zx-ai-answer-section{background:#f4f8ff!important}
+.zx-chem-keyboard,.zx-chem-keyboard[style],#chemKeyboard:not([hidden]){background:#f8fbff!important;color:#304660!important;border-color:#dce7f5!important}
+.zx-chem-keyboard .zx-chem-tools,#chemKeyboard:not([hidden]) .zx-chem-tools{background:#f8fbff!important}
+.zx-chem-keyrow button,.zx-chem-tabs button,.zx-chem-symbols button,.zx-chem-ime-inline,#chemKeyboardClose,.zx-mobile-mathpad-head button,.zx-mobile-mathpad-grid button{background:#fff!important;color:#405774!important;border-color:#dfe8f3!important}
+.zx-mobile-mathpad.is-visible{background:rgba(248,252,255,.99)!important;border-color:#dfe8f3!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
+.zx-mobile-mathpad-grid button[data-value="DONE"]{background:#477be5!important;border-color:#477be5!important;color:#fff!important}
+.zx-chem-equation{background:#edf4ff!important;color:#315fbd!important;border-color:#dce7f7!important}
+.zx-chem-keyboard *,.zx-mobile-mathpad *{text-shadow:none!important}
+.zx-field,.structured-field,.structured-select,.structured-select select,.structured-field input,.calc-screen,.calc-key,.solve-mode-tabs,.structured-mode-tabs,.solve-keypad-wrap,.solve-keypad button,.function-expression-panel,.function-graph,.zx-out,.zx-steps,.zx-hist-item,.zx-unit-table,.zx-badge,.zx-chip,.zx-eg,.zx-btn,.structured-point{background-color:#fff!important;color:#344a65!important;border-color:#dfe7f1!important}
+.structured-equation,.function-graph-head,.zx-result-head{background:#edf4ff!important;color:#315fbd!important;border-color:#dce7f5!important}
+.zx-btn.is-go,.calc-key.is-eq{background:#477be5!important;color:#fff!important;border-color:#477be5!important}
+.solve-mode-tab.is-active,.function-task-tabs button.is-active,.function-expr-examples button.is-active{background:#e9f0ff!important;color:#315fbd!important;border-color:#cbdafa!important}
+a{color:#365fbd}
+@media(prefers-reduced-transparency:reduce){.zx-header{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
+</style>
 </body>
 </html>
