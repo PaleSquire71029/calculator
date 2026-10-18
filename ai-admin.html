@@ -909,7 +909,7 @@ table{min-width:0}
 :root{color-scheme:light!important;--ink:#22324a;--muted:#71829b;--line:rgba(132,154,190,.22);--paper:rgba(255,255,255,.72);--blue:#4b73d8;--blue2:#7898ed;--shadow:0 18px 48px rgba(58,82,128,.085)}
 html,body{background:#f4f7fc!important;color:#24344b!important;max-width:100%;overflow-x:clip}
 body{
- font-family:"MiSans","Noto Sans SC","PingFang SC",system-ui,sans-serif!important;
+ font-family:var(--zx-font,system-ui,sans-serif)!important;
  background:radial-gradient(ellipse at 5% 0%,rgba(161,189,255,.27),transparent 34rem),radial-gradient(ellipse at 95% 15%,rgba(148,225,218,.22),transparent 30rem),linear-gradient(160deg,#f8faff 0%,#eff5fc 55%,#f9fbff 100%)!important;
 }
 body :where(*,*::before,*::after){box-sizing:border-box;writing-mode:horizontal-tb!important;text-orientation:mixed!important;word-break:normal}
