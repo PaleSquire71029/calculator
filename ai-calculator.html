@@ -4884,7 +4884,7 @@ a{color:#416bd6}
     if(!raw){preview.textContent='AI 正在整理分析…';return;}
     const sections=splitAnswerSections(raw,viewId);
     const core=sections.find(item=>answerSectionKind(item.title)==='result')||sections[0];
-    const summary=String(core&&core.content||raw).replace(/\\s+/g,' ').trim();
+    const summary=String(core&&core.content||raw).replace(/\s+/g,' ').trim();
     preview.textContent=summary?(summary.length>124?summary.slice(0,124)+'…':summary):'AI 正在整理分析…';
   }
   function updateStreamPreview(node,answer,viewId){
