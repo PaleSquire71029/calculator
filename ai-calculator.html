@@ -4598,6 +4598,16 @@ a{color:#416bd6}
 .zx-ai-result-head button[data-zx-ai-hide]:hover{transform:translateY(-1px);background:rgba(231,238,255,.96)!important;border-color:rgba(92,128,217,.38)!important;color:#315fc6!important}
 .zx-ai-result-content{overflow:visible;max-height:none;opacity:1;transform:translateY(0);transition:opacity .15s ease,transform .15s cubic-bezier(.22,.75,.25,1);will-change:opacity,transform}
 .zx-ai-result-content[hidden]{display:none!important}
+.zx-ai-generate-details{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;margin-top:12px;padding:10px 15px;border:1px solid #cbdafa;border-radius:13px;background:#edf3ff;color:#365fbd;font:650 12px/1.4 var(--zx-font,system-ui);cursor:pointer;transition:background .16s ease,color .16s ease,transform .16s ease}
+.zx-ai-generate-details:before{content:"✧";font-size:16px}
+.zx-ai-generate-details:hover{background:#e2ebff;color:#274da8;transform:translateY(-1px)}
+.zx-ai-generate-details:disabled{opacity:.65;cursor:wait;transform:none}
+.zx-ai-generated-details{display:grid;gap:10px;margin-top:12px}
+.zx-ai-generated-details-heading{display:flex;align-items:center;gap:8px;color:#486db8;font-size:12px;font-weight:750;padding:3px 1px}
+.zx-ai-generated-details-heading:before{content:"";width:4px;height:14px;border-radius:8px;background:linear-gradient(180deg,#7396eb,#4f70cf)}
+.zx-ai-detail-pending .zx-ai-answer-section-content{color:#6780b7!important}
+@media(prefers-reduced-motion:reduce){.zx-ai-generate-details{transition:none!important}}
+
 .zx-ai-result[data-collapsed="true"] .zx-ai-result-content{overflow:hidden;pointer-events:none}
 .zx-ai-collapsed-preview{display:none;margin-top:0;padding-top:0;max-width:100%;overflow:hidden;color:#71829b;font-size:12px;line-height:1.65;overflow-wrap:anywhere}
 .zx-ai-result[data-collapsed="true"] .zx-ai-result-head{padding-bottom:0!important;border-bottom-color:transparent!important}
@@ -4720,7 +4730,7 @@ a{color:#416bd6}
       const input=panel.querySelector('[data-zx-ai-question]');
       const question=String(input.value||'').trim();
       if(!question){input.focus();return;}
-      analyze(section,section.getAttribute('data-view'), 'extend',panel.querySelector('[data-zx-ai-ask-submit]'),question);
+      analyze(section,section.getAttribute('data-view'), 'extend',panel.querySelector('[data-zx-ai-ask-submit]'),question,'followup');
     });
     return panel;
   }
@@ -4795,7 +4805,7 @@ a{color:#416bd6}
     statusEl.replaceChildren();
     const textNode=document.createElement('span');
     textNode.className='zx-ai-thinking-stream';
-    textNode.textContent=action==='extend'?'正在补充分析内容':'正在生成核心结论';
+    textNode.textContent=action==='details'?'正在生成补充推导与核验':action==='followup'?'正在回答你的追问':'正在生成核心结论';
     statusEl.append(textNode);
   }
   function answerSectionKind(title){
@@ -4898,7 +4908,34 @@ a{color:#416bd6}
     card.querySelector('.zx-ai-answer-section-content').textContent=coreText||'正在生成核心结论…';
     card.dataset.streaming='true';
   }
-  function renderStructuredAnswer(node,answer,viewId){
+  function getCoreAnswerText(answer,viewId){
+    const sections=splitAnswerSections(answer,viewId);
+    const core=sections.find(item=>answerSectionKind(item.title)==='result')||sections[0]||{title:'核心结论',content:String(answer||'').trim()};
+    return '【核心结论】\\n'+String(core.content||answer||'').trim();
+  }
+  function renderAdditionalAnswer(node,answer,viewId,pendingNode){
+    if(pendingNode&&pendingNode.parentNode)pendingNode.remove();
+    const parsed=splitAnswerSections(answer,viewId);
+    let extra=parsed.filter(item=>item.content.trim()&&answerSectionKind(item.title)!=='result');
+    if(!extra.length&&String(answer||'').trim())extra=[{title:'补充分析',content:String(answer).trim()}];
+    if(!extra.length)throw new Error('AI 没有返回可显示的补充分析。');
+    const wrapper=document.createElement('div');
+    wrapper.className='zx-ai-generated-details';
+    const heading=document.createElement('div');
+    heading.className='zx-ai-generated-details-heading';
+    heading.textContent='完整分析';
+    wrapper.append(heading);
+    extra.forEach(item=>wrapper.append(createAnswerSection(item,false)));
+    node.append(wrapper);
+    const generate=node.querySelector('[data-zx-ai-generate-details]');
+    if(generate)generate.remove();
+  }
+  function updateDetailsStreamPreview(node,answer){
+    if(!node)return;
+    const body=node.querySelector('.zx-ai-answer-section-content');
+    if(body)body.textContent=String(answer||'')||'正在生成补充分析…';
+  }
+  function renderStructuredAnswer(node,answer,viewId,stage='full',action='analyze'){
     node.replaceChildren();
     const sections=splitAnswerSections(answer,viewId);
     let coreIndex=sections.findIndex(x=>answerSectionKind(x.title)==='result');
@@ -4907,7 +4944,22 @@ a{color:#416bd6}
     const coreCard=createAnswerSection(core,false);
     coreCard.dataset.kind='result';
     node.append(coreCard);
-    const extra=sections.filter((_,i)=>i!==coreIndex && sections[i].content.trim());
+    if(stage==='core'){
+      const generate=document.createElement('button');
+      generate.type='button';
+      generate.className='zx-ai-generate-details';
+      generate.dataset.zxAiGenerateDetails='true';
+      generate.textContent='生成完整分析';
+      generate.setAttribute('aria-label','点击后再让 AI 生成推导、核验与补充分析');
+      generate.addEventListener('click',()=>{
+        const panel=node.closest('.zx-ai-result');
+        const section=panel&&panel.closest('.view[data-view]');
+        if(section)analyze(section,viewId,panel.dataset.zxAiAction||action,generate,'','details');
+      });
+      node.append(generate);
+      return;
+    }
+    const extra=sections.filter((_,i)=>i!==coreIndex&&sections[i].content.trim());
     if(extra.length){
       const details=document.createElement('details');
       details.className='zx-ai-answer-details';
@@ -4976,19 +5028,32 @@ a{color:#416bd6}
       if(status&&status.dataset.state!=='error')status.textContent+=' · 公式渲染失败，请检查网络连接';
     }
   }
-  async function analyze(section,viewId,action,button,question=''){
+  async function analyze(section,viewId,action,button,question='',phase='core'){
     if(busy)return;
     const panel=makeResult(section);
+    const isDetails=phase==='details';
+    const isFollowup=phase==='followup'||Boolean(question);
+    const stage=isDetails?'details':isFollowup?'followup':'core';
     panel.hidden=false;
+    panel.dataset.zxAiAction=action;
     setResultCollapsed(panel,false);
     const answerEl=panel.querySelector('[data-zx-ai-answer]');
-    answerEl.hidden=true;answerEl.replaceChildren();
+    if(!isDetails){answerEl.hidden=true;answerEl.replaceChildren();}
+    else answerEl.hidden=false;
     const statusEl=panel.querySelector('[data-zx-ai-status]');
     setStatus(panel,'',false);
     statusEl.dataset.loading='true';
-    setThinkingText(statusEl,action);
+    setThinkingText(statusEl,isDetails?'details':isFollowup?'followup':action);
     const collapsedPreview=panel.querySelector('[data-zx-ai-collapsed-preview]');
-    if(collapsedPreview)collapsedPreview.textContent='AI 正在整理分析…';
+    if(collapsedPreview)collapsedPreview.textContent=isDetails?'AI 正在生成补充分析…':'AI 正在整理核心结论…';
+    let detailStreamNode=null;
+    const detailButton=isDetails?answerEl.querySelector('[data-zx-ai-generate-details]'):null;
+    if(isDetails){
+      if(detailButton){detailButton.disabled=true;detailButton.textContent='正在生成完整分析…';}
+      detailStreamNode=createAnswerSection({title:'补充分析',content:'正在生成补充分析…'},true);
+      detailStreamNode.classList.add('zx-ai-detail-pending');
+      answerEl.append(detailStreamNode);
+    }
     const allButtons=Array.from(document.querySelectorAll('[data-zx-ai-action], [data-zx-ai-ask-submit]'));
     busy=true;allButtons.forEach(b=>b.disabled=true);
     let partialAnswer='';
@@ -5000,9 +5065,11 @@ a{color:#416bd6}
       if(question){
         context.details=(context.details?context.details+'\n':'')+'用户针对当前计算结果的追问：'+String(question).slice(0,1000)+'\n请优先直接回答这条追问，并结合页面已提供的输入、计算结果与选项进行核验；不要只重复通用解释。';
       }
+      const coreAnswer=String(panel.dataset.zxAiCoreAnswer||'').trim();
+      if(isDetails&&!coreAnswer)throw new Error('请先生成核心结论，再生成完整分析。');
       requestController=new AbortController();
       requestTimeout=window.setTimeout(()=>requestController.abort(),95000);
-      const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'analysis',action:action,mode:viewId,context:context,stream:true}),redirect:'error',signal:requestController.signal});
+      const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'analysis',action:action,mode:viewId,context:context,analysisStage:stage,coreAnswer:isDetails?coreAnswer:undefined,question:question||undefined,stream:true}),redirect:'error',signal:requestController.signal});
       if(!response.ok){
         let errorData={};try{errorData=await response.json();}catch(e){}
         throw new Error(errorData.error||('请求失败（HTTP '+response.status+'）'));
@@ -5011,7 +5078,11 @@ a{color:#416bd6}
       const contentType=response.headers.get('content-type')||'';
       if(contentType.includes('text/event-stream')){
         answerEl.hidden=false;
-        const streamed=await readAnalysisStream(response,text=>{partialAnswer=text;updateStreamPreview(answerEl,text,viewId);});
+        const streamed=await readAnalysisStream(response,text=>{
+          partialAnswer=text;
+          if(isDetails)updateDetailsStreamPreview(detailStreamNode,text);
+          else updateStreamPreview(answerEl,text,viewId);
+        });
         answer=streamed.answer;model=streamed.model;
       }else{
         const data=await response.json();
@@ -5019,19 +5090,32 @@ a{color:#416bd6}
       }
       if(typeof answer!=='string'||!answer.trim())throw new Error('AI 没有返回可显示的文字内容。');
       delete statusEl.dataset.loading;
-      setStatus(panel,(question?'追问回答完成':(action==='extend'?'扩展分析完成':'分析完成'))+(model?' · '+model:''),false);
-      renderStructuredAnswer(answerEl,answer,viewId);
-      answerEl.hidden=false;
-      updateCollapsedPreview(answerEl,answer,viewId);
+      if(isDetails){
+        renderAdditionalAnswer(answerEl,answer,viewId,detailStreamNode);
+        setStatus(panel,'完整分析已生成'+(model?' · '+model:''),false);
+      }else{
+        renderStructuredAnswer(answerEl,answer,viewId,isFollowup?'full':'core',action);
+        answerEl.hidden=false;
+        if(!isFollowup)panel.dataset.zxAiCoreAnswer=getCoreAnswerText(answer,viewId);
+        setStatus(panel,(isFollowup?'追问回答完成':(action==='extend'?'核心结论已生成（扩展任务）':'核心结论已生成'))+(model?' · '+model:''),false);
+        updateCollapsedPreview(answerEl,answer,viewId);
+      }
       if(question){const questionInput=panel.querySelector('[data-zx-ai-question]');if(questionInput)questionInput.value='';}
       await typesetAnswer(answerEl);
     }catch(e){
       delete statusEl.dataset.loading;
       const failure=e&&e.name==='AbortError'?'AI 响应超时或连接已中断，请重试。':(e&&e.message?e.message:'网络错误');
-      setStatus(panel,'请求失败：'+failure+'。请检查网络或 AI 服务。',true);
+      setStatus(panel,'请求失败：'+failure+'。请重试。',true);
       answerEl.querySelectorAll('[data-streaming="true"]').forEach(el=>delete el.dataset.streaming);
-      if(partialAnswer.trim())await typesetAnswer(answerEl);
-      else answerEl.hidden=true;
+      if(isDetails){
+        if(detailStreamNode&&detailStreamNode.parentNode)detailStreamNode.remove();
+        if(detailButton){detailButton.disabled=false;detailButton.textContent='重试生成完整分析';}
+        if(partialAnswer.trim()){
+          try{renderAdditionalAnswer(answerEl,partialAnswer,viewId,null);await typesetAnswer(answerEl);}catch(_){}
+        }
+      }else if(partialAnswer.trim()){
+        await typesetAnswer(answerEl);
+      }else answerEl.hidden=true;
     }finally{
       if(requestTimeout)window.clearTimeout(requestTimeout);
       delete statusEl.dataset.loading;
