@@ -349,11 +349,27 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       const stats = data.stats || { totalRequests: 0, failedRequests: 0, promptTokens: 0, completionTokens: 0, recent: [] };
       stats.totalRequests = (stats.totalRequests || 0) + 1;
       if (!event.ok) stats.failedRequests = (stats.failedRequests || 0) + 1;
+      const toTokenCount = value => {
+        const number = Number(value ?? 0);
+        return Number.isFinite(number) && number > 0 ? Math.floor(number) : 0;
+      };
+      const promptTokens = toTokenCount(event.usage?.prompt_tokens ?? event.usage?.input_tokens ?? event.usage?.promptTokens);
+      const completionTokens = toTokenCount(event.usage?.completion_tokens ?? event.usage?.output_tokens ?? event.usage?.completionTokens);
       if (event.usage) {
-        stats.promptTokens = (stats.promptTokens || 0) + (Number(event.usage.prompt_tokens) || 0);
-        stats.completionTokens = (stats.completionTokens || 0) + (Number(event.usage.completion_tokens) || 0);
+        stats.promptTokens = (stats.promptTokens || 0) + promptTokens;
+        stats.completionTokens = (stats.completionTokens || 0) + completionTokens;
       }
-      stats.recent = [{ at: new Date().toISOString(), mode: event.mode || "unknown", ok: Boolean(event.ok), status: event.status || 0, model: event.model || "" }, ...(stats.recent || [])].slice(0, 20);
+      stats.recent = [{
+        at: new Date().toISOString(),
+        mode: event.mode || "unknown",
+        ok: Boolean(event.ok),
+        status: event.status || 0,
+        model: event.model || "",
+        promptTokens,
+        completionTokens,
+        totalTokens: promptTokens + completionTokens,
+        usageAvailable: Boolean(event.usage)
+      }, ...(stats.recent || [])].slice(0, 20);
       data.stats = stats;
       await writeData(env, data);
     } catch { /* 统计不能中断主请求 */ }
@@ -418,10 +434,10 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
         ? parsed.data.apiKey.trim() : runtime.apiKey;
       if (!apiKey) return json({ error: "请先配置 API Token。" }, 400, cors);
       const rootUrl = new URL(apiBaseUrl);
-      rootUrl.pathname = rootUrl.pathname.replace(/\\/v1\\/?$/i, "") || "/";
+      rootUrl.pathname = rootUrl.pathname.replace(/\/v1\/?$/i, "") || "/";
       rootUrl.search = "";
       rootUrl.hash = "";
-      const root = rootUrl.toString().replace(/\\/$/, "");
+      const root = rootUrl.toString().replace(/\/$/, "");
       let quota = null;
       let lastStatus = 0;
       let lastMessage = "";
