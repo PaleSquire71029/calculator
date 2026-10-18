@@ -214,6 +214,15 @@ table{min-width:0}
             <div class="metric"><div class="m-label">总 Token 用量</div><strong id="statTotalTokens">—</strong><small>供应商返回的 usage</small></div>
             <div class="metric"><div class="m-label">成功率</div><strong id="statSuccessRate">—</strong><small>按累计成功 / 失败请求估算</small></div>
           </div>
+          <section class="analytics-block analytics-overview" aria-labelledby="analyticsTitle">
+            <div class="analytics-head"><div><h3 id="analyticsTitle">数据分析</h3><p>最近请求趋势、成功率与使用分布</p></div><span class="analytics-source">实际记录</span></div>
+            <div class="analytics-grid">
+              <article class="chart-card chart-trend"><div class="chart-head"><h4>调用趋势</h4><span>按小时 · 最近 20 条</span></div><svg id="chartTraffic" class="chart-svg" viewBox="0 0 600 180" role="img" aria-label="最近请求按小时统计的折线趋势图"></svg><div class="chart-legend"><span><i class="legend-dot success"></i>成功</span><span><i class="legend-dot failed"></i>失败</span></div></article>
+              <article class="chart-card"><div class="chart-head"><h4>累计请求状态</h4><span>全量</span></div><div class="status-chart-layout"><svg id="chartStatus" class="chart-svg status-donut" viewBox="0 0 220 150" role="img" aria-label="累计请求成功与失败分布图"></svg><div id="chartStatusLegend" class="chart-status-legend"></div></div></article>
+              <article class="chart-card"><div class="chart-head"><h4>调用场景</h4><span>最近 20 条</span></div><div id="chartModes" class="chart-bars" aria-label="按场景统计调用次数"></div></article>
+              <article class="chart-card"><div class="chart-head"><h4>Token 用量</h4><span>仅统计真实 usage</span></div><div id="chartTokens" class="chart-bars" aria-label="按模型统计输入与输出 Token 用量"></div><div id="chartTokenNote" class="chart-footnote"></div></article>
+            </div>
+          </section>
           <div class="section-card">
             <div class="subhead" style="margin-top:0">当前连接</div>
             <div class="kv">
@@ -284,15 +293,6 @@ table{min-width:0}
 
         <section class="glass panel" data-panel="records">
           <h2 class="panel-title">调用记录</h2><p class="panel-desc">最近 20 条请求记录。下方图表只统计实际保存的数据，不估算缺失的 Token 用量。</p>
-          <section class="analytics-block" aria-labelledby="analyticsTitle">
-            <div class="analytics-head"><div><h3 id="analyticsTitle">数据分析</h3><p>累计状态 + 最近请求趋势、场景与 Token 分布</p></div><span class="analytics-source">实时读取后端记录</span></div>
-            <div class="analytics-grid">
-              <article class="chart-card chart-trend"><div class="chart-head"><h4>调用趋势</h4><span>按小时 · 最近 20 条</span></div><svg id="chartTraffic" class="chart-svg" viewBox="0 0 600 220" role="img" aria-label="最近请求按小时统计的趋势图"></svg><div class="chart-legend"><span><i class="legend-dot success"></i>成功</span><span><i class="legend-dot failed"></i>失败</span></div></article>
-              <article class="chart-card"><div class="chart-head"><h4>累计请求状态</h4><span>全量累计</span></div><div class="status-chart-layout"><svg id="chartStatus" class="chart-svg status-donut" viewBox="0 0 220 180" role="img" aria-label="累计请求成功与失败分布图"></svg><div id="chartStatusLegend" class="chart-status-legend"></div></div></article>
-              <article class="chart-card"><div class="chart-head"><h4>调用场景分布</h4><span>最近 20 条</span></div><div id="chartModes" class="chart-bars" aria-label="按场景统计调用次数"></div></article>
-              <article class="chart-card"><div class="chart-head"><h4>Token 用量</h4><span>最近记录 · 有 usage 才统计</span></div><div id="chartTokens" class="chart-bars" aria-label="按模型统计输入与输出 Token 用量"></div><div id="chartTokenNote" class="chart-footnote"></div></article>
-            </div>
-          </section>
           <div class="row record-filters" style="margin-bottom:14px"><div class="field"><label for="recordSearch">搜索记录</label><input id="recordSearch" type="search" placeholder="按模型、场景或 HTTP 状态搜索"></div><div class="field"><label for="recordFilter">请求状态</label><select id="recordFilter"><option value="all">全部状态</option><option value="ok">仅成功</option><option value="fail">仅失败</option></select></div></div>
           <div class="actions record-actions" style="margin-top:0;margin-bottom:14px"><button class="btn" id="refreshRecords" type="button">刷新记录</button><button class="btn" id="exportRecords" type="button">导出调用记录 CSV</button><button class="btn danger" id="resetStats" type="button">重置统计</button></div>
           <div class="table-wrap"><table><thead><tr><th>时间</th><th>场景</th><th>模型</th><th>状态</th><th>HTTP</th><th>Token 入/出</th></tr></thead><tbody id="recentRows"><tr><td colspan="6">加载中…</td></tr></tbody></table></div>
@@ -564,33 +564,30 @@ table{min-width:0}
     const svg=$("chartTraffic");svg.replaceChildren();
     const groups=new Map();
     rows.filter(item=>Number.isFinite(Date.parse(item.at))).forEach(item=>{
-      const date=new Date(item.at);
-      date.setMinutes(0,0,0);
-      const key=date.getTime();
+      const date=new Date(item.at);date.setMinutes(0,0,0);const key=date.getTime();
       if(!groups.has(key))groups.set(key,{date,ok:0,fail:0,total:0});
       const bucket=groups.get(key);bucket.total++;if(item.ok)bucket.ok++;else bucket.fail++;
     });
     const data=[...groups.values()].sort((a,b)=>a.date-b.date).slice(-8);
     if(!data.length){chartEmpty(svg,"暂无可绘制的时间数据");return;}
-    const W=600,H=220,left=42,right=18,top=18,bottom=42,cw=W-left-right,ch=H-top-bottom;
-    const max=Math.max(1,...data.map(d=>d.total));
-    for(let i=0;i<=4;i++){
-      const value=Math.ceil(max*i/4),y=top+ch-(value/max)*ch;
+    const W=600,H=180,left=40,right=18,top=15,bottom=34,cw=W-left-right,ch=H-top-bottom;
+    const max=Math.max(1,...data.map(d=>d.total)),slot=cw/data.length;
+    for(let i=0;i<=3;i++){
+      const value=Math.ceil(max*i/3),y=top+ch-(value/max)*ch;
       svg.append(svgElement("line",{x1:left,y1:y,x2:W-right,y2:y,class:"chart-gridline"}));
-      svg.append(svgElement("text",{x:left-9,y:y+4,"text-anchor":"end",class:"chart-axis-label"},value));
+      svg.append(svgElement("text",{x:left-8,y:y+4,"text-anchor":"end",class:"chart-axis-label"},value));
     }
-    const slot=cw/data.length,barW=Math.min(42,slot*.54);
-    data.forEach((d,i)=>{
-      const x=left+slot*(i+.5)-barW/2;
-      const okH=(d.ok/max)*ch,failH=(d.fail/max)*ch;
-      svg.append(svgElement("rect",{x,y:top+ch-okH,width:barW,height:okH,rx:4,class:"chart-bar-success"}));
-      svg.append(svgElement("rect",{x,y:top+ch-okH-failH,width:barW,height:failH,rx:4,class:"chart-bar-fail"}));
-      svg.append(svgElement("text",{x:x+barW/2,y:top+ch-okH-failH-7,"text-anchor":"middle",class:"chart-value-label"},d.total));
-      if(data.length<=5||i===0||i===data.length-1||i===Math.floor(data.length/2)){
-        const label=d.date.toLocaleDateString(undefined,{month:"2-digit",day:"2-digit"})+" "+String(d.date.getHours()).padStart(2,"0")+":00";
-        svg.append(svgElement("text",{x:x+barW/2,y:H-15,"text-anchor":"middle",class:"chart-axis-label"},label));
+    const series=[{key:"ok",cls:"chart-line-success",point:"chart-point-success"},{key:"fail",cls:"chart-line-fail",point:"chart-point-fail"}];
+    series.forEach(s=>{
+      const pts=data.map((d,i)=>({x:left+slot*(i+.5),y:top+ch-(d[s.key]/max)*ch}));
+      if(pts.length>1){
+        let path="M "+pts[0].x+" "+pts[0].y;
+        for(let i=1;i<pts.length;i++){const p=pts[i-1],c=pts[i],mid=(p.x+c.x)/2;path+=" C "+mid+" "+p.y+", "+mid+" "+c.y+", "+c.x+" "+c.y;}
+        svg.append(svgElement("path",{d:path,class:s.cls,fill:"none","stroke-linecap":"round","stroke-linejoin":"round"}));
       }
+      pts.forEach(p=>svg.append(svgElement("circle",{cx:p.x,cy:p.y,r:3.8,class:s.point})));
     });
+    data.forEach((d,i)=>{const x=left+slot*(i+.5);if(data.length<=5||i===0||i===data.length-1||i===Math.floor(data.length/2)){const label=String(d.date.getHours()).padStart(2,"0")+":00";svg.append(svgElement("text",{x,y:H-11,"text-anchor":"middle",class:"chart-axis-label"},label));}});
   }
   function renderStatusChart(){
     const svg=$("chartStatus"),legend=$("chartStatusLegend"),stats=settings?.stats||{};
@@ -1063,7 +1060,11 @@ body :where(*,*::before,*::after){box-sizing:border-box;writing-mode:horizontal-
 .toast{background:rgba(255,255,255,.95)!important;color:#344964!important;border-color:rgba(255,255,255,.97)!important;backdrop-filter:blur(20px)!important}
 #modelPicker{appearance:auto!important;-webkit-appearance:menulist!important;pointer-events:auto!important;position:relative!important;z-index:2!important;flex:1 1 230px!important;min-width:0!important;min-height:46px!important;touch-action:manipulation!important}
 #fetchModels{flex:0 0 auto!important;min-height:46px!important;white-space:nowrap}
-.model-catalog{margin-top:12px;padding:12px;border:1px solid rgba(130,153,191,.19);border-radius:15px;background:rgba(249,252,255,.78);box-shadow:inset 0 1px rgba(255,255,255,.95)}
+.model-catalog{margin-top:8px;padding:9px;border:1px solid rgba(130,153,191,.19);border-radius:13px;background:rgba(249,252,255,.78);box-shadow:none}
+.model-catalog:not([hidden]){max-height:310px;overflow:hidden;display:flex;flex-direction:column}
+.model-catalog-list{max-height:175px;grid-template-columns:minmax(0,1fr);gap:5px}
+.model-option{min-height:36px;padding:6px 9px;box-shadow:none!important}
+@media(max-width:800px){.model-catalog:not([hidden]){max-height:280px}.model-catalog-list{max-height:185px}}
 .model-catalog[hidden]{display:none!important}
 .model-catalog-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:9px}
 .model-catalog-head label{font-size:11px;font-weight:760;color:#506787}
@@ -1116,6 +1117,15 @@ body :where(*,*::before,*::after){box-sizing:border-box;writing-mode:horizontal-
 .chart-axis-label{font:10px system-ui,sans-serif;fill:#8997ac}
 .chart-value-label{font:11px system-ui,sans-serif;fill:#536a8d;font-weight:700}
 .chart-bar-success{fill:#5c82e7}.chart-bar-fail{fill:#e58b94}
+.chart-line-success{stroke:#5c82e7;stroke-width:3;animation:chart-line-draw .75s ease-out both}
+.chart-line-fail{stroke:#e58b94;stroke-width:2.5;animation:chart-line-draw .75s ease-out both}
+.chart-point-success{fill:#fff;stroke:#5c82e7;stroke-width:2}.chart-point-fail{fill:#fff;stroke:#e58b94;stroke-width:2}
+@keyframes chart-line-draw{from{stroke-dasharray:1000;stroke-dashoffset:1000;opacity:.45}to{stroke-dasharray:1000;stroke-dashoffset:0;opacity:1}}
+.analytics-overview{margin:16px 0 20px;padding:12px}
+.analytics-overview .analytics-grid{gap:9px}.analytics-overview .chart-card{padding:11px}
+.analytics-overview .chart-head{margin-bottom:5px}.analytics-overview .chart-bars{gap:9px;padding-top:5px}
+.analytics-overview .chart-svg{min-height:110px}.analytics-overview .status-donut{min-height:105px}
+.analytics-overview .status-chart-layout{min-height:120px}.analytics-overview .chart-status-legend{gap:7px}
 .chart-empty-text{font:12px system-ui,sans-serif;fill:#8a99af}
 .chart-legend{display:flex;align-items:center;justify-content:center;gap:16px;color:#7e8ea5;font-size:10px;margin-top:-2px}
 .legend-dot{display:inline-block;width:8px;height:8px;flex:none;border-radius:50%;margin-right:6px}
