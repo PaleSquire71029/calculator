@@ -217,6 +217,11 @@ test("calculator inline AI analysis script parses and chat panel is removed", ()
   assert.doesNotThrow(() => new Script(html.slice(start + opening.length, end)));
   assert.doesNotMatch(html, /id="zx-ai-panel"|id="zx-ai-launch"|zx-ai-compose/);
   assert.match(html, /data-zx-ai-action/);
+  assert.match(html, /data-zx-ai-ask-form/);
+  assert.match(html, /用户针对当前计算结果的追问/);
+  assert.match(html, /if\(el\.type==='hidden'\|\|el\.disabled\|\|!visible\(el\)\)return;/);
+  assert.match(html, /new AbortController\(\)/);
+  assert.match(html, /requestTimeout=window\.setTimeout/);
 });
 
 test("AI frontend inline JavaScript parses without syntax errors", () => {
@@ -236,4 +241,7 @@ test("AI admin frontend inline JavaScript parses", () => {
   assert.match(html, /ADMIN_PASSWORD/);
   assert.match(html, /获取模型列表/);
   assert.match(html, /提示词管理/);
+  assert.match(html, /id="modelCatalogList"/);
+  assert.match(html, /function renderModelCatalog/);
+  assert.match(html, /modelSearch/);
 });
