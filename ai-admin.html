@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f8fbff">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex,nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'self'; script-src 'sha256-k8QUZt6nGlyxQX8laPjAkjQ0Q7ClyxLdVhB5Pw+ARlc=' 'sha256-KlMdjGgEDDGxFverkfihYq09Uv0jrAHuIUkmTCH0v2w='; style-src 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' https://zhixing-calculator-ai.xiaoshirong2023.workers.dev; object-src 'none'; frame-src 'none'; worker-src 'none'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'self'; script-src 'sha256-fbV6yAwotxU3wod56Nz1tuzzoQDZK5wkQZU1hUKIHII=' 'sha256-KlMdjGgEDDGxFverkfihYq09Uv0jrAHuIUkmTCH0v2w='; style-src 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' https://zhixing-calculator-ai.xiaoshirong2023.workers.dev; object-src 'none'; frame-src 'none'; worker-src 'none'; upgrade-insecure-requests">
 <title>知行学习产品 · 后端管理</title>
 <style>
 :root{color-scheme:light;--ink:#202938;--muted:#718096;--line:#e1e7f0;--paper:rgba(255,255,255,.82);--blue:#4169e1;--blue2:#7192f4;--mint:#dff7ed;--gold:#d8b878;--danger:#c44747;--shadow:0 16px 45px rgba(46,66,110,.09)}
@@ -472,7 +472,6 @@ table{min-width:0}
     try {
       const base = workerUrl();
       if (!base) throw new Error("为保护密码与会话令牌，管理页只允许连接官方知行 AI Worker。");
-      localStorage.setItem(WORKER_KEY, base);
 
       const data = await api("/admin/login", {
         method: "POST",
