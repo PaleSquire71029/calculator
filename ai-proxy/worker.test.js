@@ -67,6 +67,42 @@ test("admin login issues a signed, expiring session token", async () => {
   assert.ok(body.expiresIn > 0);
 });
 
+test("admin keeps Zhixing AI settings isolated from the learning and calculator profile", async () => {
+  const isolatedEnv = testEnv({ ADMIN_PASSWORD: "test-admin-password" });
+  const login = await worker.fetch(new Request("https://worker.example.test/admin/login?app=zhixing-ai", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: origin, "CF-Connecting-IP": "198.51.100.93" },
+    body: JSON.stringify({ password: "test-admin-password" })
+  }), isolatedEnv);
+  assert.equal(login.status, 200);
+  const token = (await login.json()).token;
+  const headers = { Origin: origin, Authorization: "Bearer " + token, "Content-Type": "application/json" };
+  const defaultsResponse = await worker.fetch(new Request("https://worker.example.test/admin/defaults?app=zhixing-ai", { headers }), isolatedEnv);
+  assert.equal(defaultsResponse.status, 200);
+  const prompts = await defaultsResponse.json();
+  assert.match(prompts.chat.general, /知行AI助手/);
+  assert.doesNotMatch(prompts.chat.general, /多学科学习助手/);
+  const save = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=zhixing-ai", {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({
+      apiBaseUrl: "https://api.example.com/v1",
+      model: "zhixing-only-model",
+      temperature: 0.5,
+      maxTokens: 128,
+      prompts,
+      apiKey: ""
+    })
+  }), isolatedEnv);
+  assert.equal(save.status, 200);
+  const zhixingSettings = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=zhixing-ai", { headers }), isolatedEnv);
+  const learningSettings = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=learning", { headers }), isolatedEnv);
+  assert.equal(zhixingSettings.status, 200);
+  assert.equal(learningSettings.status, 200);
+  assert.equal((await zhixingSettings.json()).model, "zhixing-only-model");
+  assert.equal((await learningSettings.json()).model, "vision-model");
+});
+
 test("admin settings require a valid bearer session", async () => {
   const response = await worker.fetch(new Request("https://worker.example.test/admin/settings", {
     headers: { "Origin": origin }
