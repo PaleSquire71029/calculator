@@ -4913,12 +4913,13 @@ a{color:#416bd6}
     const core=sections.find(item=>answerSectionKind(item.title)==='result')||sections[0]||{title:'核心结论',content:String(answer||'').trim()};
     return '【核心结论】\\n'+String(core.content||answer||'').trim();
   }
-  function renderAdditionalAnswer(node,answer,viewId,pendingNode){
+  function renderAdditionalAnswer(node,answer,viewId,pendingNode,removeGenerateButton=true){
     if(pendingNode&&pendingNode.parentNode)pendingNode.remove();
     const parsed=splitAnswerSections(answer,viewId);
     let extra=parsed.filter(item=>item.content.trim()&&answerSectionKind(item.title)!=='result');
     if(!extra.length&&String(answer||'').trim())extra=[{title:'补充分析',content:String(answer).trim()}];
     if(!extra.length)throw new Error('AI 没有返回可显示的补充分析。');
+    node.querySelector('.zx-ai-generated-details')?.remove();
     const wrapper=document.createElement('div');
     wrapper.className='zx-ai-generated-details';
     const heading=document.createElement('div');
@@ -4928,7 +4929,7 @@ a{color:#416bd6}
     extra.forEach(item=>wrapper.append(createAnswerSection(item,false)));
     node.append(wrapper);
     const generate=node.querySelector('[data-zx-ai-generate-details]');
-    if(generate)generate.remove();
+    if(removeGenerateButton&&generate)generate.remove();
   }
   function updateDetailsStreamPreview(node,answer){
     if(!node)return;
@@ -5049,6 +5050,7 @@ a{color:#416bd6}
     let detailStreamNode=null;
     const detailButton=isDetails?answerEl.querySelector('[data-zx-ai-generate-details]'):null;
     if(isDetails){
+      answerEl.querySelector('.zx-ai-generated-details')?.remove();
       if(detailButton){detailButton.disabled=true;detailButton.textContent='正在生成完整分析…';}
       detailStreamNode=createAnswerSection({title:'补充分析',content:'正在生成补充分析…'},true);
       detailStreamNode.classList.add('zx-ai-detail-pending');
@@ -5111,7 +5113,7 @@ a{color:#416bd6}
         if(detailStreamNode&&detailStreamNode.parentNode)detailStreamNode.remove();
         if(detailButton){detailButton.disabled=false;detailButton.textContent='重试生成完整分析';}
         if(partialAnswer.trim()){
-          try{renderAdditionalAnswer(answerEl,partialAnswer,viewId,null);await typesetAnswer(answerEl);}catch(_){}
+          try{renderAdditionalAnswer(answerEl,partialAnswer,viewId,null,false);await typesetAnswer(answerEl);}catch(_){}
         }
       }else if(partialAnswer.trim()){
         await typesetAnswer(answerEl);
