@@ -323,6 +323,11 @@ test("AI admin frontend inline JavaScript parses", () => {
   assert.match(html, /id="chartStatus"/);
   assert.match(html, /id="chartModes"/);
   assert.match(html, /id="chartTokens"/);
+  assert.match(html, /class="analytics-block analytics-overview"/);
+  assert.match(html, /chart-line-success/);
+  assert.match(html, /svg\.append\(svgElement\("path"/);
+  assert.match(html, /\.model-catalog:not\(\[hidden\]\)\{max-height:310px/);
+  assert.doesNotMatch(html, /data-panel="records">[\s\S]{0,800}class="analytics-block/);
   assert.match(html, /function renderUsageCharts\(\)/);
   assert.match(html, /item\.usageAvailable===true/);
   assert.match(html, /renderUsageCharts\(\);/);
