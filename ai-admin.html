@@ -359,21 +359,56 @@ table{min-width:0}
     el.className = "status" + (type ? " " + type : "");
   }
   async function api(path, options={}) {
-    const headers = new Headers(options.headers || {});
+    const { noAuth=false, timeoutMs: customTimeout, ...requestOptions } = options;
+    const headers = new Headers(requestOptions.headers || {});
     const base = workerUrl();
     if (!base) throw new Error("Worker 地址无效。请填写可信 Worker 的 HTTPS 地址（本地开发可使用 localhost），且不要包含账号密码、查询参数或片段。");
-    if (token && !options.noAuth && sessionStorage.getItem(TOKEN_WORKER_KEY) !== base) {
+    if (token && !noAuth && sessionStorage.getItem(TOKEN_WORKER_KEY) !== base) {
       logout(false);
       throw new Error("Worker 地址已变化，请重新登录，避免把旧会话令牌发送到其他服务器。");
     }
-    if (options.body !== undefined && !(options.body instanceof FormData)) headers.set("Content-Type", "application/json");
-    if (token && !options.noAuth) headers.set("Authorization", "Bearer " + token);
+    if (requestOptions.body !== undefined && !(requestOptions.body instanceof FormData)) headers.set("Content-Type", "application/json");
+    if (token && !noAuth) headers.set("Authorization", "Bearer " + token);
+
+    // Bound every admin API call, including reading the response body, so the UI can never
+    // remain in a busy state forever when a Worker/Durable Object connection stalls.
+    const timeout = Number(customTimeout) > 0
+      ? Number(customTimeout)
+      : (path === "/admin/login" ? 12000 : 15000);
+    const controller = new AbortController();
+    let timeoutId = 0;
     let response;
+    let data = {};
+    let invalidJson = false;
     try {
-      response = await fetch(base + path, { ...options, headers, body: options.body === undefined || typeof options.body === "string" || options.body instanceof FormData ? options.body : JSON.stringify(options.body) });
-    } catch (err) { throw new Error("无法连接 Worker，请检查地址和网络。"); }
-    let data;
-    try { data = await response.json(); } catch { data = {}; }
+      timeoutId = window.setTimeout(() => controller.abort(), timeout);
+      response = await fetch(base + path, {
+        ...requestOptions,
+        headers,
+        signal: controller.signal,
+        body: requestOptions.body === undefined || typeof requestOptions.body === "string" || requestOptions.body instanceof FormData
+          ? requestOptions.body
+          : JSON.stringify(requestOptions.body)
+      });
+      try {
+        data = await response.json();
+      } catch (err) {
+        if (controller.signal.aborted) throw err;
+        invalidJson = true;
+      }
+    } catch (err) {
+      if (controller.signal.aborted || err?.name === "AbortError") {
+        throw new Error("请求超时（" + Math.round(timeout / 1000) + " 秒），未收到 Worker 完整响应。请检查 Worker 地址、网络或服务状态后重试。");
+      }
+      throw new Error("无法连接 Worker，请检查地址、网络和跨域配置。");
+    } finally {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    }
+
+    if (invalidJson) {
+      if (!response.ok) data = {};
+      else throw new Error("Worker 返回了无效响应，请检查 Worker 地址和后端部署状态。");
+    }
     if (response.status === 401 && path !== "/admin/login") {
       logout(false);
       throw new Error("登录会话已过期，请重新登录。");
@@ -401,9 +436,13 @@ table{min-width:0}
     else button.textContent = button.dataset.label;
   }
   async function enterAdmin() {
-    const data = await api("/admin/settings", { method: "GET" });
+    // Fetch the initial configuration together to shorten the post-login wait.
+    const [data, promptDefaults] = await Promise.all([
+      api("/admin/settings", { method: "GET" }),
+      api("/admin/defaults", { method: "GET" })
+    ]);
     settings = data;
-    defaults = await api("/admin/defaults", { method: "GET" });
+    defaults = promptDefaults;
     populateSettings();
     renderStats();
     renderPromptEditor(true);
@@ -428,17 +467,40 @@ table{min-width:0}
     setBusy(button, true, "正在验证…");
     status("loginStatus", "");
     try {
-      localStorage.setItem(WORKER_KEY, workerUrl());
-      const data = await api("/admin/login", { method: "POST", noAuth: true, body: { password: $("password").value } });
+      const base = workerUrl();
+      if (!base) throw new Error("Worker 地址无效，请检查是否为正确的 HTTPS 地址。");
+      localStorage.setItem(WORKER_KEY, base);
+
+      const data = await api("/admin/login", {
+        method: "POST",
+        noAuth: true,
+        timeoutMs: 12000,
+        body: { password: $("password").value }
+      });
+      if (!data || typeof data.token !== "string" || !data.token) {
+        throw new Error("Worker 未返回有效会话令牌，请检查后端部署版本。");
+      }
       token = data.token;
       sessionStorage.setItem(TOKEN_KEY, token);
-      sessionStorage.setItem(TOKEN_WORKER_KEY, workerUrl());
+      sessionStorage.setItem(TOKEN_WORKER_KEY, base);
+
+      setBusy(button, true, "正在加载管理配置…");
+      status("loginStatus", "密码已验证，正在加载管理配置…");
+      try {
+        await enterAdmin();
+      } catch (error) {
+        // Do not leave a half-initialized session behind. The timeout/error is shown
+        // and the button is restored so the user can correct the connection and retry.
+        logout(false);
+        throw error;
+      }
       $("password").value = "";
-      await enterAdmin();
       showToast("验证成功");
     } catch (error) {
-      status("loginStatus", error.message, "error");
-    } finally { setBusy(button, false); }
+      status("loginStatus", error.message || "验证失败，请检查 Worker 地址和网络后重试。", "error");
+    } finally {
+      setBusy(button, false);
+    }
   });
   $("logout").addEventListener("click", () => logout());
   document.querySelectorAll("[data-tab]").forEach(button => button.addEventListener("click", () => activateTab(button.dataset.tab)));
@@ -1278,6 +1340,8 @@ html,body,button,input,select,textarea{
   var track = loader.querySelector("#zx-font-track");
   var fill = loader.querySelector("#zx-font-fill");
   var finished = false;
+  var fontAbort = new AbortController();
+  var fontTimeout = window.setTimeout(function(){ fontAbort.abort(); }, 45000);
 
   function setProgress(loaded, total) {
     if (total > 0) {
@@ -1312,7 +1376,7 @@ html,body,button,input,select,textarea{
 
   async function loadFont() {
     try {
-      var response = await fetch(url, { cache: "force-cache", credentials: "same-origin" });
+      var response = await fetch(url, { cache: "force-cache", credentials: "same-origin", signal: fontAbort.signal });
       if (!response.ok) throw new Error("Font request failed: " + response.status);
       var total = Number(response.headers.get("content-length")) || 0;
       var chunks = [];
@@ -1355,12 +1419,26 @@ html,body,button,input,select,textarea{
       await face.load();
       document.fonts.add(face);
       finished = true;
+      window.clearTimeout(fontTimeout);
       state.textContent = "字体已就绪";
       fill.style.width = "100%";
       track.setAttribute("aria-valuenow", "100");
       window.setTimeout(hideLoader, 500);
     } catch (error) {
-      reportError();
+      window.clearTimeout(fontTimeout);
+      if (fontAbort.signal.aborted) {
+        if (!finished) {
+          finished = true;
+          loader.classList.remove("zx-font-indeterminate");
+          loader.classList.add("zx-font-error");
+          fill.style.width = "100%";
+          track.removeAttribute("aria-valuenow");
+          state.textContent = "加载超时，使用备用字体";
+          window.setTimeout(hideLoader, 2600);
+        }
+      } else {
+        reportError();
+      }
       if (window.console && console.warn) console.warn("[OPPO Sans 4.0] Font loading failed; fallback fonts remain active.", error);
     }
   }
