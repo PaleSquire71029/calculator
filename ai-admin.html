@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f8fbff">
-<title>知行 AI · 后端管理</title>
+<title>知行学习产品 · 后端管理</title>
 <style>
 :root{color-scheme:light;--ink:#202938;--muted:#718096;--line:#e1e7f0;--paper:rgba(255,255,255,.82);--blue:#4169e1;--blue2:#7192f4;--mint:#dff7ed;--gold:#d8b878;--danger:#c44747;--shadow:0 16px 45px rgba(46,66,110,.09)}
 *{box-sizing:border-box}
@@ -171,13 +171,13 @@ table{min-width:0}
 <div class="wrap">
   <header class="top">
     <div class="logo" aria-hidden="true">知</div>
-    <div class="brand"><strong>知行 AI 管理中心</strong><span>后端配置 · 提示词实验室 · 服务监测</span></div>
+    <div class="brand"><strong>知行学习产品 · 后端管理</strong><span>知行计算器 AI 版 + 知行AI学习版 · 共用配置</span></div>
     <div class="top-right"><span class="pill"><span class="dot"></span>安全管理</span></div>
   </header>
 
   <section id="login" class="glass login">
     <div class="eyebrow">ADMIN CONSOLE</div>
-    <h1 class="h1">管理 AI 服务</h1>
+    <h1 class="h1">管理学习产品 AI 服务</h1>
     <p class="lead">统一配置模型供应商、模型列表、提示词和调用状态。密钥仅发送至你的 Worker，不会回显到页面。</p>
     <form id="loginForm" class="stack" style="margin-top:24px">
       <div class="field"><label for="workerUrl">AI Worker 地址</label><input id="workerUrl" type="url" inputmode="url" value="https://zhixing-calculator-ai.xiaoshirong2023.workers.dev" required autocomplete="url"><div class="hint">需为已部署的知行 AI Worker 地址。</div></div>
@@ -382,7 +382,8 @@ table{min-width:0}
     let invalidJson = false;
     try {
       timeoutId = window.setTimeout(() => controller.abort(), timeout);
-      response = await fetch(base + path, {
+      const scopedPath = path + (path.includes("?") ? "&" : "?") + "app=learning";
+      response = await fetch(base + scopedPath, {
         ...requestOptions,
         headers,
         signal: controller.signal,
