@@ -276,9 +276,16 @@ export default {
         redirect: "error",
         signal: AbortSignal.timeout(90000)
       });
-    } catch {
+    } catch (error) {
       await adminModule.recordRequest(env, { mode, ok: false, status: 502, model: runtime.model });
-      return json({ error: "无法连接模型服务，请检查 API 地址和网络后重试。" }, 502, cors);
+      const cause = error && typeof error === "object" ? error.cause : null;
+      let detail = String(cause?.code || cause?.message || error?.message || error?.name || "未知网络错误")
+        .replace(/\s+/g, " ").slice(0, 160);
+      detail = detail.split(runtime.apiKey).join("[已隐藏]").replace(/Bearer\s+\S+/gi, "Bearer [已隐藏]");
+      return json({
+        error: "无法连接模型服务（" + base.hostname + "）。网络原因：" + detail +
+          "。请检查 API 地址、Worker 出网/DNS/TLS 与服务商状态。"
+      }, 502, cors);
     }
     const upstreamContentType = upstream.headers.get("Content-Type") || "";
     if (wantsStream && upstream.ok && upstream.body && upstreamContentType.includes("text/event-stream")) {

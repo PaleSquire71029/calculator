@@ -32,7 +32,8 @@ Worker 使用一个 SQLite-backed Durable Object 保存后台配置与调用统�
 - **模型与 API**：编辑 OpenAI 兼容 API 根地址、API Key、模型 ID、Temperature 和最大输出 Token；提供 OpenAI、DeepSeek、SiliconFlow、ModelScope 常用地址预设，以及“保存并测试”一键操作和未保存修改提醒。
 - **提示词草稿**：可导入/导出单个提示词；编辑中的提示词草稿可暂存于当前浏览器并在误操作后恢复，保存后才会应用。
 - **统计维护**：调用记录可按成功/失败、模型、场景或 HTTP 状态筛选，并导出 CSV；管理员可清空累计统计和最近 20 条元数据，不影响模型配置与提示词。
-- **自动获取模型列表**：使用当前 API 地址和密钥调用 `GET /models`，支持常见 OpenAI 兼容返回格式；若服务商不实现该接口，可以直接手动填写模型 ID。
+- **自动获取模型列表**：使用当前 API 地址和密钥调用 `GET /models`，支持常见 OpenAI 兼容返回格式；A6API 根地址会自动补全 `/v1`。
+- **A6API 余额**：查询 `GET /dashboard/billing/subscription` 的 `hard_limit_usd` 与 `GET /api/usage/token/` 的 Token 用量字段，按额度比例换算美元；只会向规范的 `api.a6api.com` 主机发送查询，并拒绝重定向。
 - **查看已保存 Token**：需管理员主动点击，接口单独限流；普通设置响应不会携带明文密钥。
 - **Token 额度查询**：尝试查询 New API 兼容的 `GET /api/usage/token/`，展示 Token 的总额度、已用与剩余额度；这不是所有供应商的账户钱包余额，服务商不支持该接口时会显示明确错误。
 - **连接测试**：发起一次短回复请求，返回 HTTP 错误、响应耗时与模型预览。
@@ -46,7 +47,7 @@ Worker 使用一个 SQLite-backed Durable Object 保存后台配置与调用统�
 
 `AI_MODEL` 和 `AI_API_KEY` 的 Worker 原有变量/Secret 继续作为默认值；管理页面保存的配置优先使用。密钥输入框留空表示不修改现有密钥；“改用 Worker Secret”会清除后台保存的自定义 Key 并回退至 `AI_API_KEY`。
 
-模型列表通过 `GET /models` 获取，这是 OpenAI 兼容接口的常见行为，但部分服务商可能禁用该接口或使用不同响应格式；页面会显示错误原因，此时可以手动输入模型 ID，使用“测试连接”确认权限。Token 额度查询使用 New API 兼容的 `/api/usage/token/`，不是标准 OpenAI 接口；实际账户钱包余额是否可查，取决于供应商是否提供对应 API。
+模型列表通过 `GET /models` 获取，这是 OpenAI 兼容接口的常见行为，但部分服务商可能禁用该接口或使用不同响应格式；页面会显示目标主机和安全化后的网络原因。A6API 根地址应使用 `https://api.a6api.com/v1`；即使误填 `https://api.a6api.com`，Worker 也会自动补全 `/v1`。A6API 余额基于订阅硬额度和 Token 额度计算；接口不可用、权限不足或返回不一致数据时会显示错误，不会推测余额。
 
 ## 4. 安全基线
 

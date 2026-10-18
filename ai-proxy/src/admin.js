@@ -111,6 +111,7 @@ export function normalizeApiBaseUrl(value) {
     throw new Error("API 地址不能指向本机或内网域名");
   }
   url.pathname = url.pathname.replace(/\/+(chat\/completions|models)\/?$/i, "").replace(/\/+$/, "") || "/";
+  if (host === "api.a6api.com" && url.pathname === "/") url.pathname = "/v1";
   url.search = "";
   url.hash = "";
   return url.toString().replace(/\/$/, "");
@@ -148,7 +149,16 @@ export async function readResponseTextLimited(response, maxBytes = 2 * 1024 * 10
   }
 }
 
-function json(data, status = 200, headers = {}) {
+function describeFetchFailure(error, apiKey = "") {
+  const cause = error && typeof error === "object" ? error.cause : null;
+  let detail = String(cause?.code || cause?.message || error?.message || error?.name || "未知网络错误")
+    .replace(/\s+/g, " ").slice(0, 180);
+  if (apiKey) detail = detail.split(apiKey).join("[已隐藏]");
+  detail = detail.replace(/Bearer\s+\S+/gi, "Bearer [已隐藏]");
+  return detail || "未知网络错误";
+}
+
+function json(data, status = 200, headers = {})
   return new Response(JSON.stringify(data), {
     status,
     headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...headers }
@@ -437,105 +447,96 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       const apiKey = typeof parsed.data.apiKey === "string" && parsed.data.apiKey.trim()
         ? parsed.data.apiKey.trim() : runtime.apiKey;
       if (!apiKey) return json({ error: "请先配置 API Token。" }, 400, cors);
-      const rootUrl = new URL(apiBaseUrl);
-      rootUrl.pathname = rootUrl.pathname.replace(/\/v1\/?$/i, "") || "/";
-      rootUrl.search = "";
-      rootUrl.hash = "";
-      const root = rootUrl.toString().replace(/\/$/, "");
-      let quota = null;
-      let lastStatus = 0;
-      let lastMessage = "";
-      for (const path of ["/api/usage/token/", "/api/usage/token"]) {
-        let response;
-        try {
-          response = await fetch(root + path, {
-            method: "GET",
-            headers: { "Authorization": "Bearer " + apiKey, "Accept": "application/json" },
-            redirect: "error",
-            signal: AbortSignal.timeout(12000)
-          });
-        } catch {
-          return json({ error: "余额接口无法连接。请确认该服务商支持 /api/usage/token/ 查询接口。" }, 502, cors);
-        }
-        lastStatus = response.status;
-        const body = await readResponseTextLimited(response, 256 * 1024);
-        if (body.error) return json({ error: "余额接口响应无法读取。" }, 502, cors);
-        let result;
-        try { result = JSON.parse(body.text); }
-        catch { result = null; }
-        if (response.ok && result && typeof result === "object") {
-          const nested = result.data && typeof result.data === "object" ? result.data : result;
-          const number = (...keys) => {
-            for (const key of keys) {
-              const raw = nested[key];
-              if (raw === undefined || raw === null || raw === "") continue;
-              const value = Number(raw);
-              if (Number.isFinite(value)) return value;
-            }
-            return null;
-          };
-          const totalUsed = number("total_used", "used_quota", "used");
-          const totalGranted = number("total_granted", "total_quota") ??
-            (totalUsed !== null ? number("quota", "total") : null);
-          const totalAvailable = number("total_available", "available_quota", "remaining", "balance") ??
-            (totalGranted !== null && totalUsed !== null ? Math.max(0, totalGranted - totalUsed) : null);
-          const unlimited = nested.unlimited_quota === true || nested.unlimited === true ||
-            nested.unlimited_quota === 1 || nested.unlimited === 1;
-          if (unlimited || totalAvailable !== null || totalUsed !== null || totalGranted !== null) {
-            quota = {
-              name: typeof nested.name === "string" ? nested.name.slice(0, 100) : "",
-              unlimited,
-              totalGranted,
-              totalUsed,
-              totalAvailable,
-              expiresAt: Number(nested.expires_at) > 0 ? Number(nested.expires_at) : null
-            };
-            break;
-          }
-          lastMessage = typeof result.message === "string" ? result.message : "余额接口返回成功，但响应中没有可识别的额度字段";
-          break;
-        }
-        lastMessage = String(result?.error?.message || result?.message || result?.msg || "服务商未提供兼容的 Token 额度接口").slice(0, 300);
-        if (response.status !== 404 && response.status !== 405) break;
+      if (new URL(apiBaseUrl).hostname.toLowerCase() !== "api.a6api.com") {
+        return json({ error: "当前不是 A6API API 地址。余额查询仅支持 https://api.a6api.com/v1；请先切换服务商或手动查看其他服务商的控制台。" }, 400, cors);
       }
-      if (!quota) {
-        if (lastStatus === 401 || lastStatus === 403) {
-          return json({ error: "余额查询被服务商拒绝（HTTP " + lastStatus + "）。请确认这个 API Token 有效，且服务商支持额度查询。" }, 502, cors);
-        }
-        return json({ error: "无法获取余额（HTTP " + lastStatus + "）：" + lastMessage }, 502, cors);
-      }
-      let quotaPerUnit = null;
-      let currencySymbol = "";
-      let currencyEnabled = true;
+      const headers = { "Authorization": "Bearer " + apiKey, "Accept": "application/json" };
+      let subscriptionResponse, tokenResponse;
       try {
-        const statusResponse = await fetch(root + "/api/status", {
-          headers: { "Accept": "application/json" }, redirect: "error", signal: AbortSignal.timeout(8000)
-        });
-        if (statusResponse.ok) {
-          const statusBody = await readResponseTextLimited(statusResponse, 128 * 1024);
-          if (!statusBody.error) {
-            const statusData = JSON.parse(statusBody.text);
-            const detail = statusData?.data && typeof statusData.data === "object" ? statusData.data : statusData;
-            const ratio = Number(detail?.quota_per_unit);
-            if (Number.isFinite(ratio) && ratio > 0) quotaPerUnit = ratio;
-            currencySymbol = String(detail?.display_in_currency_symbol || detail?.currency_symbol || "").slice(0, 8);
-            if (detail?.display_in_currency === false || detail?.display_in_currency === 0) currencyEnabled = false;
-          }
-        }
-      } catch { /* quota points remain available even when public status isn't supported */ }
-      const monetaryUnit = currencySymbol || "$";
+        [subscriptionResponse, tokenResponse] = await Promise.all([
+          fetch("https://api.a6api.com/dashboard/billing/subscription", {
+            headers, redirect: "error", signal: AbortSignal.timeout(12000)
+          }),
+          fetch("https://api.a6api.com/api/usage/token/", {
+            headers, redirect: "error", signal: AbortSignal.timeout(12000)
+          })
+        ]);
+      } catch (error) {
+        return json({
+          error: "连接 A6API 额度接口失败。网络原因：" + describeFetchFailure(error, apiKey) +
+            "。请求已固定到官方 API 主机，且不会跟随重定向。"
+        }, 502, cors);
+      }
+      const [subscriptionRead, tokenRead] = await Promise.all([
+        readResponseTextLimited(subscriptionResponse, 256 * 1024),
+        readResponseTextLimited(tokenResponse, 256 * 1024)
+      ]);
+      if (subscriptionRead.error || tokenRead.error) return json({ error: "A6API 额度响应无法读取。" }, 502, cors);
+      let subscriptionBody, tokenBody;
+      try { subscriptionBody = JSON.parse(subscriptionRead.text); } catch { subscriptionBody = null; }
+      try { tokenBody = JSON.parse(tokenRead.text); } catch { tokenBody = null; }
+      const providerMessage = body => {
+        const nested = body?.data && typeof body.data === "object" ? body.data : body;
+        return String(nested?.error?.message || nested?.message || nested?.msg || body?.message || "").slice(0, 180);
+      };
+      if (!subscriptionResponse.ok || !tokenResponse.ok) {
+        const parts = [];
+        if (!subscriptionResponse.ok) parts.push("订阅限额接口 HTTP " + subscriptionResponse.status + (providerMessage(subscriptionBody) ? "：" + providerMessage(subscriptionBody) : ""));
+        if (!tokenResponse.ok) parts.push("Token 用量接口 HTTP " + tokenResponse.status + (providerMessage(tokenBody) ? "：" + providerMessage(tokenBody) : ""));
+        return json({
+          error: "A6API 余额查询失败：" + parts.join("；") +
+            "。请确认该 Token 有效且 A6API 账户接口可用；若是 401/403，请重新核对密钥。"
+        }, 502, cors);
+      }
+      const subscription = subscriptionBody?.data && typeof subscriptionBody.data === "object" ? subscriptionBody.data : subscriptionBody;
+      const tokenUsage = tokenBody?.data && typeof tokenBody.data === "object" ? tokenBody.data : tokenBody;
+      if (!subscription || typeof subscription !== "object" || !tokenUsage || typeof tokenUsage !== "object") {
+        return json({ error: "A6API 额度接口返回格式无法识别，请检查服务商状态。" }, 502, cors);
+      }
+      if (subscriptionBody?.success === false || tokenBody?.success === false ||
+          subscriptionBody?.code === false || tokenBody?.code === false) {
+        return json({ error: "A6API 拒绝了额度查询：" + (providerMessage(tokenBody) || providerMessage(subscriptionBody) || "请核对 API Token 权限。") }, 502, cors);
+      }
+      const readNumber = (record, key) => {
+        const raw = record?.[key];
+        if (raw === undefined || raw === null || raw === "") return null;
+        const value = Number(raw);
+        return Number.isFinite(value) ? value : null;
+      };
+      const unlimitedValue = tokenUsage.unlimited_quota;
+      const unlimited = unlimitedValue === true || unlimitedValue === 1 || unlimitedValue === "true";
+      const expiryRaw = Number(tokenUsage.expires_at);
+      const expiresAt = Number.isFinite(expiryRaw) && expiryRaw > 0 ? expiryRaw : null;
+      const name = typeof tokenUsage.name === "string" ? tokenUsage.name.slice(0, 100) : "";
+      if (unlimited) {
+        return json({
+          ok: true, provider: "A6API", name, unlimited: true,
+          totalGranted: null, totalUsed: null, totalAvailable: null,
+          hardLimitUsd: readNumber(subscription, "hard_limit_usd"),
+          usedUsd: null, availableUsd: null, currencySymbol: "$", expiresAt
+        }, 200, cors);
+      }
+      const hardLimitUsd = readNumber(subscription, "hard_limit_usd");
+      const totalGranted = readNumber(tokenUsage, "total_granted");
+      const totalUsed = readNumber(tokenUsage, "total_used");
+      const totalAvailable = readNumber(tokenUsage, "total_available");
+      if (hardLimitUsd === null || hardLimitUsd <= 0 ||
+          totalGranted === null || totalGranted <= 0 ||
+          totalUsed === null || totalUsed < 0 ||
+          totalAvailable === null || totalAvailable < 0) {
+        return json({ error: "A6API 额度数据不完整：缺少 hard_limit_usd 或 Token 总额/已用/可用字段，无法可靠计算余额。" }, 502, cors);
+      }
+      const tolerance = Math.abs(totalGranted) * 1e-9;
+      if (Math.abs((totalUsed + totalAvailable) - totalGranted) > tolerance) {
+        return json({ error: "A6API 返回的总额度、已用与剩余额度不一致，已停止显示可能有误的余额。" }, 502, cors);
+      }
+      const usdPerQuotaUnit = hardLimitUsd / totalGranted;
       return json({
-        ok: true,
-        provider: rootUrl.hostname,
-        name: quota.name,
-        unlimited: quota.unlimited,
-        totalGranted: quota.totalGranted,
-        totalUsed: quota.totalUsed,
-        totalAvailable: quota.totalAvailable,
-        expiresAt: quota.expiresAt,
-        quotaPerUnit,
-        currencySymbol: monetaryUnit,
-        currencyEnabled: Boolean(quotaPerUnit && currencyEnabled)
+        ok: true, provider: "A6API", name, unlimited: false,
+        totalGranted, totalUsed, totalAvailable, hardLimitUsd,
+        usedUsd: totalUsed * usdPerQuotaUnit,
+        availableUsd: totalAvailable * usdPerQuotaUnit,
+        currencySymbol: "$", expiresAt
       }, 200, cors);
     }
     if (url.pathname === "/admin/stats/reset" && request.method === "POST") {
@@ -624,7 +625,13 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
           redirect: "error",
           signal: AbortSignal.timeout(20000)
         });
-      } catch { return json({ error: "无法连接模型列表接口，请检查 API 地址和网络" }, 502, cors); }
+      } catch (error) {
+        const host = new URL(apiBaseUrl).hostname;
+        return json({
+          error: "无法连接模型列表接口（" + host + "）。网络原因：" +
+            describeFetchFailure(error, apiKey) + "。请核对 API 根地址，并检查 Worker 出网、DNS/TLS 与服务商状态。"
+        }, 502, cors);
+      }
       const responseText = await readResponseTextLimited(response, 1024 * 1024);
       if (responseText.error) return json({ error: "模型列表响应体过大或无法读取。" }, 502, cors);
       let result;
@@ -676,7 +683,15 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
           redirect: "error",
           signal: AbortSignal.timeout(25000)
         });
-      } catch { return json({ ok: false, elapsedMs: Date.now() - start, error: "连接失败：无法连接模型服务，请检查地址和网络" }, 502, cors); }
+      } catch (error) {
+        const host = new URL(apiBaseUrl).hostname;
+        return json({
+          ok: false,
+          elapsedMs: Date.now() - start,
+          error: "连接失败（" + host + "）。网络原因：" + describeFetchFailure(error, apiKey) +
+            "。请检查 API 根地址、Worker 出网/DNS/TLS，以及服务商是否发生重定向。"
+        }, 502, cors);
+      }
       const responseText = await readResponseTextLimited(response, 256 * 1024);
       if (responseText.error) return json({ ok: false, elapsedMs: Date.now() - start, error: "测试响应体过大或无法读取。" }, 502, cors);
       let result;

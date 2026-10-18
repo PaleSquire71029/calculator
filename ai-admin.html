@@ -231,7 +231,7 @@ table{min-width:0}
           <h2 class="panel-title">模型与 API</h2><p class="panel-desc">配置连接信息，保存后测试。</p>
           <div class="section-card">
             <div class="kv">
-              <div class="field wide"><label for="providerPreset">服务商快捷预设</label><select id="providerPreset"><option value="custom">自定义 / 不修改地址</option><option value="openai">OpenAI 兼容 · OpenAI</option><option value="deepseek">DeepSeek</option><option value="siliconflow">SiliconFlow</option><option value="modelscope">ModelScope API</option></select><div class="hint">只填入地址，不会更换密钥或模型。</div></div>
+              <div class="field wide"><label for="providerPreset">服务商快捷预设</label><select id="providerPreset"><option value="custom">自定义 / 不修改地址</option><option value="a6api">A6API</option><option value="openai">OpenAI 兼容 · OpenAI</option><option value="deepseek">DeepSeek</option><option value="siliconflow">SiliconFlow</option><option value="modelscope">ModelScope API</option></select><div class="hint">只填入地址，不会更换密钥或模型。</div></div>
               <div class="field wide"><label for="apiBaseUrl">API 根地址</label><input id="apiBaseUrl" type="url" placeholder="https://api.example.com/v1" autocomplete="url" required><div class="hint">填写 HTTPS 根地址。</div></div>
               <div class="field wide"><label for="apiKey">API Key</label><input id="apiKey" type="password" autocomplete="new-password" placeholder="留空表示不修改已保存的 Token" spellcheck="false"><div id="keyState" class="key-state missing">读取密钥状态中…</div><div class="hint">留空不修改。查看 Token 需要主动点击下方按钮。</div><div class="actions key-reveal-actions" style="margin-top:8px"><button class="btn" id="viewSavedToken" type="button">查看已保存 Token</button></div><div id="keyRevealPanel" class="key-reveal-panel" hidden><div class="field"><label for="revealedKey">已保存的 Token</label><input id="revealedKey" type="text" readonly autocomplete="off" spellcheck="false"></div><div class="actions"><button class="btn" id="copyRevealedKey" type="button">复制 Token</button><button class="btn" id="hideRevealedKey" type="button">隐藏</button></div></div>
               <div class="field wide"><label for="model">模型名称 / Model ID</label><div class="row"><input style="flex:1.6" id="model" list="modelOptions" placeholder="例如 gpt-6-luna" required><datalist id="modelOptions"></datalist><button class="btn" id="fetchModels" type="button">↻ 获取模型列表</button></div><div id="modelsStatus" class="hint">可直接输入模型 ID，也可以自动获取。</div></div>
@@ -239,7 +239,7 @@ table{min-width:0}
               <div class="field"><label for="maxTokens">最大输出 Token</label><input id="maxTokens" type="number" min="0" max="32768" step="1" value="0"><div class="hint">0 = 使用服务商默认值。</div></div>
             </div>
             <div class="section-card balance-card" style="margin-top:14px">
-              <div class="balance-head"><div><strong>API Token 额度</strong><div class="hint">查询当前密钥的可用额度；需服务商支持兼容额度接口。</div></div><button class="btn" id="refreshBalance" type="button">查询余额</button></div>
+              <div class="balance-head"><div><strong>A6API 账户额度</strong><div class="hint">由订阅硬额度与当前 Token 用量换算。</div></div><button class="btn" id="refreshBalance" type="button">查询余额</button></div>
               <div id="balanceValues" class="balance-grid" hidden><div class="balance-item"><span>可用额度</span><strong id="balanceRemaining">—</strong><small id="balanceRemainingMoney"></small></div><div class="balance-item"><span>已用额度</span><strong id="balanceUsed">—</strong><small>服务商返回</small></div><div class="balance-item"><span>总额度</span><strong id="balanceTotal">—</strong><small id="balanceExpires"></small></div></div>
               <div class="status" id="balanceStatus" role="status" aria-live="polite">点击“查询余额”获取最新额度。</div>
             </div>
@@ -508,6 +508,7 @@ table{min-width:0}
   ["apiBaseUrl","model","temperature","maxTokens","apiKey"].forEach(id => $(id).addEventListener("input", markSettingsDirty));
   $("providerPreset").addEventListener("change", () => {
     const presets = {
+      a6api: "https://api.a6api.com/v1",
       openai: "https://api.openai.com/v1",
       deepseek: "https://api.deepseek.com/v1",
       siliconflow: "https://api.siliconflow.cn/v1",
@@ -664,28 +665,33 @@ table{min-width:0}
     $("viewSavedToken").textContent = "查看已保存 Token";
   });
   function displayQuota(value) {
-    return value === null || value === undefined ? "服务商未返回" : Number(value).toLocaleString("zh-CN", { maximumFractionDigits: 2 });
+    return value === null || value === undefined ? "—" : Number(value).toLocaleString("zh-CN", { maximumFractionDigits: 2 });
+  }
+  function displayUsd(value) {
+    return value === null || value === undefined || !Number.isFinite(Number(value))
+      ? "—"
+      : "$" + Number(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   $("refreshBalance").addEventListener("click", async () => {
     setBusy($("refreshBalance"), true, "查询中…");
     $("balanceValues").hidden = true;
-    status("balanceStatus", "正在查询 Token 额度…");
+    status("balanceStatus", "正在查询 A6API 账户与 Token 额度…");
     try {
       const data = await api("/admin/balance", { method: "POST", body: {
         apiBaseUrl: $("apiBaseUrl").value.trim(),
         apiKey: $("apiKey").value.trim()
       }});
       $("balanceValues").hidden = false;
-      $("balanceRemaining").textContent = data.unlimited ? "无限额度" : displayQuota(data.totalAvailable) + " 点";
-      $("balanceUsed").textContent = displayQuota(data.totalUsed) + " 点";
-      $("balanceTotal").textContent = data.unlimited ? "无限额度" : displayQuota(data.totalGranted) + " 点";
-      $("balanceRemainingMoney").textContent = !data.unlimited && data.currencyEnabled && data.totalAvailable !== null
-        ? "约 " + data.currencySymbol + (data.totalAvailable / data.quotaPerUnit).toFixed(2) + "（按站点比例）"
-        : (data.unlimited ? "此 Token 不限制总额度" : "额度单位由服务商决定");
+      $("balanceRemaining").textContent = data.unlimited ? "无限额度" : displayUsd(data.availableUsd);
+      $("balanceUsed").textContent = data.unlimited ? "—" : displayUsd(data.usedUsd);
+      $("balanceTotal").textContent = data.unlimited ? "无限额度" : displayUsd(data.hardLimitUsd);
+      $("balanceRemainingMoney").textContent = data.unlimited
+        ? "此 Token 不限制额度"
+        : "剩余 " + displayQuota(data.totalAvailable) + " / " + displayQuota(data.totalGranted) + " 额度点";
       $("balanceExpires").textContent = data.expiresAt
-        ? "到期 " + new Date(data.expiresAt * 1000).toLocaleDateString()
-        : "未提供到期时间";
-      status("balanceStatus", (data.name ? "Token：" + data.name + " · " : "") + "额度已更新。", "success");
+        ? "Token 到期 " + new Date(data.expiresAt * 1000).toLocaleDateString()
+        : "Token 未设置到期时间";
+      status("balanceStatus", (data.name ? "Token：" + data.name + " · " : "") + "A6API 额度已更新。", "success");
     } catch (e) {
       status("balanceStatus", e.message, "error");
     } finally { setBusy($("refreshBalance"), false); }
