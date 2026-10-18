@@ -234,7 +234,20 @@ table{min-width:0}
               <div class="field wide"><label for="providerPreset">服务商快捷预设</label><select id="providerPreset"><option value="custom">自定义 / 不修改地址</option><option value="a6api">A6API</option><option value="openai">OpenAI 兼容 · OpenAI</option><option value="deepseek">DeepSeek</option><option value="siliconflow">SiliconFlow</option><option value="modelscope">ModelScope API</option></select><div class="hint">只填入地址，不会更换密钥或模型。</div></div>
               <div class="field wide"><label for="apiBaseUrl">API 根地址</label><input id="apiBaseUrl" type="url" placeholder="https://api.example.com/v1" autocomplete="url" required><div class="hint">填写 HTTPS 根地址。</div></div>
               <div class="field wide"><label for="apiKey">API Key</label><input id="apiKey" type="password" autocomplete="new-password" placeholder="留空表示不修改已保存的 Token" spellcheck="false"><div id="keyState" class="key-state missing">读取密钥状态中…</div><div class="hint">留空不修改。查看 Token 需要主动点击下方按钮。</div><div class="actions key-reveal-actions" style="margin-top:8px"><button class="btn" id="viewSavedToken" type="button">查看已保存 Token</button></div><div id="keyRevealPanel" class="key-reveal-panel" hidden><div class="field"><label for="revealedKey">已保存的 Token</label><input id="revealedKey" type="text" readonly autocomplete="off" spellcheck="false"></div><div class="actions"><button class="btn" id="copyRevealedKey" type="button">复制 Token</button><button class="btn" id="hideRevealedKey" type="button">隐藏</button></div></div>
-              <div class="field wide"><label for="model">模型名称 / Model ID</label><div class="row"><input style="flex:1.6" id="model" list="modelOptions" placeholder="例如 gpt-6-luna" required><datalist id="modelOptions"></datalist><button class="btn" id="fetchModels" type="button">↻ 获取模型列表</button></div><div id="modelsStatus" class="hint">可直接输入模型 ID，也可以自动获取。</div></div>
+              <div class="field wide">
+                <label for="modelPicker">选择模型</label>
+                <div class="row">
+                  <select id="modelPicker" class="control" aria-label="已获取的模型列表">
+                    <option value="">请先获取模型列表</option>
+                  </select>
+                  <button class="btn" id="fetchModels" type="button">↻ 获取模型列表</button>
+                </div>
+                <div class="field" style="margin-top:8px">
+                  <label for="model">模型 ID（也可手动输入）</label>
+                  <input id="model" placeholder="例如 deepseek-chat" required autocomplete="off" spellcheck="false">
+                </div>
+                <div id="modelsStatus" class="hint">获取模型后，使用上方下拉框选择；也可在下方输入框手动填写 Model ID。</div>
+              </div>
               <div class="field"><label for="temperature">Temperature：<span id="tempValue">0.2</span></label><input id="temperature" type="range" min="0" max="2" step="0.1" value="0.2"><div class="hint">越低越稳定。</div></div>
               <div class="field"><label for="maxTokens">最大输出 Token</label><input id="maxTokens" type="number" min="0" max="32768" step="1" value="0"><div class="hint">0 = 使用服务商默认值。</div></div>
             </div>
@@ -423,9 +436,33 @@ table{min-width:0}
     document.querySelectorAll("[data-panel]").forEach(panel => panel.classList.toggle("active", panel.dataset.panel === tab));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+  function renderModelPicker(selectedValue = "") {
+    const picker = $("modelPicker");
+    picker.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = models.length ? "请选择模型…" : "请先获取模型列表";
+    picker.append(placeholder);
+
+    const selected = String(selectedValue || "").trim();
+    if (selected && !models.includes(selected)) {
+      const current = document.createElement("option");
+      current.value = selected;
+      current.textContent = "当前/手动模型：" + selected;
+      picker.append(current);
+    }
+    models.forEach(id => {
+      const option = document.createElement("option");
+      option.value = id;
+      option.textContent = id;
+      picker.append(option);
+    });
+    picker.value = selected;
+  }
   function populateSettings() {
     $("apiBaseUrl").value = settings.apiBaseUrl || "";
     $("model").value = settings.model || "";
+    renderModelPicker($("model").value);
     $("temperature").value = String(settings.temperature ?? 0.2);
     $("tempValue").textContent = Number($("temperature").value).toFixed(1);
     $("maxTokens").value = String(settings.maxTokens ?? 0);
@@ -505,7 +542,19 @@ table{min-width:0}
     settingsDirty = true;
     status("draftStatus", "有未保存的配置修改。请保存，或使用“刷新数据”丢弃修改。", "warn");
   }
-  ["apiBaseUrl","model","temperature","maxTokens","apiKey"].forEach(id => $(id).addEventListener("input", markSettingsDirty));
+  ["apiBaseUrl","temperature","maxTokens","apiKey"].forEach(id => $(id).addEventListener("input", markSettingsDirty));
+  $("model").addEventListener("input", () => {
+    const picker = $("modelPicker");
+    const value = $("model").value.trim();
+    picker.value = Array.from(picker.options).some(option => option.value === value) ? value : "";
+    markSettingsDirty();
+  });
+  $("modelPicker").addEventListener("change", () => {
+    const value = $("modelPicker").value;
+    if (!value) return;
+    $("model").value = value;
+    markSettingsDirty();
+  });
   $("providerPreset").addEventListener("change", () => {
     const presets = {
       a6api: "https://api.a6api.com/v1",
@@ -700,12 +749,19 @@ table{min-width:0}
     const button=$("fetchModels");setBusy(button,true,"获取中…");status("providerStatus","");
     try {
       const data=await api("/admin/models",{method:"POST",body:{apiBaseUrl:$("apiBaseUrl").value.trim(),apiKey:$("apiKey").value}});
-      models=data.models||[];
-      const list=$("modelOptions");list.replaceChildren();
-      models.forEach(id=>{const opt=document.createElement("option");opt.value=id;list.append(opt);});
-      $("modelsStatus").textContent="已获取 "+models.length+" 个模型。点击输入框可选择；也可以手动输入。";
-      status("providerStatus",models.length?"模型列表已更新。":"接口成功，但没有返回可用的模型 ID。","success");
-      showToast("已获取模型列表");
+      models = Array.isArray(data.models) ? [...new Set(data.models.filter(id => typeof id === "string" && id.trim()).map(id => id.trim()))] : [];
+      renderModelPicker($("model").value);
+      $("modelsStatus").textContent = models.length
+        ? "已获取 " + models.length + " 个模型。点击上方下拉框即可选择；下方也支持手动输入。"
+        : "接口没有返回可识别的模型 ID，可在下方手动填写。";
+      status("providerStatus", models.length ? "模型列表已更新，可从下拉框选择。" : "接口成功，但没有返回可用的模型 ID。", models.length ? "success" : "warn");
+      if (models.length) {
+        const picker = $("modelPicker");
+        picker.focus({ preventScroll: true });
+        showToast("已获取模型列表，请点下拉框选择");
+      } else {
+        showToast("未找到可选模型，请手动输入");
+      }
     } catch(e) {
       $("modelsStatus").textContent="无法自动获取模型列表，可手动填写 Model ID。";
       status("providerStatus",e.message,"error");
