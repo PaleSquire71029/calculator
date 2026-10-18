@@ -230,6 +230,8 @@ test("calculator inline AI analysis script parses and chat panel is removed", ()
   assert.match(html, /\.zx-chem-keyboard,#chemKeyboard:not\(\[hidden\]\).*?background:rgba\(249,252,255,\.97\)!important/s);
   assert.match(html, /\.function-graph\{background:rgba\(255,255,255,\.94\)!important/);
   assert.match(html, /function setResultCollapsed\(panel,collapsed\)/);
+  assert.match(html, /window\.MathJax\.typesetClear\(\[node\]\)/);
+  assert.doesNotMatch(html, /if\(node\.querySelector\('mjx-container'\)\)return/);
   assert.match(html, /class="zx-ai-result-content"/);
   assert.match(html, /data-zx-ai-collapsed-preview/);
   assert.match(html, /setResultCollapsed\(panel,panel\.dataset\.collapsed!=='true'\)/);
@@ -244,6 +246,9 @@ test("AI frontend inline JavaScript parses without syntax errors", () => {
   const end = html.lastIndexOf("</script>");
   assert.ok(start >= 0 && end > start, "inline script must exist");
   assert.doesNotThrow(() => new Script(html.slice(start + 8, end)));
+  assert.match(html, /mathTypesetQueue=Promise\.resolve\(\)/);
+  assert.match(html, /window\.MathJax\.typesetClear\(\[node\]\)/);
+  assert.match(html, /cdnjs\.cloudflare\.com\/ajax\/libs\/mathjax/);
 });
 
 test("AI admin frontend inline JavaScript parses", () => {
