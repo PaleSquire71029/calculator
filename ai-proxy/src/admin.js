@@ -2,6 +2,24 @@ const ADMIN_SESSION_TTL_MS = 4 * 60 * 60 * 1000;
 const ADMIN_LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const ADMIN_LOGIN_MAX_ATTEMPTS = 8;
 const ENCRYPTED_KEY_PREFIX = "enc:v1:";
+const EMPTY_STATS = () => ({ totalRequests: 0, failedRequests: 0, promptTokens: 0, completionTokens: 0, totalTokens: 0, recent: [] });
+function normalizeAppId(value) { return value === "zhixing-ai" ? "zhixing-ai" : "learning"; }
+function readProfile(data, appId) {
+  const key = normalizeAppId(appId);
+  const profile = data?.apps?.[key];
+  if (profile && typeof profile === "object") return profile;
+  if (key === "learning") return { settings: data?.settings || {}, stats: data?.stats || EMPTY_STATS() };
+  return { settings: {}, stats: EMPTY_STATS() };
+}
+function writeProfile(data, appId, profile) {
+  const key = normalizeAppId(appId);
+  if (!data.apps || typeof data.apps !== "object" || Array.isArray(data.apps)) data.apps = {};
+  data.apps[key] = profile;
+  if (key === "learning") {
+    data.settings = profile.settings || {};
+    data.stats = profile.stats || EMPTY_STATS();
+  }
+}
 
 export async function readJsonLimited(request, maxBytes = 256 * 1024) {
   const declaredLength = request.headers.get("Content-Length");
@@ -264,22 +282,27 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     });
     if (!response.ok) throw new Error("无法读取管理设置存储");
     const data = await response.json();
-    // Migrate older plaintext custom keys to authenticated AES-GCM ciphertext on first read.
-    const savedKey = data?.settings?.apiKey;
-    if (data?.settings?.apiKeyMode === "custom" && typeof savedKey === "string" && savedKey.length > 0) {
+    // Migrate legacy and profile-specific custom keys to authenticated AES-GCM ciphertext.
+    const settingsToCheck = [
+      data?.settings,
+      ...Object.values(data?.apps || {}).map(profile => profile?.settings)
+    ].filter(settings => settings && typeof settings === "object");
+    let changed = false;
+    for (const settings of settingsToCheck) {
+      const savedKey = settings.apiKey;
+      if (settings.apiKeyMode !== "custom" || typeof savedKey !== "string" || !savedKey) continue;
       if (!savedKey.startsWith(ENCRYPTED_KEY_PREFIX)) {
-        // Upgrade legacy plaintext to encrypted storage.
-        data.settings.apiKey = await encryptApiKey(savedKey, env);
-        await writeData(env, data);
+        settings.apiKey = await encryptApiKey(savedKey, env);
+        changed = true;
       } else {
-        // Re-wrap ciphertext under the preferred secret if an older fallback key was used.
         const decrypted = await decryptApiKeyDetails(savedKey, env);
         if (decrypted.secretIndex > 0) {
-          data.settings.apiKey = await encryptApiKey(decrypted.value, env);
-          await writeData(env, data);
+          settings.apiKey = await encryptApiKey(decrypted.value, env);
+          changed = true;
         }
       }
     }
+    if (changed) await writeData(env, data);
     return data;
   }
   async function writeData(env, data) {
@@ -303,9 +326,10 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     }
     return output;
   }
-  async function buildRuntimeSettings(data, env) {
-    const saved = data?.settings || {};
-    const defaults = defaultPrompts();
+  async function buildRuntimeSettings(data, env, appId = "learning") {
+    const profile = readProfile(data, appId);
+    const saved = profile.settings || {};
+    const defaults = defaultPrompts(normalizeAppId(appId));
     const stored = saved.prompts || {};
     const apiKey = saved.apiKeyMode === "custom" && saved.apiKey
       ? await decryptApiKey(saved.apiKey, env)
@@ -325,7 +349,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       apiKeySource: saved.apiKeyMode === "custom" && saved.apiKey ? "custom" : (env.AI_API_KEY ? "worker" : "missing"),
       hasApiKey: Boolean(apiKey),
       updatedAt: saved.updatedAt || null,
-      stats: data?.stats || { totalRequests: 0, failedRequests: 0, promptTokens: 0, completionTokens: 0, recent: [] }
+      stats: profile.stats || EMPTY_STATS()
     };
   }
   function publicSettings(runtime) {
@@ -335,8 +359,8 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       prompts: runtime.prompts, updatedAt: runtime.updatedAt, stats: runtime.stats
     };
   }
-  async function getRuntimeSettings(env) {
-    return await buildRuntimeSettings(await readData(env), env);
+  async function getRuntimeSettings(env, appId = "learning") {
+    return await buildRuntimeSettings(await readData(env), env, normalizeAppId(appId));
   }
 
   async function checkRateLimit(env, key, limit, windowMs) {
@@ -358,11 +382,12 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       return { allowed: false, unavailable: true, retryAfter: 60 };
     }
   }
-  async function recordRequest(env, event) {
+  async function recordRequest(env, event, appId = "learning") {
     try {
       const data = await readData(env);
       if (!data) return;
-      const stats = data.stats || { totalRequests: 0, failedRequests: 0, promptTokens: 0, completionTokens: 0, totalTokens: 0, recent: [] };
+      const profile = readProfile(data, appId);
+      const stats = profile.stats || EMPTY_STATS();
       stats.totalRequests = (stats.totalRequests || 0) + 1;
       if (!event.ok) stats.failedRequests = (stats.failedRequests || 0) + 1;
       const toTokenCount = value => {
@@ -390,11 +415,13 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
         totalTokens,
         usageAvailable: Boolean(usage)
       }, ...(stats.recent || [])].slice(0, 20);
-      data.stats = stats;
+      profile.stats = stats;
+      writeProfile(data, appId, profile);
       await writeData(env, data);
     } catch { /* 统计不能中断主请求 */ }
   }
   async function handleRoute(request, env, url, cors) {
+    const appId = normalizeAppId(url.searchParams.get("app"));
     const origin = request.headers.get("Origin") || "";
     if (!origin || !getAllowedOrigins(env).includes(origin)) return json({ error: "该网页来源未获授权" }, 403, cors);
     if (!(url.pathname === "/admin/login" && request.method === "POST")) {
@@ -415,12 +442,12 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       return json({ token: await createToken(env), expiresIn: ADMIN_SESSION_TTL_MS }, 200, cors);
     }
     if (!await verifyToken(request, env)) return json({ error: "管理会话已失效，请重新登录" }, 401, cors);
-    if (url.pathname === "/admin/defaults" && request.method === "GET") return json(defaultPrompts(), 200, cors);
+    if (url.pathname === "/admin/defaults" && request.method === "GET") return json(defaultPrompts(appId), 200, cors);
     if (!env.ADMIN_STORE) return json({ error: "管理设置存储尚未部署，请检查 Worker 的 Durable Object 绑定" }, 503, cors);
     let data;
     try { data = await readData(env) || {}; } catch { return json({ error: "读取管理数据失败，请稍后重试" }, 500, cors); }
     if (url.pathname === "/admin/settings" && request.method === "GET") {
-      try { return json(publicSettings(await buildRuntimeSettings(data, env)), 200, cors); }
+      try { return json(publicSettings(await buildRuntimeSettings(data, env, appId)), 200, cors); }
       catch { return json({ error: "无法读取加密的 API Key。请检查加密密钥设置；若原密钥已丢失，需要重新保存 API Key。" }, 503, cors); }
     }
     if (url.pathname === "/admin/key/reveal" && request.method === "POST") {
@@ -432,7 +459,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
       if (parsed.data.confirm !== "REVEAL_KEY") return json({ error: "请在管理页面点击“查看已保存 Token”后重试。" }, 400, cors);
       let runtime;
-      try { runtime = await buildRuntimeSettings(data, env); }
+      try { runtime = await buildRuntimeSettings(data, env, appId); }
       catch { return json({ error: "无法读取已保存的 Token，请检查加密密钥设置。" }, 503, cors); }
       if (!runtime.apiKey) return json({ error: "当前没有已配置的 API Token。" }, 404, cors);
       return json({ apiKey: runtime.apiKey, source: runtime.apiKeySource }, 200, cors);
@@ -445,7 +472,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       const parsed = await readJsonLimited(request, 16384);
       if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
       let runtime;
-      try { runtime = await buildRuntimeSettings(data, env); }
+      try { runtime = await buildRuntimeSettings(data, env, appId); }
       catch { return json({ error: "无法读取已保存的 API Token，请检查加密密钥设置。" }, 503, cors); }
       let apiBaseUrl;
       try { apiBaseUrl = normalizeApiBaseUrl(parsed.data.apiBaseUrl || runtime.apiBaseUrl); }
@@ -564,7 +591,8 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       const parsed = await readJsonLimited(request, 4096);
       if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
       if (parsed.data.confirm !== "RESET_STATS") return json({ error: "确认字段不正确，未重置统计。" }, 400, cors);
-      data.stats = {
+      const profile = readProfile(data, appId);
+      profile.stats = {
         totalRequests: 0,
         failedRequests: 0,
         promptTokens: 0,
@@ -573,9 +601,10 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
         recent: [],
         resetAt: new Date().toISOString()
       };
+      writeProfile(data, appId, profile);
       try { await writeData(env, data); }
       catch { return json({ error: "统计重置失败，请检查管理存储是否正常。" }, 500, cors); }
-      return json({ ok: true, resetAt: data.stats.resetAt }, 200, cors);
+      return json({ ok: true, resetAt: profile.stats.resetAt }, 200, cors);
     }
     if (url.pathname === "/admin/settings" && request.method === "PUT") {
       const parsed = await readJsonLimited(request, 256 * 1024);
@@ -585,7 +614,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       try { apiBaseUrl = normalizeApiBaseUrl(body.apiBaseUrl); } catch (error) { return json({ error: error.message }, 400, cors); }
       const model = String(body.model || "").trim();
       if (!model || model.length > 200) return json({ error: "模型名称不能为空且不能超过 200 字符" }, 400, cors);
-      const defaults = defaultPrompts();
+      const defaults = defaultPrompts(appId);
       const pi = body.prompts || {};
       let prompts;
       try {
@@ -603,7 +632,8 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       if (!Number.isInteger(maxTokens) || maxTokens < 0 || maxTokens > 32768) return json({ error: "最大输出 Token 必须为 0 到 32768 的整数，0 表示不指定" }, 400, cors);
       const newKey = typeof body.apiKey === "string" ? body.apiKey.trim() : "";
       if (newKey.length > 1000) return json({ error: "API Key 长度无效" }, 400, cors);
-      const current = data.settings || {};
+      const profile = readProfile(data, appId);
+      const current = profile.settings || {};
       const next = { apiBaseUrl, model, temperature, maxTokens, prompts, updatedAt: new Date().toISOString() };
       if (body.clearSavedKey === true) {
         next.apiKey = ""; next.apiKeyMode = "worker";
@@ -614,9 +644,10 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       } else {
         next.apiKey = current.apiKey || ""; next.apiKeyMode = current.apiKeyMode || "worker";
       }
-      data.settings = next;
+      profile.settings = next;
+      writeProfile(data, appId, profile);
       try { await writeData(env, data); } catch { return json({ error: "保存失败，请检查管理存储是否正常" }, 500, cors); }
-      try { return json({ ok: true, settings: publicSettings(await buildRuntimeSettings(data, env)) }, 200, cors); }
+      try { return json({ ok: true, settings: publicSettings(await buildRuntimeSettings(data, env, appId)) }, 200, cors); }
       catch { return json({ error: "设置已保存，但无法解密 API Key。请检查加密密钥设置。" }, 503, cors); }
     }
     if (url.pathname === "/admin/models" && request.method === "POST") {
@@ -625,7 +656,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
       if (!rate.allowed) return json({ error: "模型管理请求过于频繁，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
       let runtime;
-      try { runtime = await buildRuntimeSettings(data, env); }
+      try { runtime = await buildRuntimeSettings(data, env, appId); }
       catch { return json({ error: "无法解密已保存的 API Key，请检查加密密钥设置。" }, 503, cors); }
       const parsed = await readJsonLimited(request, 16384);
       if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
@@ -683,7 +714,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
       if (!rate.allowed) return json({ error: "模型管理请求过于频繁，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
       let runtime;
-      try { runtime = await buildRuntimeSettings(data, env); }
+      try { runtime = await buildRuntimeSettings(data, env, appId); }
       catch { return json({ error: "无法解密已保存的 API Key，请检查加密密钥设置。" }, 503, cors); }
       const parsed = await readJsonLimited(request, 16384);
       if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
