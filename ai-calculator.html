@@ -4541,6 +4541,57 @@ a{color:#416bd6}
  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
 </style>
+<style id="zx-light-surface-audit">
+/* Final light-only surface audit for legacy calculation and chemistry widgets. */
+:root{color-scheme:light!important}
+::selection{background:rgba(103,143,235,.24)!important;color:#203550!important}
+::-webkit-scrollbar-track{background:rgba(226,234,246,.72)!important}
+::-webkit-scrollbar-thumb{background:#c2cee1!important;border-color:#edf3fb!important}
+::-webkit-scrollbar-thumb:hover{background:#9bafd0!important}
+.zx-out,.zx-steps,.solve-mode-tabs,.structured-mode-tabs,.solve-keypad-wrap,.function-expression-panel,.function-graph,.zx-hist-item,.zx-unit-table,.zx-mobile-mathpad,.zx-mobile-mathpad.is-visible{
+ color:#344a65!important;background:rgba(255,255,255,.78)!important;border-color:rgba(130,153,191,.22)!important;
+ box-shadow:0 8px 22px rgba(59,83,128,.045),inset 0 1px rgba(255,255,255,.98)!important;
+}
+.zx-result-head{background:linear-gradient(100deg,rgba(91,129,220,.08),transparent)!important;border-color:rgba(130,153,191,.20)!important}
+.zx-result-title,.zx-result-main,.zx-out-v,.zx-process-title,.zx-step-text,.zx-hist-in,.zx-result-meta,.structured-form-title,.zx-mobile-mathpad-head{color:#354b67!important}
+.zx-out-v.is-big,.zx-result-main{color:#263f60!important}
+.zx-out-k,.zx-result-meta,.function-graph-note,.zx-hist-meta,.zx-chem-meta{color:#75869e!important}
+.zx-out-row,.zx-process,.zx-step{border-color:rgba(130,153,191,.16)!important}
+.zx-step-no{background:#edf2ff!important;border-color:#dce6fb!important;color:#446bd0!important}
+.zx-badge{background:#f0f4fc!important;border-color:#dfe7f4!important;color:#667b98!important}
+.zx-hist-item{background:rgba(255,255,255,.86)!important}
+.zx-hist-item:hover{background:#f1f5ff!important;border-color:#c7d5f0!important}
+.zx-unit-table th{background:#eef3fb!important;color:#536b8c!important}
+.zx-unit-table td{background:rgba(255,255,255,.75)!important;color:#435974!important;border-color:#e3eaf5!important}
+.solve-mode-tab{background:rgba(255,255,255,.82)!important;color:#657791!important;border-color:rgba(130,153,191,.15)!important}
+.solve-mode-tab:hover{background:#eff4ff!important;color:#365fb8!important}
+.solve-mode-tab.is-active{background:#e7eeff!important;color:#365fbe!important;border-color:#c9d7f8!important;box-shadow:inset 0 -2px #5e82dd!important}
+.structured-examples button,.function-task-tabs button,.function-expr-examples button{background:rgba(255,255,255,.9)!important;color:#526883!important;border-color:rgba(130,153,191,.22)!important}
+.function-task-tabs button.is-active{background:#e8efff!important;color:#375fbd!important;border-color:#c9d8fa!important}
+.function-expression-panel{background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(242,247,255,.86))!important}
+.function-graph{background:rgba(255,255,255,.94)!important;border-color:rgba(130,153,191,.25)!important}
+.function-graph-head{color:#304963!important;background:rgba(241,246,255,.94)!important;border-bottom-color:#e1e9f7!important}
+.function-graph svg{color:#415a78!important}
+.function-graph-empty{color:#7789a1!important}
+.zx-chem-keyboard,#chemKeyboard:not([hidden]){color:#304660!important;background:rgba(249,252,255,.97)!important;border-color:rgba(130,153,191,.26)!important;box-shadow:0 -14px 40px rgba(54,84,138,.14),inset 0 1px rgba(255,255,255,.98)!important;backdrop-filter:blur(25px) saturate(150%)!important;-webkit-backdrop-filter:blur(25px) saturate(150%)!important}
+.zx-chem-keyrow button,.zx-chem-tabs button,.zx-chem-symbols button,.zx-chem-ime-inline,#chemKeyboardClose,.zx-mobile-mathpad-head button{color:#405774!important;background:rgba(255,255,255,.94)!important;border-color:rgba(130,153,191,.24)!important;box-shadow:0 3px 9px rgba(57,82,125,.045),inset 0 1px white!important}
+.zx-chem-keyrow button:active,.zx-chem-symbols button:active{background:#edf3ff!important;border-color:#8ea8e8!important}
+.zx-chem-keyrow button[data-chemkey=" -> "],.zx-chem-keyrow button[data-chemkey="+"]{color:#416bd6!important}
+.zx-chem-tabs button[aria-selected="true"]{background:#e6eeff!important;color:#315fc5!important;border-color:#bfcff4!important}
+.zx-chem-symbols button small,.zx-chem-symbol-grid button small{color:#8595ac!important}
+.zx-chem-tools{background:transparent!important;color:#536a87!important}
+#chemKeyboard:not([hidden]) .zx-chem-tools{background:rgba(249,252,255,.97)!important;border-bottom-color:#e1e9f5!important}
+#chemKeyboard:not([hidden]) .zx-chem-tools input,.zx-chem-search{background:#fff!important;color:#304660!important;border-color:#d9e3f2!important}
+[data-view="chemistry"] .view-head-mark{background:linear-gradient(145deg,#edf3ff,#fff)!important;color:#426bd6!important;border-color:#d5e1fa!important;box-shadow:0 7px 18px rgba(69,101,167,.10)!important}
+[data-view="chemistry"] .view-head-mark i{color:#426bd6!important}
+#chemProductSuggestNote>span:first-child{color:#426bd6!important}
+.zx-chem-candidate{background:rgba(255,255,255,.88)!important;border-color:rgba(130,153,191,.22)!important}
+.zx-chem-candidate-index{background:#e9efff!important;color:#416bd6!important}
+.zx-chem-candidate-name{color:#2e4562!important}
+.zx-chem-equation{background:linear-gradient(110deg,#edf3ff,#f9fbff)!important;color:#305bb9!important;border-color:#d7e3fb!important}
+.zx-chem-meta{color:#70829b!important}
+@media(max-width:768px){#chemKeyboard:not([hidden]){background:rgba(249,252,255,.97)!important}#chemKeyboard:not([hidden]) .zx-chem-tools{background:rgba(249,252,255,.97)!important}.zx-mobile-mathpad-head button{min-height:38px!important}}
+</style>
 <script id="zx-ai-inline-controller">
 (function(){
   'use strict';
