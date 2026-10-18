@@ -196,6 +196,54 @@ test("structured AI analysis uses the shared Worker prompt template", async () =
   }
 });
 
+test("AI analysis generates core first and accepts details only with the shown core", async () => {
+  const originalFetch = globalThis.fetch;
+  const sentBodies = [];
+  globalThis.fetch = async (url, init) => {
+    sentBodies.push(JSON.parse(init.body));
+    return new Response(JSON.stringify({
+      model: "vision-model",
+      choices: [{ message: { content: "【核心结论】x=2 或 x=3。" } }]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  const context = {
+    title: "方程求解",
+    view: "equation",
+    inputs: "x^2-5x+6=0",
+    outputs: "x=2 或 x=3",
+    details: "本地计算结果待核验"
+  };
+  try {
+    const core = await worker.fetch(req({
+      task: "analysis", action: "analyze", mode: "equation",
+      analysisStage: "core", context
+    }, "198.51.100.80"), env);
+    assert.equal(core.status, 200);
+    assert.match(sentBodies[0].messages[0].content, /第一阶段/);
+    assert.match(sentBodies[0].messages[0].content, /只允许输出一个章节/);
+    assert.match(sentBodies[0].messages[0].content, /不要输出关键信息/);
+
+    const details = await worker.fetch(req({
+      task: "analysis", action: "analyze", mode: "equation",
+      analysisStage: "details", coreAnswer: "【核心结论】x=2 或 x=3。", context
+    }, "198.51.100.81"), env);
+    assert.equal(details.status, 200);
+    assert.match(sentBodies[1].messages[0].content, /第二阶段/);
+    assert.match(sentBodies[1].messages[0].content, /不要重写或重复核心结论/);
+    assert.match(sentBodies[1].messages[1].content, /previously_shown_core_conclusion/);
+    assert.match(sentBodies[1].messages[1].content, /x=2 或 x=3/);
+
+    const missingCore = await worker.fetch(req({
+      task: "analysis", action: "analyze", mode: "equation",
+      analysisStage: "details", context
+    }, "198.51.100.82"), env);
+    assert.equal(missingCore.status, 400);
+    assert.match((await missingCore.json()).error, /先有核心结论/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("structured AI analysis rejects missing or oversized context", async () => {
   const missing = await worker.fetch(req({
     task: "analysis", action: "analyze", mode: "basic", context: {}
@@ -218,6 +266,12 @@ test("calculator inline AI analysis script parses and chat panel is removed", ()
   assert.doesNotMatch(html, /id="zx-ai-panel"|id="zx-ai-launch"|zx-ai-compose/);
   assert.match(html, /data-zx-ai-action/);
   assert.match(html, /data-zx-ai-ask-form/);
+  assert.match(html, /analysisStage:stage/);
+  assert.match(html, /function getCoreAnswerText\(/);
+  assert.match(html, /function renderAdditionalAnswer\(/);
+  assert.match(html, /data-zx-ai-generate-details/);
+  assert.match(html, /generate,'','details'/);
+  assert.match(html, /panel\.dataset\.zxAiCoreAnswer=getCoreAnswerText/);
   assert.match(html, /用户针对当前计算结果的追问/);
   assert.match(html, /el\.closest\('\.zx-ai-result'\)\|\|el\.type==='hidden'/);
   assert.match(html, /value\.includes\('\:\/\/'\)/);
