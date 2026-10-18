@@ -5034,7 +5034,9 @@ a{color:#416bd6}
     const panel=makeResult(section);
     const isDetails=phase==='details';
     const isFollowup=phase==='followup'||Boolean(question);
-    const stage=isDetails?'details':isFollowup?'followup':'core';
+    const stage=isDetails?'details':'core';
+    if(!isDetails&&!question)delete panel.dataset.zxAiLastQuestion;
+    if(question)panel.dataset.zxAiLastQuestion=String(question).slice(0,1000);
     panel.hidden=false;
     panel.dataset.zxAiAction=action;
     setResultCollapsed(panel,false);
@@ -5066,6 +5068,8 @@ a{color:#416bd6}
       const context=collectContext(viewId,section);
       if(question){
         context.details=(context.details?context.details+'\n':'')+'用户针对当前计算结果的追问：'+String(question).slice(0,1000)+'\n请优先直接回答这条追问，并结合页面已提供的输入、计算结果与选项进行核验；不要只重复通用解释。';
+      }else if(isDetails&&panel.dataset.zxAiLastQuestion){
+        context.details=(context.details?context.details+'\n':'')+'本次核心结论对应的用户追问：'+panel.dataset.zxAiLastQuestion+'。请围绕这个问题补充推导、核验和必要限制。';
       }
       const coreAnswer=String(panel.dataset.zxAiCoreAnswer||'').trim();
       if(isDetails&&!coreAnswer)throw new Error('请先生成核心结论，再生成完整分析。');
@@ -5096,10 +5100,10 @@ a{color:#416bd6}
         renderAdditionalAnswer(answerEl,answer,viewId,detailStreamNode);
         setStatus(panel,'完整分析已生成'+(model?' · '+model:''),false);
       }else{
-        renderStructuredAnswer(answerEl,answer,viewId,isFollowup?'full':'core',action);
+        renderStructuredAnswer(answerEl,answer,viewId,'core',action);
         answerEl.hidden=false;
-        if(!isFollowup)panel.dataset.zxAiCoreAnswer=getCoreAnswerText(answer,viewId);
-        setStatus(panel,(isFollowup?'追问回答完成':(action==='extend'?'核心结论已生成（扩展任务）':'核心结论已生成'))+(model?' · '+model:''),false);
+        panel.dataset.zxAiCoreAnswer=getCoreAnswerText(answer,viewId);
+        setStatus(panel,(isFollowup?'追问核心回答已生成':(action==='extend'?'核心结论已生成（扩展任务）':'核心结论已生成'))+(model?' · '+model:''),false);
         updateCollapsedPreview(answerEl,answer,viewId);
       }
       if(question){const questionInput=panel.querySelector('[data-zx-ai-question]');if(questionInput)questionInput.value='';}
