@@ -387,6 +387,137 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       try { return json(publicSettings(await buildRuntimeSettings(data, env)), 200, cors); }
       catch { return json({ error: "无法读取加密的 API Key。请检查加密密钥设置；若原密钥已丢失，需要重新保存 API Key。" }, 503, cors); }
     }
+    if (url.pathname === "/admin/key/reveal" && request.method === "POST") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await checkRateLimit(env, "admin-key-reveal:" + ip, 8, 15 * 60 * 1000);
+      if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return json({ error: "Token 查看次数过多，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
+      const parsed = await readJsonLimited(request, 4096);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
+      if (parsed.data.confirm !== "REVEAL_KEY") return json({ error: "请在管理页面点击“查看已保存 Token”后重试。" }, 400, cors);
+      let runtime;
+      try { runtime = await buildRuntimeSettings(data, env); }
+      catch { return json({ error: "无法读取已保存的 Token，请检查加密密钥设置。" }, 503, cors); }
+      if (!runtime.apiKey) return json({ error: "当前没有已配置的 API Token。" }, 404, cors);
+      return json({ apiKey: runtime.apiKey, source: runtime.apiKeySource }, 200, cors);
+    }
+    if (url.pathname === "/admin/balance" && request.method === "POST") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await checkRateLimit(env, "admin-balance:" + ip, 12, 15 * 60 * 1000);
+      if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return json({ error: "余额查询过于频繁，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
+      const parsed = await readJsonLimited(request, 16384);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
+      let runtime;
+      try { runtime = await buildRuntimeSettings(data, env); }
+      catch { return json({ error: "无法读取已保存的 API Token，请检查加密密钥设置。" }, 503, cors); }
+      let apiBaseUrl;
+      try { apiBaseUrl = normalizeApiBaseUrl(parsed.data.apiBaseUrl || runtime.apiBaseUrl); }
+      catch (error) { return json({ error: error.message }, 400, cors); }
+      const apiKey = typeof parsed.data.apiKey === "string" && parsed.data.apiKey.trim()
+        ? parsed.data.apiKey.trim() : runtime.apiKey;
+      if (!apiKey) return json({ error: "请先配置 API Token。" }, 400, cors);
+      const rootUrl = new URL(apiBaseUrl);
+      rootUrl.pathname = rootUrl.pathname.replace(/\\/v1\\/?$/i, "") || "/";
+      rootUrl.search = "";
+      rootUrl.hash = "";
+      const root = rootUrl.toString().replace(/\\/$/, "");
+      let quota = null;
+      let lastStatus = 0;
+      let lastMessage = "";
+      for (const path of ["/api/usage/token/", "/api/usage/token"]) {
+        let response;
+        try {
+          response = await fetch(root + path, {
+            method: "GET",
+            headers: { "Authorization": "Bearer " + apiKey, "Accept": "application/json" },
+            redirect: "error",
+            signal: AbortSignal.timeout(12000)
+          });
+        } catch {
+          return json({ error: "余额接口无法连接。请确认该服务商支持 /api/usage/token/ 查询接口。" }, 502, cors);
+        }
+        lastStatus = response.status;
+        const body = await readResponseTextLimited(response, 256 * 1024);
+        if (body.error) return json({ error: "余额接口响应无法读取。" }, 502, cors);
+        let result;
+        try { result = JSON.parse(body.text); }
+        catch { result = null; }
+        if (response.ok && result && typeof result === "object") {
+          const nested = result.data && typeof result.data === "object" ? result.data : result;
+          const number = (...keys) => {
+            for (const key of keys) {
+              const raw = nested[key];
+              if (raw === undefined || raw === null || raw === "") continue;
+              const value = Number(raw);
+              if (Number.isFinite(value)) return value;
+            }
+            return null;
+          };
+          const totalUsed = number("total_used", "used_quota", "used");
+          const totalGranted = number("total_granted", "total_quota") ??
+            (totalUsed !== null ? number("quota", "total") : null);
+          const totalAvailable = number("total_available", "available_quota", "remaining", "balance") ??
+            (totalGranted !== null && totalUsed !== null ? Math.max(0, totalGranted - totalUsed) : null);
+          const unlimited = nested.unlimited_quota === true || nested.unlimited === true ||
+            nested.unlimited_quota === 1 || nested.unlimited === 1;
+          if (unlimited || totalAvailable !== null || totalUsed !== null || totalGranted !== null) {
+            quota = {
+              name: typeof nested.name === "string" ? nested.name.slice(0, 100) : "",
+              unlimited,
+              totalGranted,
+              totalUsed,
+              totalAvailable,
+              expiresAt: Number(nested.expires_at) > 0 ? Number(nested.expires_at) : null
+            };
+            break;
+          }
+          lastMessage = typeof result.message === "string" ? result.message : "余额接口返回成功，但响应中没有可识别的额度字段";
+          break;
+        }
+        lastMessage = String(result?.error?.message || result?.message || result?.msg || "服务商未提供兼容的 Token 额度接口").slice(0, 300);
+        if (response.status !== 404 && response.status !== 405) break;
+      }
+      if (!quota) {
+        if (lastStatus === 401 || lastStatus === 403) {
+          return json({ error: "余额查询被服务商拒绝（HTTP " + lastStatus + "）。请确认这个 API Token 有效，且服务商支持额度查询。" }, 502, cors);
+        }
+        return json({ error: "无法获取余额（HTTP " + lastStatus + "）：" + lastMessage }, 502, cors);
+      }
+      let quotaPerUnit = null;
+      let currencySymbol = "";
+      let currencyEnabled = true;
+      try {
+        const statusResponse = await fetch(root + "/api/status", {
+          headers: { "Accept": "application/json" }, redirect: "error", signal: AbortSignal.timeout(8000)
+        });
+        if (statusResponse.ok) {
+          const statusBody = await readResponseTextLimited(statusResponse, 128 * 1024);
+          if (!statusBody.error) {
+            const statusData = JSON.parse(statusBody.text);
+            const detail = statusData?.data && typeof statusData.data === "object" ? statusData.data : statusData;
+            const ratio = Number(detail?.quota_per_unit);
+            if (Number.isFinite(ratio) && ratio > 0) quotaPerUnit = ratio;
+            currencySymbol = String(detail?.display_in_currency_symbol || detail?.currency_symbol || "").slice(0, 8);
+            if (detail?.display_in_currency === false || detail?.display_in_currency === 0) currencyEnabled = false;
+          }
+        }
+      } catch { /* quota points remain available even when public status isn't supported */ }
+      const monetaryUnit = currencySymbol || "$";
+      return json({
+        ok: true,
+        provider: rootUrl.hostname,
+        name: quota.name,
+        unlimited: quota.unlimited,
+        totalGranted: quota.totalGranted,
+        totalUsed: quota.totalUsed,
+        totalAvailable: quota.totalAvailable,
+        expiresAt: quota.expiresAt,
+        quotaPerUnit,
+        currencySymbol: monetaryUnit,
+        currencyEnabled: Boolean(quotaPerUnit && currencyEnabled)
+      }, 200, cors);
+    }
     if (url.pathname === "/admin/stats/reset" && request.method === "POST") {
       const ip = request.headers.get("CF-Connecting-IP") || "unknown";
       const rate = await checkRateLimit(env, "admin-stats-reset:" + ip, 5, 60 * 60 * 1000);
@@ -478,8 +609,23 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       let result;
       try { result = JSON.parse(responseText.text); } catch { result = {}; }
       if (!response.ok) return json({ error: "获取模型列表失败（HTTP " + response.status + "）：" + String(result?.error?.message || result?.message || "当前供应商可能不支持 /models 接口").slice(0, 400) }, 502, cors);
-      const list = Array.isArray(result.data) ? result.data : (Array.isArray(result.models) ? result.models : []);
-      const models = [...new Set(list.map(item => typeof item === "string" ? item : item?.id).filter(item => typeof item === "string" && item.length > 0))].sort();
+      if (result && (result.success === false || result.code === false)) {
+        return json({ error: "获取模型列表失败：" + String(result.message || result.msg || "服务商拒绝请求").slice(0, 400) }, 502, cors);
+      }
+      const list = [
+        Array.isArray(result) ? result : null,
+        Array.isArray(result?.data) ? result.data : null,
+        Array.isArray(result?.models) ? result.models : null,
+        Array.isArray(result?.items) ? result.items : null,
+        Array.isArray(result?.data?.models) ? result.data.models : null,
+        Array.isArray(result?.result?.data) ? result.result.data : null,
+        Array.isArray(result?.result?.models) ? result.result.models : null
+      ].find(Array.isArray) || [];
+      const models = [...new Set(list.map(item => typeof item === "string" ? item : item?.id || item?.model || item?.name)
+        .filter(item => typeof item === "string" && item.trim().length > 0).map(item => item.trim()))].sort();
+      if (!models.length) {
+        return json({ error: "接口已响应，但未找到可识别的模型列表。请检查该服务商的 /models 返回格式，或手动填写模型 ID。" }, 502, cors);
+      }
       return json({ models, count: models.length }, 200, cors);
     }
     if (url.pathname === "/admin/test" && request.method === "POST") {
