@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>知行计算器 AI 版 | 知行</title>
     <link rel="canonical" href="https://zhixingjsq.pages.dev/">
     <meta name="description" content="知行计算器 AI 版：集成科学计算、方程函数工具与 AI 学习助手，支持结合当前计算页面进行讲解。">
-    <meta name="theme-color" content="#11131a">
-    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#f4f7ff">
+    <meta name="color-scheme" content="light">
 
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
 
@@ -1553,9 +1553,9 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
                 <div>
                     <div class="workspace-eyebrow">ZHIXING · MATH WORKSPACE</div>
                     <h1 class="workspace-title">让每一步计算，都清晰可循。</h1>
-                    <p class="workspace-copy">从快速运算到方程、函数与单位换算。输入、推导、结果与历史记录在同一工作区完成。</p>
+                    <p class="workspace-copy">本地计算负责准确求值，AI 负责解释、核验与继续推导。结果始终留在当前工具页。</p>
                 </div>
-                <div class="workspace-status">本地计算 · AI 分析需主动点击</div>
+                <div class="workspace-status">本地计算 · AI 随时协同</div>
             </section>
 
             <!-- ========== 界面 1：基础计算 ========== -->
@@ -4330,6 +4330,217 @@ function zxFnAdvance(f,xValue,rangeText){
  .zx-ai-result-footer{align-items:flex-start;flex-direction:column}
 }
 </style>
+<style id="zx-liquid-glass-redesign">
+/* 知行 AI 计算器 · 全浅色液态玻璃系统。覆盖旧主题视觉，保留计算器引擎与布局语义。 */
+:root{
+ color-scheme:light;
+ --zx-bg:#f4f7fc;--zx-panel:rgba(255,255,255,.72);--zx-panel-raised:rgba(255,255,255,.88);--zx-panel-soft:rgba(248,251,255,.76);
+ --zx-line:rgba(125,148,184,.22);--zx-line-soft:rgba(125,148,184,.14);
+ --zx-text:#1e2c42;--zx-muted:#65758c;--zx-dim:#8491a4;
+ --zx-gold:#426bd8;--zx-gold-soft:rgba(66,107,216,.09);--zx-green:#128b78;--zx-red:#c23e56;
+ --zx-radius:23px;--zx-ease:cubic-bezier(.22,.72,.22,1);
+}
+html,body{background:#f4f7fc!important;color:var(--zx-text)!important;max-width:100%;overflow-x:clip}
+html{color-scheme:light!important;scroll-behavior:smooth}
+body{
+ font-family:"Noto Sans SC","MiSans",system-ui,sans-serif!important;letter-spacing:0;
+ background:
+  radial-gradient(ellipse at 8% 0%,rgba(153,187,255,.30),transparent 34rem),
+  radial-gradient(ellipse at 92% 12%,rgba(160,229,220,.28),transparent 32rem),
+  linear-gradient(160deg,#f8faff 0%,#f0f5fc 48%,#f8fbff 100%)!important;
+ color:#24344b!important;
+}
+body::before{
+ opacity:.28!important;
+ background-image:radial-gradient(rgba(111,139,183,.21) .7px,transparent .7px)!important;
+ background-size:20px 20px!important;
+}
+*,*::before,*::after{box-sizing:border-box}
+body :where(*, *::before, *::after){writing-mode:horizontal-tb!important;text-orientation:mixed!important}
+a{color:#416bd6}
+.zx-header{
+ position:sticky!important;top:0;z-index:80!important;
+ background:rgba(249,252,255,.72)!important;
+ border-bottom:1px solid rgba(139,162,197,.22)!important;
+ box-shadow:0 8px 30px rgba(55,82,125,.055)!important;
+ backdrop-filter:blur(26px) saturate(155%)!important;-webkit-backdrop-filter:blur(26px) saturate(155%)!important;
+}
+.zx-header-inner{min-height:70px!important}
+.zx-brand-mark{
+ color:#315fd1!important;border:1px solid rgba(93,130,221,.25)!important;
+ background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(218,231,255,.8))!important;
+ box-shadow:0 7px 20px rgba(74,112,197,.14),inset 0 1px rgba(255,255,255,.96)!important;
+}
+.zx-header .text-white,.zx-header .text-slate-400,.zx-header .text-slate-500{color:#34445c!important}
+.zx-back,.zx-icon-btn{
+ color:#50627c!important;border-color:rgba(128,151,190,.24)!important;
+ background:rgba(255,255,255,.72)!important;box-shadow:0 3px 12px rgba(57,82,125,.04)!important;
+}
+.zx-back:hover,.zx-icon-btn:hover{color:#315fd1!important;background:rgba(255,255,255,.96)!important;border-color:rgba(82,120,215,.35)!important}
+.zx-layout{max-width:1520px!important;padding-top:28px!important;gap:24px!important}
+.zx-menu{
+ background:rgba(255,255,255,.60)!important;border:1px solid rgba(255,255,255,.94)!important;
+ border-radius:23px!important;box-shadow:0 18px 50px rgba(69,91,132,.10),inset 0 1px rgba(255,255,255,.98)!important;
+ backdrop-filter:blur(24px) saturate(150%)!important;-webkit-backdrop-filter:blur(24px) saturate(150%)!important;
+}
+.zx-menu-group+.zx-menu-group{border-top-color:rgba(132,153,189,.14)!important}
+.zx-menu-title{color:#8290a5!important;letter-spacing:.12em!important}
+.zx-menu-item{color:#52627a!important;border-radius:12px!important;min-height:44px!important;transition:background .24s var(--zx-ease),color .24s var(--zx-ease),transform .24s var(--zx-ease),border-color .24s var(--zx-ease)!important}
+.zx-menu-item:hover{color:#284fba!important;background:rgba(229,237,255,.75)!important;border-color:rgba(104,139,220,.15)!important;transform:translateX(2px)}
+.zx-menu-item.is-active{color:#2d58c4!important;background:linear-gradient(105deg,rgba(219,231,255,.95),rgba(240,246,255,.8))!important;border:1px solid rgba(100,137,222,.20)!important;box-shadow:inset 3px 0 #5c83e2,0 5px 16px rgba(91,126,199,.07)!important}
+.zx-menu-item.is-active>i,.zx-menu-item.is-active>svg,.zx-menu-item.is-active>.zx-menu-icon{color:#416bd6!important}
+.workspace-intro{
+ position:relative;isolation:isolate;overflow:hidden;margin-bottom:20px!important;padding:clamp(23px,3.2vw,37px)!important;
+ border:1px solid rgba(255,255,255,.94)!important;border-radius:27px!important;
+ background:linear-gradient(120deg,rgba(255,255,255,.88),rgba(239,246,255,.72) 62%,rgba(229,246,244,.72))!important;
+ box-shadow:0 22px 54px rgba(65,91,138,.09),inset 0 1px 0 rgba(255,255,255,.98)!important;
+ backdrop-filter:blur(28px) saturate(155%)!important;-webkit-backdrop-filter:blur(28px) saturate(155%)!important;
+}
+.workspace-intro:after{content:"";position:absolute;z-index:-1;width:360px;height:360px;right:-105px;top:-200px;border-radius:50%;background:radial-gradient(circle,rgba(126,163,244,.23),rgba(141,218,216,.10) 48%,transparent 72%);filter:blur(3px);pointer-events:none}
+.workspace-eyebrow{color:#6681bd!important;font-size:10px!important;letter-spacing:.18em!important;font-weight:750}
+.workspace-title{color:#1e304a!important;font-size:clamp(27px,3.5vw,42px)!important;letter-spacing:-.04em!important;line-height:1.22!important;font-weight:800!important}
+.workspace-copy{max-width:660px!important;color:#64758e!important;font-size:13px!important;line-height:1.85!important}
+.workspace-status{border:1px solid rgba(111,151,226,.20)!important;background:rgba(255,255,255,.73)!important;color:#496bb2!important;border-radius:99px!important;padding:8px 12px!important;box-shadow:inset 0 1px rgba(255,255,255,.95)!important}
+.glass-panel,.view-card,.view.is-active>.glass-panel{
+ background:rgba(255,255,255,.68)!important;border:1px solid rgba(255,255,255,.96)!important;
+ border-radius:24px!important;box-shadow:0 18px 50px rgba(67,88,129,.075),inset 0 1px rgba(255,255,255,.98)!important;
+ backdrop-filter:blur(24px) saturate(145%)!important;-webkit-backdrop-filter:blur(24px) saturate(145%)!important;
+}
+.view-card{padding:clamp(18px,2.5vw,30px)!important}
+.view-head{gap:13px!important;margin-bottom:20px!important}
+.view-head-mark{background:linear-gradient(145deg,#e6eeff,#f6f9ff)!important;color:#416bd6!important;border:1px solid rgba(98,135,219,.18)!important;border-radius:15px!important;box-shadow:0 7px 18px rgba(78,112,187,.07),inset 0 1px rgba(255,255,255,.95)!important}
+.view-title{color:#233650!important;font-weight:800!important;letter-spacing:-.02em}
+.view-sub{color:#6e7f96!important;line-height:1.75!important}
+.zx-label,.structured-field span,.structured-select span,.solve-keypad-title,.unit-label,.zx-field-label{color:#687b96!important}
+.calc-screen,.calc-display,.zx-input-panel{
+ background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(242,247,255,.84))!important;
+ border:1px solid rgba(144,166,204,.24)!important;border-radius:20px!important;
+ box-shadow:inset 0 2px 5px rgba(72,98,144,.035),0 8px 24px rgba(67,91,132,.045)!important;
+}
+.calc-input,.view input:not([type=checkbox]):not([type=radio]):not([type=range]),.view select,.view textarea,.structured-select select,.structured-field input,.zx-ai-proxy-row input{
+ color:#233650!important;background:rgba(255,255,255,.86)!important;border:1px solid rgba(132,154,190,.25)!important;border-radius:13px!important;
+}
+.calc-input{font-family:"JetBrains Mono",monospace!important;font-weight:550!important}
+.view input:focus,.view select:focus,.view textarea:focus,.calc-input:focus,.zx-ai-proxy-row input:focus{
+ outline:none!important;border-color:rgba(79,119,218,.55)!important;box-shadow:0 0 0 4px rgba(82,126,224,.10)!important;
+}
+.calc-hint,.structured-hint,.hint{color:#8190a5!important}
+.calc-key,.zx-btn,.zx-chip,.solve-keypad button,.zx-mobile-mathpad-grid button,.zx-mathpad-tabs button{
+ border-color:rgba(133,156,194,.22)!important;background:rgba(255,255,255,.82)!important;color:#415571!important;
+ box-shadow:0 3px 9px rgba(56,81,122,.035),inset 0 1px rgba(255,255,255,.98)!important;
+ transition:transform .22s var(--zx-ease),background .22s var(--zx-ease),border-color .22s var(--zx-ease),box-shadow .22s var(--zx-ease)!important;
+}
+.calc-key.is-op,.zx-btn.is-go,.zx-btn.primary,.zx-btn.is-primary,.solve-keypad button.key-next{
+ background:linear-gradient(135deg,#557fe5,#4269d2)!important;color:white!important;border-color:rgba(255,255,255,.55)!important;
+ box-shadow:0 8px 20px rgba(67,105,206,.20),inset 0 1px rgba(255,255,255,.25)!important;
+}
+.calc-key.is-fn,.solve-keypad button.key-action{background:rgba(230,238,255,.86)!important;color:#426bd6!important}
+.calc-key:hover,.zx-btn:hover,.zx-chip:hover,.solve-keypad button:hover,.zx-mobile-mathpad-grid button:hover{
+ transform:translateY(-2px);border-color:rgba(79,119,218,.38)!important;box-shadow:0 8px 20px rgba(72,104,169,.11)!important
+}
+.calc-key:active,.zx-btn:active,.zx-chip:active,.solve-keypad button:active{transform:scale(.98)}
+.zx-out,.zx-steps,.structured-equation,.structured-point,.function-expression-panel,.function-value-note,.function-graph-note,.zx-chem-equation,.zx-chem-candidate{
+ background:rgba(247,250,255,.86)!important;border-color:rgba(133,157,197,.20)!important;color:#324761!important;border-radius:15px!important;
+}
+.structured-equation{color:#355fbe!important;background:linear-gradient(120deg,rgba(230,238,255,.9),rgba(249,251,255,.84))!important}
+.structured-point>b,.function-expression-panel strong{color:#3f66c8!important}
+.zx-mobile-mathpad,.zx-mobile-mathpad.is-visible{
+ background:rgba(248,251,255,.96)!important;border:1px solid rgba(255,255,255,.97)!important;
+ box-shadow:0 -12px 35px rgba(63,88,134,.12)!important;backdrop-filter:blur(24px)!important;-webkit-backdrop-filter:blur(24px)!important;
+}
+.zx-mobile-mathpad-head{color:#455a77!important}
+.zx-mobile-mathpad-grid button[data-value="DONE"]{background:linear-gradient(135deg,#557fe5,#4269d2)!important;color:#fff!important}
+.zx-ai-inline-actions button{
+ border:1px solid rgba(84,120,209,.20)!important;background:rgba(231,238,255,.83)!important;color:#365fbd!important;
+ border-radius:12px!important;padding:9px 12px!important;min-height:38px!important;font-size:12px!important;
+ box-shadow:0 4px 12px rgba(68,97,156,.055)!important;
+}
+.zx-ai-inline-actions button[data-zx-ai-action="extend"]{color:#138171!important;background:rgba(222,246,240,.88)!important;border-color:rgba(33,146,127,.19)!important}
+.zx-ai-inline-actions button:hover{transform:translateY(-2px)!important;box-shadow:0 9px 20px rgba(70,99,159,.10)!important}
+.zx-ai-inline-actions button:disabled,.zx-ai-result button:disabled{opacity:.58;cursor:wait}
+.zx-ai-result{
+ margin:0 0 20px!important;padding:clamp(15px,2vw,22px)!important;
+ color:#263953!important;border:1px solid rgba(255,255,255,.98)!important;border-radius:22px!important;
+ background:linear-gradient(140deg,rgba(255,255,255,.94),rgba(239,246,255,.86) 64%,rgba(231,248,245,.82))!important;
+ box-shadow:0 18px 48px rgba(61,88,139,.09),inset 0 1px rgba(255,255,255,.99)!important;
+ backdrop-filter:blur(24px) saturate(145%)!important;-webkit-backdrop-filter:blur(24px) saturate(145%)!important;
+}
+.zx-ai-result-head{border-bottom-color:rgba(123,149,195,.19)!important;padding-bottom:12px!important}
+.zx-ai-result-title{color:#315fc6!important;font-size:14px!important}
+.zx-ai-result-title i{color:#567fe0!important}
+.zx-ai-result-head button,.zx-ai-result-footer button{
+ color:#536883!important;background:rgba(255,255,255,.78)!important;border-color:rgba(129,153,192,.22)!important;border-radius:10px!important;
+}
+.zx-ai-result-status{color:#5475bd!important;line-height:1.7!important}
+.zx-ai-result-status[data-state="error"]{color:#c13b52!important;animation:none!important;background:none!important}
+.zx-ai-result-body{color:#344a66!important;line-height:1.9!important}
+.zx-ai-answer-section{
+ background:rgba(255,255,255,.72)!important;border-color:rgba(125,151,193,.19)!important;border-radius:15px!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.98)!important;
+}
+.zx-ai-answer-section[data-kind="result"]{background:linear-gradient(130deg,rgba(232,239,255,.94),rgba(255,255,255,.82))!important;border-color:rgba(92,128,217,.28)!important}
+.zx-ai-answer-section-title{color:#496ab0!important}
+.zx-ai-answer-section-title:before{background:linear-gradient(180deg,#7295ea,#4e70cf)!important;width:4px!important}
+.zx-ai-answer-section-content{color:#354a65!important;line-height:1.9!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:normal!important}
+.zx-ai-answer-details{border-color:rgba(125,151,193,.2)!important;background:rgba(255,255,255,.5)!important;border-radius:13px!important}
+.zx-ai-answer-details>summary{color:#526c9e!important}
+.zx-ai-answer-details-content .zx-ai-answer-section{background:rgba(255,255,255,.76)!important}
+.zx-ai-thinking-stream,.zx-ai-answer-section[data-streaming="true"] .zx-ai-answer-section-content{
+ color:transparent!important;background-image:linear-gradient(100deg,#8c9db9 0%,#8c9db9 35%,#fff 45%,#7ea1f6 50%,#fff 55%,#8c9db9 66%,#8c9db9 100%)!important;
+ background-size:260% 100%!important;background-clip:text!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important;
+ animation:zx-ai-text-flow 2.8s linear infinite!important;
+}
+.zx-ai-result-footer{border-top-color:rgba(125,151,193,.18)!important;color:#7a8aa0!important;font-size:11px!important;line-height:1.7!important}
+.zx-ai-result-settings{color:#657b99!important}
+.zx-ai-proxy-row input{background:rgba(255,255,255,.92)!important;color:#263953!important}
+.zx-ai-proxy-row button{background:rgba(230,238,255,.92)!important;border-color:rgba(84,120,209,.20)!important;color:#365fbd!important;border-radius:10px!important}
+.zx-ai-ask-form{display:flex;align-items:stretch;gap:8px;margin-top:14px;padding:9px;border:1px solid rgba(128,153,197,.18);border-radius:16px;background:rgba(255,255,255,.58);box-shadow:inset 0 1px rgba(255,255,255,.98)}
+.zx-ai-ask-form input{flex:1;min-width:0;min-height:43px;padding:10px 12px;border:1px solid rgba(132,154,190,.20);border-radius:12px;background:rgba(255,255,255,.91);color:#263953;font:13px/1.4 "Noto Sans SC",system-ui,sans-serif;outline:none}
+.zx-ai-ask-form input::placeholder{color:#9aa7ba}
+.zx-ai-ask-form input:focus{border-color:rgba(79,119,218,.52);box-shadow:0 0 0 3px rgba(82,126,224,.09)}
+.zx-ai-ask-form button{flex:0 0 auto;min-width:84px;padding:0 15px;border:1px solid rgba(255,255,255,.55);border-radius:12px;background:linear-gradient(135deg,#557fe5,#4269d2);color:white;font:650 12px "Noto Sans SC",system-ui,sans-serif;box-shadow:0 6px 14px rgba(67,105,206,.18);cursor:pointer;transition:transform .2s var(--zx-ease),box-shadow .2s var(--zx-ease)}
+.zx-ai-ask-form button:hover{transform:translateY(-1px);box-shadow:0 9px 18px rgba(67,105,206,.22)}
+.zx-ai-ask-form button:disabled{opacity:.58;cursor:wait}
+.workspace-status,.zx-count,.zx-ai-inline-actions button,.zx-ai-result button,.zx-ai-result input{writing-mode:horizontal-tb!important;text-orientation:mixed!important}
+.zx-count{color:#416bd6!important;background:#e9efff!important}
+:focus-visible{outline:3px solid rgba(85,126,226,.38)!important;outline-offset:2px}
+@media(max-width:850px){
+ .zx-layout{grid-template-columns:minmax(0,1fr)!important;padding:15px 13px calc(32px + env(safe-area-inset-bottom))!important;gap:14px!important}
+ .zx-menu{position:fixed!important;z-index:100!important;top:76px!important;left:12px!important;right:12px!important;max-height:calc(100dvh - 92px)!important;overflow:auto!important;display:none!important;background:rgba(249,252,255,.94)!important}
+ .zx-menu.is-mobile-open{display:block!important}
+ .workspace-intro{padding:22px 19px!important;margin-bottom:14px!important;border-radius:22px!important}
+ .workspace-title{font-size:clamp(25px,7vw,34px)!important}
+ .workspace-status{margin-top:14px;align-self:flex-start}
+ .view-card{padding:17px!important;border-radius:21px!important}
+ .view-head{align-items:flex-start!important;flex-wrap:wrap!important}
+ .zx-ai-inline-actions{display:flex!important;width:100%!important;margin:7px 0 0!important;padding-left:0!important;gap:8px!important;flex-wrap:wrap}
+ .zx-ai-inline-actions button{min-height:39px!important}
+ .zx-ai-result{padding:13px!important;border-radius:18px!important}
+ .zx-ai-ask-form{gap:6px;padding:7px}
+ .zx-ai-ask-form input{font-size:16px!important;min-height:44px}
+ .zx-ai-ask-form button{min-width:76px;padding:0 11px}
+ .zx-ai-result-body{font-size:13px!important}
+ .calc-pad{gap:8px}
+}
+@media(max-width:420px){
+ .zx-layout{padding-inline:10px!important}
+ .workspace-intro{padding:18px 15px!important}
+ .workspace-copy{font-size:12px!important}
+ .view-card{padding:14px!important}
+ .view-head-mark{width:39px;height:39px}
+ .zx-ai-inline-actions button{flex:1 1 auto;min-width:0;padding:8px 9px!important;font-size:11px!important}
+ .zx-ai-result-head{align-items:flex-start}
+ .zx-ai-result-title{font-size:13px!important}
+ .zx-ai-result-footer{gap:8px}
+ .zx-ai-proxy-row{flex-wrap:wrap}
+ .zx-ai-proxy-row input{flex:1 1 100%}
+ .zx-ai-ask-form{align-items:stretch}
+ .zx-ai-ask-form button{min-width:70px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
 <script id="zx-ai-inline-controller">
 (function(){
   'use strict';
@@ -4375,10 +4586,18 @@ function zxFnAdvance(f,xValue,rangeText){
     panel.className='zx-ai-result';
     panel.hidden=true;
     panel.setAttribute('aria-live','polite');
-    panel.innerHTML='<div class="zx-ai-result-head"><div class="zx-ai-result-title"><i aria-hidden="true">✦</i><span>知行 AI 分析</span></div><button type="button" data-zx-ai-hide>收起结果</button></div><div class="zx-ai-result-status" data-zx-ai-status>等待分析</div><div class="zx-ai-result-body" data-zx-ai-answer hidden></div><div class="zx-ai-result-footer"><span>仅发送当前工具的必要输入、结果与选项，不发送其他页面内容。提交的数据会转发给当前 Worker 配置的模型服务商，请勿输入密码、学号或无关个人隐私。</span><a href="https://github.com/PaleSquire71029/calculator/blob/main/ai-proxy/SECURITY.md" target="_blank" rel="noopener noreferrer">数据安全说明</a><details class="zx-ai-result-settings"><summary>AI 服务设置</summary><div class="zx-ai-proxy-row"><input type="url" inputmode="url" data-zx-ai-proxy placeholder="https://你的-worker.workers.dev" aria-label="AI Worker 地址"><button type="button" data-zx-ai-save-proxy>保存地址</button></div></details></div>';
+    panel.innerHTML='<div class="zx-ai-result-head"><div class="zx-ai-result-title"><i aria-hidden="true">✦</i><span>知行 AI 分析</span></div><button type="button" data-zx-ai-hide>收起结果</button></div><div class="zx-ai-result-status" data-zx-ai-status>等待分析</div><div class="zx-ai-result-body" data-zx-ai-answer hidden></div><form class="zx-ai-ask-form" data-zx-ai-ask-form><input type="text" maxlength="1000" data-zx-ai-question placeholder="围绕当前结果继续提问…" aria-label="针对当前计算结果追问 AI" autocomplete="off"><button type="submit" data-zx-ai-ask-submit>追问 AI</button></form><div class="zx-ai-result-footer"><span>仅发送当前页面相关内容到已配置的模型服务商；不要输入隐私信息。</span><a href="https://github.com/PaleSquire71029/calculator/blob/main/ai-proxy/SECURITY.md" target="_blank" rel="noopener noreferrer">数据安全说明</a><details class="zx-ai-result-settings"><summary>AI 服务设置</summary><div class="zx-ai-proxy-row"><input type="url" inputmode="url" data-zx-ai-proxy placeholder="https://你的-worker.workers.dev" aria-label="AI Worker 地址"><button type="button" data-zx-ai-save-proxy>保存地址</button></div></details></div>';
     const head=section.querySelector('.view-head');
     if(head)head.insertAdjacentElement('afterend',panel);
     panel.querySelector('[data-zx-ai-hide]').addEventListener('click',()=>{panel.hidden=true;});
+    const askForm=panel.querySelector('[data-zx-ai-ask-form]');
+    askForm.addEventListener('submit',event=>{
+      event.preventDefault();
+      const input=panel.querySelector('[data-zx-ai-question]');
+      const question=String(input.value||'').trim();
+      if(!question){input.focus();return;}
+      analyze(section,section.getAttribute('data-view'), 'extend',panel.querySelector('[data-zx-ai-ask-submit]'),question);
+    });
     const proxyInput=panel.querySelector('[data-zx-ai-proxy]');
     proxyInput.value=proxyValue();
     panel.querySelector('[data-zx-ai-save-proxy]').addEventListener('click',()=>{
@@ -4617,7 +4836,7 @@ function zxFnAdvance(f,xValue,rangeText){
       if(status&&status.dataset.state!=='error')status.textContent+=' · 公式渲染失败，请检查网络连接';
     }
   }
-  async function analyze(section,viewId,action,button){
+  async function analyze(section,viewId,action,button,question=''){
     if(busy)return;
     const panel=makeResult(section);
     panel.hidden=false;
@@ -4627,13 +4846,16 @@ function zxFnAdvance(f,xValue,rangeText){
     setStatus(panel,'',false);
     statusEl.dataset.loading='true';
     setThinkingText(statusEl,action);
-    const allButtons=Array.from(document.querySelectorAll('[data-zx-ai-action]'));
+    const allButtons=Array.from(document.querySelectorAll('[data-zx-ai-action], [data-zx-ai-ask-submit]'));
     busy=true;allButtons.forEach(b=>b.disabled=true);
     let partialAnswer='';
     try{
       const ep=endpoint();
       if(!ep)throw new Error('AI Worker 地址无效，请展开“AI 服务设置”重新配置。');
       const context=collectContext(viewId,section);
+      if(question){
+        context.details=(context.details?context.details+'\n':'')+'用户针对当前计算结果的追问：'+String(question).slice(0,1000)+'\n请优先直接回答这条追问，并结合页面已提供的输入、计算结果与选项进行核验；不要只重复通用解释。';
+      }
       const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'analysis',action:action,mode:viewId,context:context,stream:true})});
       if(!response.ok){
         let errorData={};try{errorData=await response.json();}catch(e){}
@@ -4651,9 +4873,10 @@ function zxFnAdvance(f,xValue,rangeText){
       }
       if(typeof answer!=='string'||!answer.trim())throw new Error('AI 没有返回可显示的文字内容。');
       delete statusEl.dataset.loading;
-      setStatus(panel,(action==='extend'?'扩展分析完成':'分析完成')+(model?' · '+model:''),false);
+      setStatus(panel,(question?'追问回答完成':(action==='extend'?'扩展分析完成':'分析完成'))+(model?' · '+model:''),false);
       renderStructuredAnswer(answerEl,answer,viewId);
       answerEl.hidden=false;
+      if(question){const questionInput=panel.querySelector('[data-zx-ai-question]');if(questionInput)questionInput.value='';}
       await typesetAnswer(answerEl);
       panel.querySelector('[data-zx-ai-proxy]').value=proxyValue();
     }catch(e){
