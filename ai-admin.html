@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f4f6fb">
+<meta name="theme-color" content="#f8fbff">
 <title>知行 AI · 后端管理</title>
 <style>
 :root{color-scheme:light;--ink:#202938;--muted:#718096;--line:#e1e7f0;--paper:rgba(255,255,255,.82);--blue:#4169e1;--blue2:#7192f4;--mint:#dff7ed;--gold:#d8b878;--danger:#c44747;--shadow:0 16px 45px rgba(46,66,110,.09)}
@@ -652,7 +652,7 @@ table{min-width:0}
     const tokenData=[...models.entries()].map(([model,value])=>({model,...value,total:value.prompt+value.completion})).sort((a,b)=>b.total-a.total).slice(0,5);
     const tokenMax=Math.max(1,...tokenData.map(x=>x.total));
     if(!tokenData.length)tokenHost.textContent="最近记录没有供应商 usage 数据，暂不绘制 Token 用量。";
-    else tokenData.forEach(item=>appendBarRow(tokenHost,item.model,item.prompt,item.total||tokenMax,"tokens",item.completion,"输入 "+item.prompt.toLocaleString()+" · 输出 "+item.completion.toLocaleString()+" · "+item.count+" 次"));
+    else tokenData.forEach(item=>appendBarRow(tokenHost,item.model,item.prompt,tokenMax,"tokens",item.completion,"输入 "+item.prompt.toLocaleString()+" · 输出 "+item.completion.toLocaleString()+" · "+item.count+" 次"));
     $("chartTokenNote").textContent=tokenRows.length+" / "+rows.length+" 条最近记录包含真实 usage 数据。";
   }
   function renderRecentRows() {
@@ -1099,7 +1099,7 @@ body :where(*,*::before,*::after){box-sizing:border-box;writing-mode:horizontal-
 <style id="zx-admin-layout-analytics">
 /* Full-bleed masthead: the old sticky header was trapped inside the padded wrap. */
 .wrap{--admin-inline-pad:clamp(16px,3vw,34px);--admin-top-pad:clamp(16px,3vw,34px)}
-.top{position:sticky;top:0;left:50%;transform:translateX(-50%);width:100vw;margin-top:calc(-1 * var(--admin-top-pad));margin-bottom:24px;padding:17px max(24px,calc((100vw - 1180px)/2 + 34px));border-radius:0!important;border-left:0!important;border-right:0!important;background:rgba(248,252,255,.96)!important;box-shadow:none!important;backdrop-filter:blur(20px) saturate(135%)!important;-webkit-backdrop-filter:blur(20px) saturate(135%)!important}
+.top{position:sticky;top:0;left:auto;transform:none;width:100vw;margin-left:calc(50% - 50vw - var(--admin-inline-pad));margin-top:calc(-1 * var(--admin-top-pad));margin-bottom:24px;padding:17px max(24px,calc((100vw - 1180px)/2 + 34px));border-radius:0!important;border-left:0!important;border-right:0!important;background:rgba(248,252,255,.96)!important;box-shadow:none!important;backdrop-filter:blur(20px) saturate(135%)!important;-webkit-backdrop-filter:blur(20px) saturate(135%)!important}
 .logo{box-shadow:none!important}
 .analytics-block{margin:8px 0 20px;padding:16px;border:1px solid #dfe8f5;border-radius:17px;background:rgba(250,252,255,.70)}
 .analytics-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
@@ -1140,7 +1140,7 @@ body :where(*,*::before,*::after){box-sizing:border-box;writing-mode:horizontal-
 .chart-bar-detail{display:block;margin-top:4px;color:#8a99ae;font-size:10px;line-height:1.5;overflow-wrap:anywhere}
 .chart-footnote{margin-top:8px;color:#8796aa;font-size:10px;line-height:1.5}
 @media(max-width:800px){.wrap{--admin-inline-pad:13px;--admin-top-pad:14px}.top{padding:15px 20px;margin-bottom:20px}.analytics-block{padding:12px}.analytics-grid{gap:9px}.chart-card{padding:11px}.chart-head{align-items:flex-start;flex-direction:column;gap:3px}.chart-head span{text-align:left}.status-chart-layout{grid-template-columns:minmax(0,1fr);gap:0}.status-donut{max-height:155px}.chart-status-legend{grid-template-columns:1fr 1fr;gap:9px;padding:0 8px 7px}.chart-status-item{grid-template-columns:8px 1fr}.chart-status-item strong{font-size:12px}}
-@media(max-width:520px){.wrap{--admin-inline-pad:12px;--admin-top-pad:14px}.top{padding:14px 24px;margin-bottom:16px;gap:10px}.analytics-head{align-items:flex-start;flex-direction:column;gap:7px}.analytics-source{align-self:flex-start}.analytics-grid{grid-template-columns:minmax(0,1fr)}.chart-card{padding:13px}.chart-head{flex-direction:row;align-items:baseline}.chart-head span{max-width:52%;text-align:right}.chart-svg{min-height:155px}.status-chart-layout{grid-template-columns:minmax(0,1fr) minmax(95px,.8fr);gap:4px}.status-donut{max-height:none;min-height:150px}.chart-status-legend{display:grid;grid-template-columns:1fr;gap:11px;padding:0}.chart-status-item{grid-template-columns:8px 1fr}.analytics-block .chart-card+.chart-card{margin-top:0}}
+@media(max-width:520px){.wrap{--admin-inline-pad:12px;--admin-top-pad:12px}.top{padding:14px 24px;margin-bottom:16px;gap:10px}.analytics-head{align-items:flex-start;flex-direction:column;gap:7px}.analytics-source{align-self:flex-start}.analytics-grid{grid-template-columns:minmax(0,1fr)}.chart-card{padding:13px}.chart-head{flex-direction:row;align-items:baseline}.chart-head span{max-width:52%;text-align:right}.chart-svg{min-height:155px}.status-chart-layout{grid-template-columns:minmax(0,1fr) minmax(95px,.8fr);gap:4px}.status-donut{max-height:none;min-height:150px}.chart-status-legend{display:grid;grid-template-columns:1fr;gap:11px;padding:0}.chart-status-item{grid-template-columns:8px 1fr}.analytics-block .chart-card+.chart-card{margin-top:0}}
 @media(prefers-reduced-motion:reduce){.chart-mode-fill,.chart-bar-success,.chart-bar-fail{transition:none!important}}
 </style>
 </body>
