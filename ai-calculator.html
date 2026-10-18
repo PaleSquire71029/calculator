@@ -4615,8 +4615,13 @@ a{color:#416bd6}
   }
   function visible(node){
     if(!node||node.hidden||node.closest('[hidden]'))return false;
-    const style=window.getComputedStyle(node);
-    return style.display!=='none'&&style.visibility!=='hidden';
+    let current=node;
+    while(current&&current.nodeType===1){
+      const style=window.getComputedStyle(current);
+      if(style.display==='none'||style.visibility==='hidden'||style.contentVisibility==='hidden')return false;
+      current=current.parentElement;
+    }
+    return true;
   }
   function inputLabel(el){
     return el.getAttribute('aria-label')||el.getAttribute('data-math-field')||el.getAttribute('placeholder')||el.id||el.name||'输入项';
@@ -4626,7 +4631,7 @@ a{color:#416bd6}
     const inputLines=[];
     const controls=Array.from(section.querySelectorAll('input,select,textarea'));
     controls.forEach(el=>{
-      if(el.type==='hidden'||el.disabled||el.closest('[hidden]'))return;
+      if(el.type==='hidden'||el.disabled||!visible(el))return;
       const value=el.tagName==='SELECT'?(el.selectedOptions&&el.selectedOptions[0]?el.selectedOptions[0].textContent:el.value):String(el.value||'');
       if(!value.trim())return;
       inputLines.push(inputLabel(el)+' = '+value.trim().slice(0,600));
