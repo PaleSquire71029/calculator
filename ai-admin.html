@@ -242,6 +242,10 @@ table{min-width:0}
                   </select>
                   <button class="btn" id="fetchModels" type="button">↻ 获取模型列表</button>
                 </div>
+                <div id="modelCatalog" class="model-catalog" hidden>
+                  <div class="model-catalog-head"><label for="modelSearch">模型列表 <span id="modelCatalogCount"></span></label><input id="modelSearch" type="search" placeholder="搜索模型 ID…" autocomplete="off" aria-label="筛选模型列表"></div>
+                  <div id="modelCatalogList" class="model-catalog-list" role="listbox" aria-label="可选模型"></div>
+                </div>
                 <div class="field" style="margin-top:8px">
                   <label for="model">模型 ID（也可手动输入）</label>
                   <input id="model" placeholder="例如 deepseek-chat" required autocomplete="off" spellcheck="false">
@@ -458,6 +462,50 @@ table{min-width:0}
       picker.append(option);
     });
     picker.value = selected;
+    renderModelCatalog(selected);
+  }
+  function renderModelCatalog(selectedValue = "") {
+    const catalog = $("modelCatalog");
+    const list = $("modelCatalogList");
+    const queryEl = $("modelSearch");
+    if (!catalog || !list) return;
+    if (!models.length) { catalog.hidden = true; return; }
+    catalog.hidden = false;
+    const selected = String(selectedValue || $("model").value || "").trim();
+    const query = String(queryEl?.value || "").trim().toLocaleLowerCase();
+    const filtered = models.filter(id => !query || id.toLocaleLowerCase().includes(query));
+    $("modelCatalogCount").textContent = "· " + filtered.length + " / " + models.length;
+    list.replaceChildren();
+    if (!filtered.length) {
+      const empty = document.createElement("div");
+      empty.className = "model-catalog-empty";
+      empty.textContent = "没有匹配的模型，请更换搜索词。";
+      list.append(empty);
+      return;
+    }
+    filtered.forEach(id => {
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className = "model-option" + (id === selected ? " is-selected" : "");
+      option.setAttribute("role", "option");
+      option.setAttribute("aria-selected", id === selected ? "true" : "false");
+      option.title = "选择模型 " + id;
+      const label = document.createElement("span");
+      label.className = "model-option-name";
+      label.textContent = id;
+      const state = document.createElement("span");
+      state.className = "model-option-state";
+      state.textContent = id === selected ? "当前使用" : "选择";
+      option.append(label, state);
+      option.addEventListener("click", () => {
+        $("model").value = id;
+        $("modelPicker").value = id;
+        renderModelCatalog(id);
+        markSettingsDirty();
+        showToast("已选择模型：" + id);
+      });
+      list.append(option);
+    });
   }
   function populateSettings() {
     $("apiBaseUrl").value = settings.apiBaseUrl || "";
@@ -547,14 +595,17 @@ table{min-width:0}
     const picker = $("modelPicker");
     const value = $("model").value.trim();
     picker.value = Array.from(picker.options).some(option => option.value === value) ? value : "";
+    renderModelCatalog(value);
     markSettingsDirty();
   });
   $("modelPicker").addEventListener("change", () => {
     const value = $("modelPicker").value;
     if (!value) return;
     $("model").value = value;
+    renderModelCatalog(value);
     markSettingsDirty();
   });
+  $("modelSearch").addEventListener("input", () => renderModelCatalog($("model").value));
   $("providerPreset").addEventListener("change", () => {
     const presets = {
       a6api: "https://api.a6api.com/v1",
@@ -854,5 +905,78 @@ table{min-width:0}
   token ? enterAdmin().catch(error => { logout(false); showLogin(error.message); }) : showLogin();
 })();
 </script>
+<style id="zx-admin-liquid-redesign">
+:root{color-scheme:light!important;--ink:#22324a;--muted:#71829b;--line:rgba(132,154,190,.22);--paper:rgba(255,255,255,.72);--blue:#4b73d8;--blue2:#7898ed;--shadow:0 18px 48px rgba(58,82,128,.085)}
+html,body{background:#f4f7fc!important;color:#24344b!important;max-width:100%;overflow-x:clip}
+body{
+ font-family:"MiSans","Noto Sans SC","PingFang SC",system-ui,sans-serif!important;
+ background:radial-gradient(ellipse at 5% 0%,rgba(161,189,255,.27),transparent 34rem),radial-gradient(ellipse at 95% 15%,rgba(148,225,218,.22),transparent 30rem),linear-gradient(160deg,#f8faff 0%,#eff5fc 55%,#f9fbff 100%)!important;
+}
+body :where(*,*::before,*::after){box-sizing:border-box;writing-mode:horizontal-tb!important;text-orientation:mixed!important;word-break:normal}
+.top{position:sticky;top:0;z-index:50;background:rgba(248,251,255,.76)!important;border-bottom:1px solid rgba(136,158,195,.20)!important;backdrop-filter:blur(24px) saturate(150%)!important;-webkit-backdrop-filter:blur(24px) saturate(150%)!important}
+.logo{border:1px solid rgba(95,132,220,.18)!important;background:linear-gradient(145deg,#fff,#e6eeff)!important;color:#416bd6!important;box-shadow:0 8px 22px rgba(72,104,171,.12),inset 0 1px white!important}
+.layout{gap:20px!important;align-items:start!important}
+.sidebar,.panel,.section-card,.metric,.balance-item,.table-wrap,.prompt-card,.login,.hero{
+ border:1px solid rgba(255,255,255,.94)!important;background:rgba(255,255,255,.68)!important;
+ box-shadow:0 17px 45px rgba(62,85,128,.075),inset 0 1px rgba(255,255,255,.97)!important;
+ backdrop-filter:blur(22px) saturate(145%)!important;-webkit-backdrop-filter:blur(22px) saturate(145%)!important;
+}
+.sidebar{border-radius:22px!important}
+.panel,.section-card,.login{border-radius:22px!important}
+.hero{border-radius:26px!important;background:linear-gradient(120deg,rgba(255,255,255,.88),rgba(239,246,255,.78) 65%,rgba(229,248,244,.74))!important}
+.h1{color:#20334e!important;letter-spacing:-.035em!important;font-weight:820!important}
+.lead,.panel-desc{color:#667992!important}
+.navbtn{border-color:transparent!important;color:#576982!important;border-radius:12px!important}
+.navbtn.active{color:#315fc7!important;background:linear-gradient(110deg,#e2eaff,#f5f8ff)!important;border-color:rgba(85,124,220,.19)!important;box-shadow:inset 3px 0 #5e83df!important}
+.panel-title{color:#263951!important;font-weight:800!important;letter-spacing:-.02em}
+.field label,.label,.m-label{color:#5d718d!important}
+.field input,.field select,.field textarea,.control,.model-catalog-head input{
+ color:#243752!important;background:rgba(255,255,255,.88)!important;border-color:rgba(130,153,191,.24)!important;border-radius:12px!important;
+}
+.field input:focus,.field select:focus,.field textarea:focus,.control:focus,.model-catalog-head input:focus{outline:none!important;border-color:rgba(75,115,216,.55)!important;box-shadow:0 0 0 4px rgba(75,115,216,.10)!important}
+.btn{border-color:rgba(125,149,189,.25)!important;background:rgba(255,255,255,.83)!important;color:#4b607e!important;border-radius:12px!important;transition:transform .22s cubic-bezier(.22,.72,.22,1),box-shadow .22s,border-color .22s!important}
+.btn:hover{transform:translateY(-2px);border-color:rgba(75,115,216,.34)!important;box-shadow:0 8px 20px rgba(61,91,154,.10)!important}
+.btn.primary{background:linear-gradient(135deg,#5a82e4,#416bd3)!important;color:#fff!important;border-color:rgba(255,255,255,.55)!important;box-shadow:0 7px 18px rgba(65,105,205,.19)!important}
+.metric,.balance-item{background:rgba(250,252,255,.78)!important;border-color:rgba(132,155,192,.17)!important;border-radius:15px!important}
+.metric strong,.balance-item strong{color:#273b56!important}
+.status{border-radius:12px!important;overflow-wrap:anywhere}
+.status.success{background:#e8f7f1!important;color:#147863!important}
+.status.error{background:#fff0f1!important;color:#b72e48!important;animation:none!important}
+.toast{background:rgba(255,255,255,.95)!important;color:#344964!important;border-color:rgba(255,255,255,.97)!important;backdrop-filter:blur(20px)!important}
+#modelPicker{appearance:auto!important;-webkit-appearance:menulist!important;pointer-events:auto!important;position:relative!important;z-index:2!important;flex:1 1 230px!important;min-width:0!important;min-height:46px!important;touch-action:manipulation!important}
+#fetchModels{flex:0 0 auto!important;min-height:46px!important;white-space:nowrap}
+.model-catalog{margin-top:12px;padding:12px;border:1px solid rgba(130,153,191,.19);border-radius:15px;background:rgba(249,252,255,.78);box-shadow:inset 0 1px rgba(255,255,255,.95)}
+.model-catalog[hidden]{display:none!important}
+.model-catalog-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:9px}
+.model-catalog-head label{font-size:11px;font-weight:760;color:#506787}
+#modelCatalogCount{color:#8998ae;font-weight:500}
+.model-catalog-head input{max-width:260px;min-height:38px;padding:8px 10px;font-size:12px}
+.model-catalog-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:265px;overflow:auto;overscroll-behavior:contain;padding:2px}
+.model-option{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;min-height:42px;padding:8px 10px;border:1px solid rgba(130,153,191,.17);border-radius:11px;background:rgba(255,255,255,.87);color:#405673;text-align:left;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
+.model-option:hover{background:#eef3ff;border-color:rgba(75,115,216,.34);transform:translateY(-1px)}
+.model-option.is-selected{background:linear-gradient(115deg,#e4ecff,#f5f8ff);border-color:rgba(70,109,211,.42);box-shadow:inset 3px 0 #5b82e2}
+.model-option-name{min-width:0;overflow-wrap:anywhere;font:12px/1.45 ui-monospace,"JetBrains Mono",monospace;color:#334c70}
+.model-option-state{flex:0 0 auto;color:#8494ad;font-size:10px}
+.model-option.is-selected .model-option-state{color:#3764ca;font-weight:750}
+.model-catalog-empty{grid-column:1/-1;padding:16px;text-align:center;color:#8494a9;font-size:12px}
+@media(max-width:800px){
+ .wrap{padding:14px 13px calc(28px + env(safe-area-inset-bottom))!important}
+ .layout{grid-template-columns:minmax(0,1fr)!important}
+ .hero{padding:20px!important}
+ .panel{padding:17px!important}
+ .model-catalog-list{grid-template-columns:minmax(0,1fr);max-height:225px}
+ .model-catalog-head{align-items:stretch;flex-direction:column;gap:8px}
+ .model-catalog-head input{max-width:none;width:100%;min-height:44px;font-size:16px}
+ #modelPicker{min-height:46px;font-size:16px}
+ #fetchModels{width:100%;min-height:44px}
+ .field .row:has(#modelPicker){align-items:stretch}
+}
+@media(max-width:420px){
+ .h1{font-size:26px!important}
+ .model-option{min-height:45px}
+ .panel-title{font-size:19px!important}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
 </body>
 </html>
