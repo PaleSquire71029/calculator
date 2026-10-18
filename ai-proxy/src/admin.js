@@ -452,6 +452,8 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       }
       const headers = { "Authorization": "Bearer " + apiKey, "Accept": "application/json" };
       let subscriptionResponse, tokenResponse;
+      // Cloudflare Workers do not support redirect:"error"; "manual" avoids forwarding credentials,
+      // and the explicit 3xx check below rejects redirects without contacting their destinations.
       try {
         [subscriptionResponse, tokenResponse] = await Promise.all([
           fetch("https://api.a6api.com/dashboard/billing/subscription", {
