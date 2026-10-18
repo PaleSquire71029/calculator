@@ -259,7 +259,9 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
   async function readData(env) {
     if (!env.ADMIN_STORE) return null;
     const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
-    const response = await stub.fetch("https://admin-store.internal/data");
+    const response = await stub.fetch("https://admin-store.internal/data", {
+      signal: AbortSignal.timeout(8000)
+    });
     if (!response.ok) throw new Error("无法读取管理设置存储");
     const data = await response.json();
     // Migrate older plaintext custom keys to authenticated AES-GCM ciphertext on first read.
@@ -284,7 +286,10 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     if (!env.ADMIN_STORE) throw new Error("管理设置存储未绑定");
     const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
     const response = await stub.fetch("https://admin-store.internal/data", {
-      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      signal: AbortSignal.timeout(8000)
     });
     if (!response.ok) throw new Error("无法保存管理设置");
   }
@@ -342,7 +347,8 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       const response = await stub.fetch("https://admin-store.internal/rate-limit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key, limit, windowMs })
+        body: JSON.stringify({ key, limit, windowMs }),
+        signal: AbortSignal.timeout(8000)
       });
       if (!response.ok) return { allowed: false, unavailable: true, retryAfter: 60 };
       const result = await response.json();
