@@ -77,12 +77,44 @@ function json(data, status, headers = {}) {
 function limitSseStream(body, maxBytes = MAX_STREAM_BYTES, onFinish = () => {}) {
   const reader = body.getReader();
   const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
   let totalBytes = 0;
   let finalized = false;
+  let pendingText = "";
+  let usage = null;
+  function inspectSse(chunk, final = false) {
+    pendingText += decoder.decode(chunk, { stream: !final });
+    const lines = pendingText.split(/\\r?\\n/);
+    pendingText = final ? "" : (lines.pop() || "");
+    if (final && lines.length === 0 && pendingText) lines.push(pendingText);
+    for (const line of lines) {
+      const trimmed = line.trimStart();
+      if (!trimmed.startsWith("data:")) continue;
+      const data = trimmed.slice(5).trim();
+      if (!data || data === "[DONE]") continue;
+      try {
+        const event = JSON.parse(data);
+        if (event?.usage && typeof event.usage === "object") usage = event.usage;
+      } catch { /* Ignore partial or provider-specific SSE events. */ }
+    }
+    if (final && pendingText) {
+      const trimmed = pendingText.trimStart();
+      if (trimmed.startsWith("data:")) {
+        try {
+          const event = JSON.parse(trimmed.slice(5).trim());
+          if (event?.usage && typeof event.usage === "object") usage = event.usage;
+        } catch {}
+      }
+      pendingText = "";
+    }
+  }
   async function finish(ok) {
     if (finalized) return;
     finalized = true;
-    try { await onFinish(ok); } catch {}
+    try {
+      inspectSse(new Uint8Array(), true);
+      await onFinish(ok, usage);
+    } catch {}
   }
   return new ReadableStream({
     async pull(controller) {
@@ -100,10 +132,11 @@ function limitSseStream(body, maxBytes = MAX_STREAM_BYTES, onFinish = () => {}) 
           const message = {
             error: { message: "模型流式输出超过 4 MB 安全上限，请在管理页设置较小的最大输出 Token 后重试。" }
           };
-          controller.enqueue(encoder.encode("\n\ndata: " + JSON.stringify(message) + "\n\ndata: [DONE]\n\n"));
+          controller.enqueue(encoder.encode("\\n\\ndata: " + JSON.stringify(message) + "\\n\\ndata: [DONE]\\n\\n"));
           controller.close();
           return;
         }
+        inspectSse(value);
         controller.enqueue(value);
       } catch (error) {
         await finish(false);
@@ -231,6 +264,7 @@ export default {
       messages: upstreamMessages,
       temperature: runtime.temperature,
       stream: wantsStream,
+      ...(wantsStream ? { stream_options: { include_usage: true } } : {}),
       ...(runtime.maxTokens > 0 ? { max_tokens: runtime.maxTokens } : {})
     };
     let upstream;
@@ -248,8 +282,8 @@ export default {
     }
     const upstreamContentType = upstream.headers.get("Content-Type") || "";
     if (wantsStream && upstream.ok && upstream.body && upstreamContentType.includes("text/event-stream")) {
-      return new Response(limitSseStream(upstream.body, MAX_STREAM_BYTES, ok =>
-        adminModule.recordRequest(env, { mode, ok, status: ok ? upstream.status : 502, model: runtime.model })
+      return new Response(limitSseStream(upstream.body, MAX_STREAM_BYTES, (ok, usage) =>
+        adminModule.recordRequest(env, { mode, ok, status: ok ? upstream.status : 502, model: runtime.model, usage })
       ), {
         status: 200,
         headers: {
