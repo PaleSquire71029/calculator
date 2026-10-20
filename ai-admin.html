@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f8fbff">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex,nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; script-src 'sha256-i1HJjehfwbRYny68Hkk4bd6A23gKu7WE6N4yiddptgs=' 'sha256-fbV6yAwotxU3wod56Nz1tuzzoQDZK5wkQZU1hUKIHII=' 'sha256-KlMdjGgEDDGxFverkfihYq09Uv0jrAHuIUkmTCH0v2w='; style-src 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' https://zhixing-calculator-ai.xiaoshirong2023.workers.dev; object-src 'none'; frame-src 'none'; worker-src 'none'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; script-src 'sha256-i1HJjehfwbRYny68Hkk4bd6A23gKu7WE6N4yiddptgs=' 'sha256-fbV6yAwotxU3wod56Nz1tuzzoQDZK5wkQZU1hUKIHII=' 'sha256-KlMdjGgEDDGxFverkfihYq09Uv0jrAHuIUkmTCH0v2w='; style-src 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' https://api.zhixing.us.ci; object-src 'none'; frame-src 'none'; worker-src 'none'; upgrade-insecure-requests">
 <script>
 if (window.top !== window.self) {
   document.documentElement.style.display = "none";
@@ -189,7 +189,7 @@ table{min-width:0}
     <h1 class="h1">管理学习产品 AI 服务</h1>
     <p class="lead">统一配置模型供应商、模型列表、提示词和调用状态。密钥仅发送至你的 Worker，不会回显到页面。</p>
     <form id="loginForm" class="stack" style="margin-top:24px">
-      <div class="field"><label for="workerUrl">AI Worker 地址</label><input id="workerUrl" type="url" inputmode="url" value="https://zhixing-calculator-ai.xiaoshirong2023.workers.dev" required autocomplete="url" readonly aria-readonly="true"><div class="hint">已锁定官方 Worker，避免管理密码或会话令牌被发送到其他地址。</div></div>
+      <div class="field"><label for="workerUrl">AI Worker 地址</label><input id="workerUrl" type="url" inputmode="url" value="https://api.zhixing.us.ci" required autocomplete="url" readonly aria-readonly="true"><div class="hint">已锁定官方 Worker，避免管理密码或会话令牌被发送到其他地址。</div></div>
       <div class="field"><label for="password">管理密码</label><input id="password" type="password" required autocomplete="current-password" placeholder="输入你在 Cloudflare 中设置的管理密码"></div>
       <button class="btn primary full" id="loginButton" type="submit">解锁管理中心 <span aria-hidden="true">→</span></button>
       <div class="status" id="loginStatus" role="status" aria-live="polite"></div>
@@ -334,7 +334,7 @@ table{min-width:0}
 (() => {
   "use strict";
   const $ = id => document.getElementById(id);
-  const DEFAULT_WORKER = "https://zhixing-calculator-ai.xiaoshirong2023.workers.dev";
+  const DEFAULT_WORKER = "https://api.zhixing.us.ci";
   const TOKEN_KEY = "zx-ai-admin-token";
   const TOKEN_WORKER_KEY = "zx-ai-admin-token-worker";
   const WORKER_KEY = "zx-ai-admin-worker-url";
