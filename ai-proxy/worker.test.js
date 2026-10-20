@@ -224,6 +224,24 @@ test("Zhixing AI can pick a model and append a lightweight custom prompt without
   }
 });
 
+test("rejects non-JSON chat requests before parsing the body", async () => {
+  const response = await worker.fetch(new Request("https://worker.example.test/api/chat", {
+    method: "POST",
+    headers: { Origin: origin, "CF-Connecting-IP": "198.51.100.177", "Content-Type": "text/plain" },
+    body: JSON.stringify({ messages: [userMessage] })
+  }), env);
+  assert.equal(response.status, 415);
+});
+
+test("rejects non-JSON admin mutations before authentication or parsing", async () => {
+  const response = await worker.fetch(new Request("https://worker.example.test/admin/login", {
+    method: "POST",
+    headers: { Origin: origin, "CF-Connecting-IP": "198.51.100.178", "Content-Type": "text/plain" },
+    body: "password=guess"
+  }), testEnv({ ADMIN_PASSWORD: "long-test-password" }));
+  assert.equal(response.status, 415);
+});
+
 test("rejects unapproved origins", async () => {
   const response = await worker.fetch(req({ mode: "solve", messages: [userMessage] }, "198.51.100.11", "https://evil.example"), env);
   assert.equal(response.status, 403);
