@@ -511,6 +511,8 @@ test("API responses set baseline security headers", async () => {
   assert.equal(response.headers.get("X-Frame-Options"), "DENY");
   assert.equal(response.headers.get("Referrer-Policy"), "no-referrer");
   assert.equal(response.headers.get("Cache-Control"), "no-store");
+  assert.equal(response.headers.get("Content-Security-Policy"), "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+  assert.equal(response.headers.get("Permissions-Policy"), "camera=(), microphone=(), geolocation=()");
 });
 
 test("changing the admin password invalidates existing sessions even with a separate session secret", async () => {
