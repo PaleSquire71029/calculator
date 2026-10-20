@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Script } from "node:vm";
+import { createHash } from "node:crypto";
 import worker, { AdminSettingsStore } from "./src/index.js";
 
 const origin = "https://c.zhixing.us.ci";
@@ -69,20 +70,34 @@ test("admin login issues a signed, expiring session token", async () => {
 
 test("admin keeps Zhixing AI settings isolated from the learning and calculator profile", async () => {
   const isolatedEnv = testEnv({ ADMIN_PASSWORD: "test-admin-password" });
-  const login = await worker.fetch(new Request("https://worker.example.test/admin/login?app=zhixing-ai", {
+  const loginFor = async (app, ip) => worker.fetch(new Request("https://worker.example.test/admin/login?app=" + app, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Origin: origin, "CF-Connecting-IP": "198.51.100.93" },
+    headers: { "Content-Type": "application/json", Origin: origin, "CF-Connecting-IP": ip },
     body: JSON.stringify({ password: "test-admin-password" })
   }), isolatedEnv);
-  assert.equal(login.status, 200);
-  const token = (await login.json()).token;
-  const headers = { Origin: origin, Authorization: "Bearer " + token, "Content-Type": "application/json" };
-  const learningDefaultsResponse = await worker.fetch(new Request("https://worker.example.test/admin/defaults?app=learning", { headers }), isolatedEnv);
+  const [zhixingLogin, learningLogin] = await Promise.all([
+    loginFor("zhixing-ai", "198.51.100.93"),
+    loginFor("learning", "198.51.100.94")
+  ]);
+  assert.equal(zhixingLogin.status, 200);
+  assert.equal(learningLogin.status, 200);
+  const zhixingToken = (await zhixingLogin.json()).token;
+  const learningToken = (await learningLogin.json()).token;
+  const headersFor = token => ({ Origin: origin, Authorization: "Bearer " + token, "Content-Type": "application/json" });
+  const zhixingHeaders = headersFor(zhixingToken);
+  const learningHeaders = headersFor(learningToken);
+
+  const crossScope = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=learning", {
+    headers: zhixingHeaders
+  }), isolatedEnv);
+  assert.equal(crossScope.status, 401, "a Zhixing AI session must not access the learning profile");
+
+  const learningDefaultsResponse = await worker.fetch(new Request("https://worker.example.test/admin/defaults?app=learning", { headers: learningHeaders }), isolatedEnv);
   assert.equal(learningDefaultsResponse.status, 200);
   const learningPrompts = await learningDefaultsResponse.json();
   const seedLegacy = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=learning", {
     method: "PUT",
-    headers,
+    headers: learningHeaders,
     body: JSON.stringify({
       apiBaseUrl: "https://api.example.com/v1",
       model: "legacy-shared-model",
@@ -93,17 +108,18 @@ test("admin keeps Zhixing AI settings isolated from the learning and calculator 
     })
   }), isolatedEnv);
   assert.equal(seedLegacy.status, 200);
-  const defaultsResponse = await worker.fetch(new Request("https://worker.example.test/admin/defaults?app=zhixing-ai", { headers }), isolatedEnv);
+
+  const defaultsResponse = await worker.fetch(new Request("https://worker.example.test/admin/defaults?app=zhixing-ai", { headers: zhixingHeaders }), isolatedEnv);
   assert.equal(defaultsResponse.status, 200);
   const prompts = await defaultsResponse.json();
   assert.match(prompts.chat.general, /知行AI助手/);
   assert.doesNotMatch(prompts.chat.general, /多学科学习助手/);
-  const inherited = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=zhixing-ai", { headers }), isolatedEnv);
+  const inherited = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=zhixing-ai", { headers: zhixingHeaders }), isolatedEnv);
   assert.equal(inherited.status, 200);
   assert.equal((await inherited.json()).model, "legacy-shared-model");
   const save = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=zhixing-ai", {
     method: "PUT",
-    headers,
+    headers: zhixingHeaders,
     body: JSON.stringify({
       apiBaseUrl: "https://api.example.com/v1",
       model: "zhixing-only-model",
@@ -114,8 +130,8 @@ test("admin keeps Zhixing AI settings isolated from the learning and calculator 
     })
   }), isolatedEnv);
   assert.equal(save.status, 200);
-  const zhixingSettings = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=zhixing-ai", { headers }), isolatedEnv);
-  const learningSettings = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=learning", { headers }), isolatedEnv);
+  const zhixingSettings = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=zhixing-ai", { headers: zhixingHeaders }), isolatedEnv);
+  const learningSettings = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=learning", { headers: learningHeaders }), isolatedEnv);
   assert.equal(zhixingSettings.status, 200);
   assert.equal(learningSettings.status, 200);
   assert.equal((await zhixingSettings.json()).model, "zhixing-only-model");
@@ -450,6 +466,27 @@ test("AI admin frontend inline JavaScript parses", () => {
   assert.match(html, /\.model-catalog-list\{max-height:155px!important\}/);
 });
 
+
+
+
+test("admin page CSP only authorizes the current inline script hashes", () => {
+  const html = readFileSync(new URL("../ai-admin.html", import.meta.url), "utf8");
+  const policy = html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/);
+  assert.ok(policy, "admin CSP must be present");
+  const csp = policy[1];
+  const scriptDirective = csp.split(";").map(value => value.trim()).find(value => value.startsWith("script-src "));
+  assert.ok(scriptDirective, "admin CSP must contain script-src");
+  assert.doesNotMatch(scriptDirective, /unsafe-inline|unsafe-eval/);
+  assert.match(csp, /base-uri 'none'/);
+  assert.match(csp, /form-action 'none'/);
+  assert.match(csp, /object-src 'none'/);
+  assert.match(csp, /frame-src 'none'/);
+
+  const declaredHashes = [...scriptDirective.matchAll(/'sha256-([^']+)'/g)].map(match => match[1]).sort();
+  const actualHashes = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi)]
+    .map(match => createHash("sha256").update(match[1]).digest("base64")).sort();
+  assert.deepEqual(declaredHashes, actualHashes, "CSP hashes must be refreshed whenever an inline script changes");
+});
 
 test("admin verification and startup requests always time out instead of hanging", () => {
   const html = readFileSync(new URL("../ai-admin.html", import.meta.url), "utf8");
