@@ -78,6 +78,30 @@ test("rejects insecure, credential-bearing, literal-IP, internal, and custom-por
   for (const value of invalid) assert.throws(() => normalizeApiBaseUrl(value), value);
 });
 
+test("single login issues two separate product-scoped admin sessions", async () => {
+  const { env } = fakeEnvironment();
+  const origin = "https://c.zhixing.us.ci";
+  const response = await worker.fetch(jsonRequest("https://worker.test/admin/login/all?app=learning", {
+    password: env.ADMIN_PASSWORD
+  }, { Origin: origin, "CF-Connecting-IP": "203.0.113.199" }), env);
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.ok(body.tokens["zhixing-ai"]);
+  assert.ok(body.tokens.learning);
+  assert.notEqual(body.tokens["zhixing-ai"], body.tokens.learning);
+  assert.ok(body.expiresIn > 0);
+
+  const denied = await worker.fetch(new Request("https://worker.test/admin/defaults?app=learning", {
+    headers: { Origin: origin, Authorization: "Bearer " + body.tokens["zhixing-ai"] }
+  }), env);
+  assert.equal(denied.status, 401, "A token for Zhixing AI must not access learning settings");
+
+  const allowed = await worker.fetch(new Request("https://worker.test/admin/defaults?app=learning", {
+    headers: { Origin: origin, Authorization: "Bearer " + body.tokens.learning }
+  }), env);
+  assert.equal(allowed.status, 200);
+});
+
 test("limits JSON bodies even when Content-Length is absent or misleading", async () => {
   const valid = await readJsonLimited(jsonRequest("https://worker.test/api", { ok: true }), 32);
   assert.deepEqual(valid.data, { ok: true });
