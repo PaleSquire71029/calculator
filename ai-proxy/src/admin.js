@@ -436,15 +436,20 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       }
       stats.recent = [{
         at: new Date().toISOString(),
-        mode: event.mode || "unknown",
+        mode: String(event.mode || "unknown").slice(0, 80),
         ok: Boolean(event.ok),
-        status: event.status || 0,
-        model: event.model || "",
+        status: Number.isFinite(Number(event.status)) ? Number(event.status) : 0,
+        model: String(event.model || "").slice(0, 200),
         promptTokens,
         completionTokens,
         totalTokens,
-        usageAvailable: Boolean(usage)
-      }, ...(stats.recent || [])].slice(0, 20);
+        usageAvailable: Boolean(usage),
+        // Client IP comes from Cloudflare's edge header, never from a client-supplied field.
+        ip: String(event.clientIp || "unknown").slice(0, 80),
+        origin: String(event.origin || "").slice(0, 200),
+        userAgent: String(event.userAgent || "").slice(0, 220),
+        durationMs: Math.max(0, Math.min(900000, Math.floor(Number(event.durationMs) || 0)))
+      }, ...(stats.recent || [])].slice(0, 500);
       profile.stats = stats;
       writeProfile(data, appId, profile);
       await writeData(env, data);
