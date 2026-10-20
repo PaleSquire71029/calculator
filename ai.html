@@ -104,7 +104,7 @@ textarea::placeholder{color:#9aa5b6}
   <summary>连接设置 <span id="health" class="health">· 等待配置</span></summary>
   <div class="settings-body">
     <label for="proxyUrl">AI 代理地址</label>
-    <div class="proxy-row"><input id="proxyUrl" type="url" inputmode="url" autocomplete="url" placeholder="https://你的-worker.workers.dev"><button class="btn" id="checkBtn" type="button">检查</button></div>
+    <div class="proxy-row"><input id="proxyUrl" type="url" inputmode="url" autocomplete="url" placeholder="https://api.zhixing.us.ci"><button class="btn" id="checkBtn" type="button">检查</button></div>
     <div class="tiny">填写你部署的 Worker 地址，不要填写 API 密钥。地址会保存在本机浏览器。你的提问和图片会发送给该 Worker 配置的模型服务商处理，请勿提交密码、学号或无关个人隐私。<a href="https://github.com/PaleSquire71029/calculator/blob/main/ai-proxy/SECURITY.md" target="_blank" rel="noopener noreferrer">查看数据安全说明</a></div>
   </div>
 </details>
@@ -138,9 +138,17 @@ textarea::placeholder{color:#9aa5b6}
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
-const DEFAULT_PROXY='https://zhixing-calculator-ai.xiaoshirong2023.workers.dev';
+const DEFAULT_PROXY='https://api.zhixing.us.ci';
 const state={messages:[],images:[],files:[],busy:false,proxy:''};
-try{state.proxy=localStorage.getItem('zx-ai-proxy-url')||sessionStorage.getItem('zx-ai-proxy')||DEFAULT_PROXY;}catch(e){state.proxy=DEFAULT_PROXY;}
+try{
+  state.proxy=localStorage.getItem('zx-ai-proxy-url')||sessionStorage.getItem('zx-ai-proxy')||'';
+  if(state.proxy.replace(/\/+$/,'')==='https://zhixing-calculator-ai.xiaoshirong2023.workers.dev'){
+    state.proxy=DEFAULT_PROXY;
+    localStorage.setItem('zx-ai-proxy-url',state.proxy);
+    sessionStorage.setItem('zx-ai-proxy',state.proxy);
+  }
+  if(!state.proxy)state.proxy=DEFAULT_PROXY;
+}catch(e){state.proxy=DEFAULT_PROXY;}
 $('proxyUrl').value=state.proxy;
 function saveProxy(){state.proxy=$('proxyUrl').value.trim().replace(/\/$/,'');try{localStorage.setItem('zx-ai-proxy-url',state.proxy);sessionStorage.setItem('zx-ai-proxy',state.proxy);}catch(e){}}
 $('proxyUrl').addEventListener('change',()=>{saveProxy();checkProxy();});
