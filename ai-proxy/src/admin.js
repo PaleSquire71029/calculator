@@ -454,6 +454,10 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
     const appId = normalizeAppId(url.searchParams.get("app"));
     const origin = request.headers.get("Origin") || "";
     if (!origin || !getAllowedOrigins(env).includes(origin)) return json({ error: "该网页来源未获授权" }, 403, cors);
+    if (["POST", "PUT", "PATCH"].includes(request.method) &&
+        !/^application\\/json(?:\\s*;|$)/i.test(request.headers.get("Content-Type") || "")) {
+      return json({ error: "请求必须使用 application/json 格式。" }, 415, cors);
+    }
     if (!(url.pathname === "/admin/login" && request.method === "POST")) {
       const ip = request.headers.get("CF-Connecting-IP") || "unknown";
       const rate = await checkRateLimit(env, "admin-auth:" + ip, 120, 60 * 1000);
