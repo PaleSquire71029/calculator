@@ -550,3 +550,64 @@ test("upstream error messages never echo the configured API key", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test("public model listing and authenticated admin probes redact upstream credentials", async () => {
+  const originalFetch = globalThis.fetch;
+  const secret = "test-key";
+  const echoed = "Provider echoed " + secret + "; Authorization: Bearer " + secret;
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    error: { message: echoed },
+    message: echoed
+  }), { status: 500, headers: { "Content-Type": "application/json" } });
+
+  try {
+    const isolatedEnv = testEnv({
+      AI_API_KEY: secret,
+      ADMIN_PASSWORD: "test-admin-password",
+      ALLOWED_ORIGINS: origin
+    });
+    const publicModels = await worker.fetch(new Request(
+      "https://worker.example.test/api/models?app=learning",
+      { headers: { Origin: origin, "CF-Connecting-IP": "198.51.100.122" } }
+    ), isolatedEnv);
+    assert.equal(publicModels.status, 502);
+    const publicBody = await publicModels.text();
+    assert.doesNotMatch(publicBody, /test-key/);
+
+    const login = await worker.fetch(new Request("https://worker.example.test/admin/login?app=learning", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: origin,
+        "CF-Connecting-IP": "198.51.100.123"
+      },
+      body: JSON.stringify({ password: "test-admin-password" })
+    }), isolatedEnv);
+    assert.equal(login.status, 200);
+    const token = (await login.json()).token;
+    const headers = {
+      "Content-Type": "application/json",
+      Origin: origin,
+      Authorization: "Bearer " + token,
+      "CF-Connecting-IP": "198.51.100.123"
+    };
+    const body = JSON.stringify({
+      apiBaseUrl: "https://api.example.com/v1",
+      apiKey: secret,
+      model: "vision-model"
+    });
+
+    for (const route of ["/admin/models?app=learning", "/admin/test?app=learning"]) {
+      const response = await worker.fetch(new Request("https://worker.example.test" + route, {
+        method: "POST",
+        headers,
+        body
+      }), isolatedEnv);
+      assert.equal(response.status, 502, route + " should report a controlled provider error");
+      assert.doesNotMatch(await response.text(), /test-key/, route + " must not echo the configured API key");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
