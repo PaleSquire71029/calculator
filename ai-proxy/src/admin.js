@@ -463,11 +463,30 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
         !/^application\/json(?:\s*;|$)/i.test(request.headers.get("Content-Type") || "")) {
       return json({ error: "请求必须使用 application/json 格式。" }, 415, cors);
     }
-    if (!(url.pathname === "/admin/login" && request.method === "POST")) {
+    const isLoginRoute = request.method === "POST" &&
+      (url.pathname === "/admin/login" || url.pathname === "/admin/login/all");
+    if (!isLoginRoute) {
       const ip = request.headers.get("CF-Connecting-IP") || "unknown";
       const rate = await checkRateLimit(env, "admin-auth:" + ip, 120, 60 * 1000);
       if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
       if (!rate.allowed) return json({ error: "管理接口请求过于频繁，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
+    }
+    if (url.pathname === "/admin/login/all" && request.method === "POST") {
+      if (!env.ADMIN_PASSWORD) return json({ error: "尚未配置管理密码。请在 Cloudflare Worker → Settings → Variables and Secrets 中添加 Secret：ADMIN_PASSWORD。" }, 503, cors);
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await checkRateLimit(env, "admin-login:" + ip, ADMIN_LOGIN_MAX_ATTEMPTS, ADMIN_LOGIN_WINDOW_MS);
+      if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return json({ error: "登录尝试过多，请 15 分钟后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
+      const parsed = await readJsonLimited(request, 8192);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
+      if (typeof parsed.data.password !== "string" || !safeEqual(parsed.data.password, env.ADMIN_PASSWORD)) return json({ error: "管理密码不正确" }, 401, cors);
+      return json({
+        tokens: {
+          "zhixing-ai": await createToken(env, "zhixing-ai"),
+          learning: await createToken(env, "learning")
+        },
+        expiresIn: ADMIN_SESSION_TTL_MS
+      }, 200, cors);
     }
     if (url.pathname === "/admin/login" && request.method === "POST") {
       if (!env.ADMIN_PASSWORD) return json({ error: "尚未配置管理密码。请在 Cloudflare Worker → Settings → Variables and Secrets 中添加 Secret：ADMIN_PASSWORD。" }, 503, cors);
