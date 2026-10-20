@@ -92,7 +92,7 @@ function sanitizeProviderText(value, apiKey = "", maxLength = 400) {
   return message.slice(0, maxLength);
 }
 function isJsonRequest(request) {
-  return /^application\\/json(?:\\s*;|$)/i.test(request.headers.get("Content-Type") || "");
+  return /^application\/json(?:\s*;|$)/i.test(request.headers.get("Content-Type") || "");
 }
 function json(data, status, headers = {}) {
   return new Response(JSON.stringify(data), {
