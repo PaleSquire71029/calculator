@@ -91,6 +91,9 @@ function sanitizeProviderText(value, apiKey = "", maxLength = 400) {
     .replace(/(api[_ -]?key|token|secret)(\s*[:=]\s*)["']?[^,\s"'<>]{8,}/gi, "$1$2[已隐藏]");
   return message.slice(0, maxLength);
 }
+function isJsonRequest(request) {
+  return /^application\\/json(?:\\s*;|$)/i.test(request.headers.get("Content-Type") || "");
+}
 function json(data, status, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,
@@ -291,6 +294,7 @@ export default {
       return json({ app: appId, defaultModel: runtime.model || null, count: models.length, models }, 200, { ...cors, "Cache-Control": "no-store" });
     }
     if (url.pathname !== "/api/chat" || request.method !== "POST") return json({ error: "Not found" }, 404, cors);
+    if (!isJsonRequest(request)) return json({ error: "请求必须使用 application/json 格式。" }, 415, cors);
     if (!origin || !allowed.includes(origin)) return json({ error: "该网站来源未获授权，请检查 Worker 的 ALLOWED_ORIGINS 配置。" }, 403, cors);
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const rate = await adminModule.checkRateLimit(env, "chat:" + ip, MAX_REQUESTS, WINDOW_MS);
