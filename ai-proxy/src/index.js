@@ -79,7 +79,9 @@ const API_SECURITY_HEADERS = {
   "Cache-Control": "no-store",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
-  "Referrer-Policy": "no-referrer"
+  "Referrer-Policy": "no-referrer",
+  "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
 };
 function sanitizeProviderText(value, apiKey = "", maxLength = 400) {
   let message = String(value ?? "").replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
