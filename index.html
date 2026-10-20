@@ -4641,7 +4641,7 @@ a{color:#416bd6}
 <script id="zx-ai-inline-controller">
 (function(){
   'use strict';
-  const DEFAULT_PROXY='https://zhixing-calculator-ai.xiaoshirong2023.workers.dev';
+  const DEFAULT_PROXY='https://api.zhixing.us.ci';
   const VIEW_TITLES={basic:'基础计算',equation:'方程求解',inequality:'不等式',fit:'函数分析与绘图',units:'单位换算',chemistry:'化学方程式配平',knowledge:'知识库',history:'历史记录'};
   const EXTEND_ACTIONS={
     basic:{label:'✧ AI 化简/推导',title:'补充符号化简、因式分解与相关推导'},
@@ -4655,8 +4655,15 @@ a{color:#416bd6}
   const $=id=>document.getElementById(id);
   let busy=false;
   function proxyValue(){
-    try{return localStorage.getItem('zx-ai-proxy-url')||sessionStorage.getItem('zx-ai-proxy')||DEFAULT_PROXY;}
-    catch(e){return DEFAULT_PROXY;}
+    try{
+      let saved=localStorage.getItem('zx-ai-proxy-url')||sessionStorage.getItem('zx-ai-proxy')||'';
+      if(saved.replace(/\/+$/,'')==='https://zhixing-calculator-ai.xiaoshirong2023.workers.dev'){
+        saved=DEFAULT_PROXY;
+        localStorage.setItem('zx-ai-proxy-url',saved);
+        sessionStorage.setItem('zx-ai-proxy',saved);
+      }
+      return saved||DEFAULT_PROXY;
+    }catch(e){return DEFAULT_PROXY;}
   }
   function endpoint(){
     const raw=String(proxyValue()||'').trim();
