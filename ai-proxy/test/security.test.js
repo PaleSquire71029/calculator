@@ -515,5 +515,9 @@ test("streamed analysis requests usage and adds token counts to statistics and r
     assert.equal(stats.recent[0].promptTokens, 31);
     assert.equal(stats.recent[0].completionTokens, 9);
     assert.equal(stats.recent[0].totalTokens, 40);
+    assert.equal(stats.recent[0].ip, "203.0.113.184");
+    assert.equal(stats.recent[0].origin, "https://c.zhixing.us.ci");
+    assert.equal(typeof stats.recent[0].durationMs, "number");
+    assert.ok(stats.recent[0].durationMs >= 0);
   } finally { globalThis.fetch = originalFetch; }
 });
