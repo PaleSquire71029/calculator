@@ -220,18 +220,25 @@ function safeEqual(a, b) {
 }
 async function signPayload(payload, env) {
   const password = String(env.ADMIN_PASSWORD || "");
-  const sessionSecret = String(env.ADMIN_SESSION_SECRET || "");
-  // Include the password in the signature key so password rotation revokes existing sessions.
-  const secret = sessionSecret ? sessionSecret + "\n" + password : password;
-  if (!secret || !password) throw new Error("未设置管理会话签名密钥或管理密码");
+  const configuredSessionSecret = String(env.ADMIN_SESSION_SECRET || "");
+  // Bind sessions to both secrets: changing the admin password revokes old tokens even
+  // when ADMIN_SESSION_SECRET is configured separately. The password is never placed in the token.
+  const secret = configuredSessionSecret
+    ? configuredSessionSecret + "\0" + password
+    : password;
+  if (!password || !secret) throw new Error("未设置管理会话签名密钥或管理密码");
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return encodeBase64Url(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload))));
 }
-async function createToken(env) {
-  const payload = encodeBase64Url(new TextEncoder().encode(JSON.stringify({ role: "admin", exp: Date.now() + ADMIN_SESSION_TTL_MS })));
+async function createToken(env, appId = "learning") {
+  const payload = encodeBase64Url(new TextEncoder().encode(JSON.stringify({
+    role: "admin",
+    app: normalizeAppId(appId),
+    exp: Date.now() + ADMIN_SESSION_TTL_MS
+  })));
   return payload + "." + await signPayload(payload, env);
 }
-async function verifyToken(request, env) {
+async function verifyToken(request, env, appId = "learning") {
   const match = (request.headers.get("Authorization") || "").match(/^Bearer\s+([A-Za-z0-9_.-]+)$/i);
   if (!match || match[1].length > 2048 || !env.ADMIN_PASSWORD) return false;
   const parts = match[1].split(".");
@@ -239,7 +246,9 @@ async function verifyToken(request, env) {
   try {
     if (!safeEqual(await signPayload(parts[0], env), parts[1])) return false;
     const payload = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[0])));
-    return payload.role === "admin" && Number(payload.exp) > Date.now();
+    return payload.role === "admin" &&
+      payload.app === normalizeAppId(appId) &&
+      Number(payload.exp) > Date.now();
   } catch { return false; }
 }
 export class AdminSettingsStore {
@@ -460,9 +469,9 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       const parsed = await readJsonLimited(request, 8192);
       if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
       if (typeof parsed.data.password !== "string" || !safeEqual(parsed.data.password, env.ADMIN_PASSWORD)) return json({ error: "管理密码不正确" }, 401, cors);
-      return json({ token: await createToken(env), expiresIn: ADMIN_SESSION_TTL_MS }, 200, cors);
+      return json({ token: await createToken(env, appId), expiresIn: ADMIN_SESSION_TTL_MS }, 200, cors);
     }
-    if (!await verifyToken(request, env)) return json({ error: "管理会话已失效，请重新登录" }, 401, cors);
+    if (!await verifyToken(request, env, appId)) return json({ error: "管理会话已失效或不属于当前产品，请重新登录" }, 401, cors);
     if (url.pathname === "/admin/defaults" && request.method === "GET") return json(defaultPrompts(appId), 200, cors);
     if (!env.ADMIN_STORE) return json({ error: "管理设置存储尚未部署，请检查 Worker 的 Durable Object 绑定" }, 503, cors);
     let data;
