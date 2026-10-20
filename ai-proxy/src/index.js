@@ -297,6 +297,7 @@ export default {
     if (!isJsonRequest(request)) return json({ error: "请求必须使用 application/json 格式。" }, 415, cors);
     if (!origin || !allowed.includes(origin)) return json({ error: "该网站来源未获授权，请检查 Worker 的 ALLOWED_ORIGINS 配置。" }, 403, cors);
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    const requestStartedAt = Date.now();
     const rate = await adminModule.checkRateLimit(env, "chat:" + ip, MAX_REQUESTS, WINDOW_MS);
     if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
     if (!rate.allowed) return json({ error: "请求过于频繁，请等待几分钟后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
@@ -387,7 +388,7 @@ export default {
         signal: AbortSignal.timeout(90000)
       });
     } catch (error) {
-      await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model });
+      await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model , clientIp: ip, origin, userAgent: request.headers.get("User-Agent") || "", durationMs: Date.now() - requestStartedAt });
       const cause = error && typeof error === "object" ? error.cause : null;
       let detail = String(cause?.code || cause?.message || error?.message || error?.name || "未知网络错误")
         .replace(/\s+/g, " ").slice(0, 160);
@@ -398,7 +399,7 @@ export default {
       }, 502, cors);
     }
     if (upstream.status >= 300 && upstream.status < 400) {
-      await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model });
+      await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model , clientIp: ip, origin, userAgent: request.headers.get("User-Agent") || "", durationMs: Date.now() - requestStartedAt });
       return json({
         error: "模型服务返回重定向（HTTP " + upstream.status +
           "）。为保护 API Token，Worker 不会跟随重定向。请检查 API 根地址或供应商配置。"
@@ -407,7 +408,7 @@ export default {
     const upstreamContentType = upstream.headers.get("Content-Type") || "";
     if (wantsStream && upstream.ok && upstream.body && upstreamContentType.includes("text/event-stream")) {
       return new Response(limitSseStream(upstream.body, MAX_STREAM_BYTES, (ok, usage) =>
-        adminModule.recordRequest(env, { appId, mode, ok, status: ok ? upstream.status : 502, model, usage })
+        adminModule.recordRequest(env, { appId, mode, ok, status: ok ? upstream.status : 502, model, usage , clientIp: ip, origin, userAgent: request.headers.get("User-Agent") || "", durationMs: Date.now() - requestStartedAt })
       ), {
         status: 200,
         headers: {
@@ -421,13 +422,13 @@ export default {
     }
     const upstreamRead = await readResponseTextLimited(upstream, 4 * 1024 * 1024);
     if (upstreamRead.error) {
-      await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model });
+      await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model , clientIp: ip, origin, userAgent: request.headers.get("User-Agent") || "", durationMs: Date.now() - requestStartedAt });
       return json({ error: "模型服务响应体过大或无法读取，请检查 API 服务配置后重试。" }, 502, cors);
     }
     let result;
     try { result = JSON.parse(upstreamRead.text); } catch { result = null; }
     if (!upstream.ok) {
-      await adminModule.recordRequest(env, { appId, mode, ok: false, status: upstream.status, model });
+      await adminModule.recordRequest(env, { appId, mode, ok: false, status: upstream.status, model , clientIp: ip, origin, userAgent: request.headers.get("User-Agent") || "", durationMs: Date.now() - requestStartedAt });
       const upstreamMessage = sanitizeProviderText(result?.error?.message, runtime.apiKey, 500);
       if (upstream.status === 401) {
         return json({ error: "模型服务鉴权失败（上游 401）。请检查 Cloudflare Worker 的 AI_API_KEY 是否有效、是否已过期，以及密钥是否属于 AI_BASE_URL 对应的服务商。若换过服务商，必须同时核对 AI_BASE_URL、AI_MODEL 和 AI_API_KEY；不要把密钥填进网页。", code: "UPSTREAM_AUTH_FAILED" }, 502, cors);
@@ -445,10 +446,10 @@ export default {
     }
     const answer = result?.choices?.[0]?.message?.content;
     if (typeof answer !== "string" || !answer.trim()) {
-      await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model, usage: result?.usage });
+      await adminModule.recordRequest(env, { appId, mode, ok: false, status: 502, model, usage: result?.usage , clientIp: ip, origin, userAgent: request.headers.get("User-Agent") || "", durationMs: Date.now() - requestStartedAt });
       return json({ error: "模型没有返回可显示的文字，请稍后重试。" }, 502, cors);
     }
-    await adminModule.recordRequest(env, { appId, mode, ok: true, status: upstream.status, model: result.model || model, usage: result.usage });
+    await adminModule.recordRequest(env, { appId, mode, ok: true, status: upstream.status, model: result.model || model, usage: result.usage , clientIp: ip, origin, userAgent: request.headers.get("User-Agent") || "", durationMs: Date.now() - requestStartedAt });
     return json({ answer, model: result.model || model, usage: result.usage || null }, 200, cors);
   }
 };
