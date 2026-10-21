@@ -70,11 +70,11 @@ async function authAdminRequest(env, path, options = {}) {
   const base = String(env.SUPABASE_URL || "").replace(/\/+$/, "");
   const key = String(env.SUPABASE_SERVICE_ROLE_KEY || "");
   if (!base || !key) { const error = new Error("Supabase 后端密钥未配置。"); error.status = 503; throw error; }
-  // Supabase Auth Admin endpoints expect the server-side key as the bearer fallback too.
-  // Unlike PostgREST data requests above, the Auth Admin API authenticates this bearer.
+  // The new sb_secret_* keys are opaque API keys, not JWTs: send them only in apikey.
+  // For legacy service_role JWTs, preserve the Authorization bearer used by older projects.
   const headers = {
     apikey: key,
-    Authorization: "Bearer " + key,
+    ...(key.startsWith("sb_secret_") ? {} : { Authorization: "Bearer " + key }),
     Accept: "application/json",
     "Content-Type": "application/json",
     ...(options.headers || {})
