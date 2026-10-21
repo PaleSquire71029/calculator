@@ -570,12 +570,16 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
         assert.equal(payload.email, "new.user@example.com");
         assert.equal(payload.email_confirm, true);
         assert.equal(typeof payload.password, "string");
+        assert.equal(payload.app_metadata.zx_registration.ip, "203.0.113.210");
+        assert.equal(payload.app_metadata.zx_registration.city, "Example City");
+        assert.equal(payload.app_metadata.zx_registration.region, "Example Region");
         return new Response(JSON.stringify({
           id: "123e4567-e89b-42d3-a456-426614174001",
           email: payload.email,
           email_confirmed_at: "2026-10-21T12:00:00.000Z",
           created_at: "2026-10-21T12:00:00.000Z",
-          last_sign_in_at: null
+          last_sign_in_at: null,
+          app_metadata: payload.app_metadata
         }), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       return new Response(JSON.stringify({ users: [{
@@ -584,6 +588,7 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
         email_confirmed_at: "2026-10-21T12:00:00.000Z",
         created_at: "2026-10-21T12:00:00.000Z",
         last_sign_in_at: null,
+        app_metadata: { zx_registration: { ip: "203.0.113.210", city: "Example City", region: "Example Region", country: "US", countryCode: "US", timezone: "America/Los_Angeles", registeredAt: "2026-10-21T12:00:00.000Z", source: "admin-created" } },
         encrypted_password: "must-not-leak"
       }] }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
@@ -634,12 +639,17 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
     assert.equal(accountsBody.users[0].email, "new.user@example.com");
     assert.equal(JSON.stringify(accountsBody).includes("must-not-leak"), false, "Auth internal fields must not be returned");
 
-    const createdAccount = await worker.fetch(jsonRequest("https://worker.test/admin/cloud/accounts", {
+    const createAccountRequest = jsonRequest("https://worker.test/admin/cloud/accounts", {
       email: "new.user@example.com", password: "safe-initial-password-123", emailOwnershipConfirmed: true
-    }, { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" }), env);
+    }, { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" });
+    Object.defineProperty(createAccountRequest, "cf", { value: { city: "Example City", region: "Example Region", country: "US", timezone: "America/Los_Angeles" } });
+    const createdAccount = await worker.fetch(createAccountRequest, env);
     assert.equal(createdAccount.status, 201);
     const createdBody = await createdAccount.json();
     assert.equal(createdBody.user.email, "new.user@example.com");
+    assert.equal(createdBody.user.registration.ip, "203.0.113.210");
+    assert.equal(createdBody.user.registration.city, "Example City");
+    assert.equal(createdBody.user.registration.region, "Example Region");
     assert.equal(JSON.stringify(createdBody).includes("safe-initial-password-123"), false, "created user response must not echo password");
     assert.equal(createdBody.auditLogged, true);
 
@@ -683,7 +693,7 @@ test("end-user sessions are isolated from admin privileges and can only manage t
     SUPABASE_URL: "https://project.supabase.co",
     SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test_key"
   });
-  const origin = "https://ai.zhixing.us.ci";
+  const origin = "https://c.zhixing.us.ci";
   const originalFetch = globalThis.fetch;
   const userId = "123e4567-e89b-42d3-a456-426614174088";
   const user = {
