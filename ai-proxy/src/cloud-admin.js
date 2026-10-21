@@ -69,6 +69,25 @@ function requestedApp(url) {
   const value = url.searchParams.get("app");
   return VALID_APPS.has(value) ? value : "";
 }
+async function readAuditLog(env) {
+  if (!env.ADMIN_STORE) { const error = new Error("操作日志存储暂不可用。"); error.status = 503; throw error; }
+  const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+  const response = await stub.fetch("https://admin-store.internal/cloud-audit", { signal: AbortSignal.timeout(8000) });
+  if (!response.ok) { const error = new Error("操作日志读取失败。"); error.status = 503; throw error; }
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
+}
+async function appendAuditLog(env, action, app, affectedCount) {
+  try {
+    if (!env.ADMIN_STORE) return false;
+    const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+    const response = await stub.fetch("https://admin-store.internal/cloud-audit", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, app, affectedCount }), signal: AbortSignal.timeout(8000)
+    });
+    return response.ok;
+  } catch { return false; }
+}
 export async function handleCloudAdminDataRoute(request, env, url, cors) {
   if (!url.pathname.startsWith("/admin/cloud/") || url.pathname === "/admin/cloud/login") return null;
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -76,6 +95,10 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
   }
   try {
     const path = url.pathname;
+    if (path === "/admin/cloud/audit" && request.method === "GET") {
+      const entries = await readAuditLog(env);
+      return reply({ entries, limit: 200 }, 200, cors);
+    }
     if (path === "/admin/cloud/overview" && request.method === "GET") {
       const apps = ["zhixing-ai", "learning"];
       const cutoff = new Date(Date.now() - 90 * 86400000).toISOString();
@@ -213,7 +236,9 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       const { data } = await db(env, "zx_conversations?" + params.toString(), {
         method: "DELETE", headers: { Prefer: "return=representation" }
       });
-      return reply({ ok: true, deleted: Array.isArray(data) ? data.length : 0 }, 200, cors);
+      const deleted = Array.isArray(data) ? data.length : 0;
+      const auditLogged = await appendAuditLog(env, body.ids.length === 1 ? "delete_conversation" : "delete_selected", body.app, deleted);
+      return reply({ ok: true, deleted, auditLogged }, 200, cors);
     }
     if (path === "/admin/cloud/users/delete" && request.method === "POST") {
       const parsed = await readBody(request);
@@ -226,14 +251,18 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       const { data } = await db(env, "zx_conversations?" + params.toString(), {
         method: "DELETE", headers: { Prefer: "return=representation" }
       });
-      return reply({ ok: true, deleted: Array.isArray(data) ? data.length : 0 }, 200, cors);
+      const deleted = Array.isArray(data) ? data.length : 0;
+      const auditLogged = await appendAuditLog(env, "delete_user_data", "all", deleted);
+      return reply({ ok: true, deleted, auditLogged }, 200, cors);
     }
     if (path === "/admin/cloud/cleanup" && request.method === "POST") {
       const parsed = await readBody(request, 4096);
       if (parsed.error) return reply({ error: parsed.error }, parsed.status, cors);
       if (parsed.data.confirm !== "CLEANUP_90D") return reply({ error: "缺少 90 天清理确认，未执行操作。" }, 400, cors);
       const { data } = await db(env, "rpc/zx_cleanup_expired_conversations", { method: "POST", body: "{}" });
-      return reply({ ok: true, deletedConversations: Number(data) || 0 }, 200, cors);
+      const deletedConversations = Number(data) || 0;
+      const auditLogged = await appendAuditLog(env, "cleanup_90d", "all", deletedConversations);
+      return reply({ ok: true, deletedConversations, auditLogged }, 200, cors);
     }
     return reply({ error: "Not found" }, 404, cors);
   } catch (error) {
