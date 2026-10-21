@@ -215,6 +215,19 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       });
       return reply({ ok: true, deleted: Array.isArray(data) ? data.length : 0 }, 200, cors);
     }
+    if (path === "/admin/cloud/users/delete" && request.method === "POST") {
+      const parsed = await readBody(request);
+      if (parsed.error) return reply({ error: parsed.error }, parsed.status, cors);
+      const userId = parsed.data.user_id;
+      if (parsed.data.confirm !== "DELETE_USER_DATA" || typeof userId !== "string" || !UUID_RE.test(userId)) {
+        return reply({ error: "用户 ID 无效，或缺少删除确认。" }, 400, cors);
+      }
+      const params = new URLSearchParams({ user_id: "eq." + userId, select: "id" });
+      const { data } = await db(env, "zx_conversations?" + params.toString(), {
+        method: "DELETE", headers: { Prefer: "return=representation" }
+      });
+      return reply({ ok: true, deleted: Array.isArray(data) ? data.length : 0 }, 200, cors);
+    }
     if (path === "/admin/cloud/cleanup" && request.method === "POST") {
       const parsed = await readBody(request, 4096);
       if (parsed.error) return reply({ error: parsed.error }, parsed.status, cors);
