@@ -65,6 +65,59 @@ async function countRows(env, table, filters = {}) {
   const match = (response.headers.get("Content-Range") || "").match(/\/(\d+|\*)$/);
   return match && match[1] !== "*" ? Number(match[1]) : null;
 }
+
+async function authAdminRequest(env, path, options = {}) {
+  const base = String(env.SUPABASE_URL || "").replace(/\/+$/, "");
+  const key = String(env.SUPABASE_SERVICE_ROLE_KEY || "");
+  if (!base || !key) { const error = new Error("Supabase 后端密钥未配置。"); error.status = 503; throw error; }
+  const headers = {
+    apikey: key,
+    ...(key.startsWith("sb_secret_") ? {} : { Authorization: "Bearer " + key }),
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    ...(options.headers || {})
+  };
+  const response = await fetch(base + "/auth/v1/admin/users" + path, {
+    ...options, headers, redirect: "manual", signal: AbortSignal.timeout(12000)
+  });
+  const raw = await response.text();
+  let data = null;
+  try { data = raw ? JSON.parse(raw) : null; } catch {}
+  if (response.status >= 300 && response.status < 400) {
+    const error = new Error("Supabase Auth 管理接口返回重定向，已拒绝跟随。"); error.status = 502; throw error;
+  }
+  if (!response.ok) {
+    const error = new Error("Supabase Auth 管理请求失败。");
+    error.status = response.status;
+    error.publicMessage = String(data?.msg || data?.message || data?.error_description || data?.error || "");
+    throw error;
+  }
+  return data;
+}
+async function consumeAdminRateLimit(env, key, limit, windowMs) {
+  if (!env.ADMIN_STORE) return { allowed: false, unavailable: true };
+  try {
+    const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+    const response = await stub.fetch("https://admin-store.internal/rate-limit", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, limit, windowMs }), signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) return { allowed: false, unavailable: true };
+    const data = await response.json();
+    return typeof data.allowed === "boolean" ? data : { allowed: false, unavailable: true };
+  } catch { return { allowed: false, unavailable: true }; }
+}
+function safeAuthUser(user) {
+  return {
+    id: String(user?.id || ""),
+    email: String(user?.email || ""),
+    email_confirmed_at: user?.email_confirmed_at || null,
+    created_at: user?.created_at || null,
+    last_sign_in_at: user?.last_sign_in_at || null,
+    banned_until: user?.banned_until || null
+  };
+}
+
 function requestedApp(url) {
   const value = url.searchParams.get("app");
   return VALID_APPS.has(value) ? value : "";
@@ -99,6 +152,50 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       const entries = await readAuditLog(env);
       return reply({ entries, limit: 200 }, 200, cors);
     }
+    if (path === "/admin/cloud/accounts" && request.method === "GET") {
+      const page = Math.max(1, Math.min(10000, Number.parseInt(url.searchParams.get("page") || "1", 10) || 1));
+      const perPage = Math.max(1, Math.min(100, Number.parseInt(url.searchParams.get("per_page") || "50", 10) || 50));
+      const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+      const result = await authAdminRequest(env, "?" + params.toString());
+      const users = Array.isArray(result?.users) ? result.users : (Array.isArray(result) ? result : []);
+      return reply({
+        users: users.map(safeAuthUser).filter(user => UUID_RE.test(user.id)),
+        page, perPage, hasMore: users.length === perPage
+      }, 200, cors);
+    }
+    if (path === "/admin/cloud/accounts" && request.method === "POST") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await consumeAdminRateLimit(env, "cloud-create-account:" + ip, 8, 60 * 60 * 1000);
+      if (rate.unavailable) return reply({ error: "账号创建限流服务暂不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return reply({ error: "账号创建次数过多，请一小时后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter || 3600) });
+      const parsed = await readBody(request, 16384);
+      if (parsed.error) return reply({ error: parsed.error }, parsed.status, cors);
+      const email = typeof parsed.data.email === "string" ? parsed.data.email.trim().toLowerCase() : "";
+      const password = typeof parsed.data.password === "string" ? parsed.data.password : "";
+      const verifiedOwnership = parsed.data.emailOwnershipConfirmed === true;
+      if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return reply({ error: "邮箱格式无效。" }, 400, cors);
+      if (password.length < 8 || password.length > 128 || /[\r\n\0]/.test(password)) return reply({ error: "密码长度必须为 8–128 个字符，且不能包含换行。" }, 400, cors);
+      if (!verifiedOwnership) return reply({ error: "请先确认已核验此邮箱的归属。" }, 400, cors);
+      let result;
+      try {
+        result = await authAdminRequest(env, "", {
+          method: "POST",
+          body: JSON.stringify({ email, password, email_confirm: true })
+        });
+      } catch (error) {
+        const status = error?.status === 422 || error?.status === 409 ? 409 :
+          error?.status === 400 ? 400 : 502;
+        const message = status === 409 ? "该邮箱可能已注册，请刷新账号列表核对。" :
+          status === 400 && error.publicMessage ? error.publicMessage.slice(0, 180) :
+          "创建账号失败，请检查 Supabase Auth 配置后重试。";
+        return reply({ error: message }, status, cors);
+      }
+      const user = safeAuthUser(result?.user || result);
+      if (!UUID_RE.test(user.id)) return reply({ error: "Supabase 未返回有效的新账号信息，请刷新列表核对后再试。" }, 502, cors);
+      const auditLogged = await appendAuditLog(env, "create_account", "all", 1);
+      return reply({ ok: true, user, auditLogged }, 201, cors);
+    }
+
     if (path === "/admin/cloud/overview" && request.method === "GET") {
       const apps = ["zhixing-ai", "learning"];
       const cutoff = new Date(Date.now() - 90 * 86400000).toISOString();
@@ -268,6 +365,10 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
   } catch (error) {
     console.error("Cloud admin operation failed:", { path: url.pathname, status: error?.status || 0 });
     const status = error?.status === 400 || error?.status === 404 || error?.status === 413 ? error.status : (error?.status === 503 ? 503 : 502);
-    return reply({ error: status === 404 ? "所需数据或数据库对象不存在。" : status === 503 ? error.message : "云端数据请求失败，请检查 Supabase 配置或稍后重试。" }, status, cors);
+    const safeMessage = error?.status === 503 ? error.message :
+      error?.status === 404 ? "所需数据或数据库对象不存在。" :
+      error?.publicMessage ? String(error.publicMessage).replace(/\s+/g, " ").slice(0, 180) :
+      "云端数据请求失败，请检查 Supabase 配置或稍后重试。";
+    return reply({ error: safeMessage }, status, cors);
   }
 }
