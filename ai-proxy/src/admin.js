@@ -1,3 +1,4 @@
+import { handleCloudAdminDataRoute } from "./cloud-admin.js";
 const ADMIN_SESSION_TTL_MS = 2 * 60 * 60 * 1000;
 const ADMIN_LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const ADMIN_LOGIN_MAX_ATTEMPTS = 8;
@@ -230,15 +231,15 @@ async function signPayload(payload, env) {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return encodeBase64Url(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload))));
 }
-async function createToken(env, appId = "learning") {
+async function createToken(env, appId = "learning", role = "admin") {
   const payload = encodeBase64Url(new TextEncoder().encode(JSON.stringify({
-    role: "admin",
+    role,
     app: normalizeAppId(appId),
     exp: Date.now() + ADMIN_SESSION_TTL_MS
   })));
   return payload + "." + await signPayload(payload, env);
 }
-async function verifyToken(request, env, appId = "learning") {
+async function verifyToken(request, env, appId = "learning", expectedRole = "admin") {
   const match = (request.headers.get("Authorization") || "").match(/^Bearer\s+([A-Za-z0-9_.-]+)$/i);
   if (!match || match[1].length > 2048 || !env.ADMIN_PASSWORD) return false;
   const parts = match[1].split(".");
@@ -246,7 +247,7 @@ async function verifyToken(request, env, appId = "learning") {
   try {
     if (!safeEqual(await signPayload(parts[0], env), parts[1])) return false;
     const payload = JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[0])));
-    return payload.role === "admin" &&
+    return payload.role === expectedRole &&
       payload.app === normalizeAppId(appId) &&
       Number(payload.exp) > Date.now();
   } catch { return false; }
@@ -464,7 +465,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       return json({ error: "请求必须使用 application/json 格式。" }, 415, cors);
     }
     const isLoginRoute = request.method === "POST" &&
-      (url.pathname === "/admin/login" || url.pathname === "/admin/login/all");
+      (url.pathname === "/admin/login" || url.pathname === "/admin/login/all" || url.pathname === "/admin/cloud/login");
     if (!isLoginRoute) {
       const ip = request.headers.get("CF-Connecting-IP") || "unknown";
       const rate = await checkRateLimit(env, "admin-auth:" + ip, 120, 60 * 1000);
@@ -499,7 +500,22 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       if (typeof parsed.data.password !== "string" || !safeEqual(parsed.data.password, env.ADMIN_PASSWORD)) return json({ error: "管理密码不正确" }, 401, cors);
       return json({ token: await createToken(env, appId), expiresIn: ADMIN_SESSION_TTL_MS }, 200, cors);
     }
-    if (!await verifyToken(request, env, appId)) return json({ error: "管理会话已失效或不属于当前产品，请重新登录" }, 401, cors);
+    if (url.pathname === "/admin/cloud/login" && request.method === "POST") {
+      if (!env.ADMIN_PASSWORD) return json({ error: "尚未配置管理密码。" }, 503, cors);
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await checkRateLimit(env, "admin-login:" + ip, ADMIN_LOGIN_MAX_ATTEMPTS, ADMIN_LOGIN_WINDOW_MS);
+      if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return json({ error: "登录尝试过多，请 15 分钟后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
+      const parsed = await readJsonLimited(request, 8192);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
+      if (typeof parsed.data.password !== "string" || !safeEqual(parsed.data.password, env.ADMIN_PASSWORD)) return json({ error: "管理密码不正确。" }, 401, cors);
+      return json({ token: await createToken(env, "learning", "cloud-admin"), expiresIn: ADMIN_SESSION_TTL_MS }, 200, cors);
+    }
+    const cloudAdminRoute = url.pathname.startsWith("/admin/cloud/");
+    if (!await verifyToken(request, env, cloudAdminRoute ? "learning" : appId, cloudAdminRoute ? "cloud-admin" : "admin")) {
+      return json({ error: "管理会话已失效或无权访问，请重新登录。" }, 401, cors);
+    }
+    if (cloudAdminRoute) return await handleCloudAdminDataRoute(request, env, url, cors);
     if (url.pathname === "/admin/defaults" && request.method === "GET") return json(defaultPrompts(appId), 200, cors);
     if (!env.ADMIN_STORE) return json({ error: "管理设置存储尚未部署，请检查 Worker 的 Durable Object 绑定" }, 503, cors);
     let data;
