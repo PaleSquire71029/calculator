@@ -109,14 +109,43 @@ async function consumeAdminRateLimit(env, key, limit, windowMs) {
     return typeof data.allowed === "boolean" ? data : { allowed: false, unavailable: true };
   } catch { return { allowed: false, unavailable: true }; }
 }
+function safeMetaText(value, max = 100) {
+  return typeof value === "string" ? value.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, max) : "";
+}
 function safeAuthUser(user) {
+  const meta = user?.app_metadata?.zx_registration && typeof user.app_metadata.zx_registration === "object"
+    ? user.app_metadata.zx_registration : {};
   return {
     id: String(user?.id || ""),
     email: String(user?.email || ""),
     email_confirmed_at: user?.email_confirmed_at || null,
     created_at: user?.created_at || null,
     last_sign_in_at: user?.last_sign_in_at || null,
-    banned_until: user?.banned_until || null
+    banned_until: user?.banned_until || null,
+    registration: {
+      ip: safeMetaText(meta.ip, 80),
+      city: safeMetaText(meta.city, 80),
+      region: safeMetaText(meta.region, 80),
+      country: safeMetaText(meta.country, 80),
+      countryCode: safeMetaText(meta.countryCode, 8),
+      timezone: safeMetaText(meta.timezone, 80),
+      registeredAt: typeof meta.registeredAt === "string" ? meta.registeredAt : null,
+      source: safeMetaText(meta.source, 40)
+    }
+  };
+}
+function registrationFromRequest(request) {
+  const cf = request && request.cf && typeof request.cf === "object" ? request.cf : {};
+  const value = key => safeMetaText(cf[key], 80);
+  return {
+    ip: safeMetaText(request.headers.get("CF-Connecting-IP") || "unknown", 80),
+    city: value("city"),
+    region: value("region"),
+    country: value("country"),
+    countryCode: value("country"),
+    timezone: value("timezone"),
+    registeredAt: new Date().toISOString(),
+    source: "admin-created"
   };
 }
 
@@ -182,7 +211,10 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       try {
         result = await authAdminRequest(env, "", {
           method: "POST",
-          body: JSON.stringify({ email, password, email_confirm: true })
+          body: JSON.stringify({
+            email, password, email_confirm: true,
+            app_metadata: { zx_registration: registrationFromRequest(request) }
+          })
         });
       } catch (error) {
         const status = error?.status === 422 || error?.status === 409 ? 409 :
