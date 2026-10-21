@@ -28,8 +28,8 @@ function restHeaders(env) {
 }
 async function readBody(request) {
   const raw = await request.text();
-  if (raw.length > 140000) throw new Error("请求内容过大。");
-  try { return JSON.parse(raw); } catch { throw new Error("请求格式无效。"); }
+  if (raw.length > 140000) { const error = new Error("请求内容过大。"); error.status = 413; throw error; }
+  try { return JSON.parse(raw); } catch { const error = new Error("请求格式无效。"); error.status = 400; throw error; }
 }
 async function supabase(env, path, options = {}) {
   const base = String(env.SUPABASE_URL || "").replace(/\/+$/, "");
@@ -78,7 +78,9 @@ export async function handleCloudStorage(request, env, url, cors) {
   if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY && !env.SUPABASE_ANON_KEY || !env.SUPABASE_SERVICE_ROLE_KEY) {
     return reply({ error: "云对话存储尚未完成后端密钥配置。" }, 503, cors);
   }
-  const auth = await authenticate(request, env);
+  let auth;
+  try { auth = await authenticate(request, env); }
+  catch { return reply({ error: "登录验证服务暂时不可用，请稍后重试。" }, 503, cors); }
   if (!auth) return reply({ error: "请先登录或重新登录后再同步对话。" }, 401, cors);
   if (auth.configError) return reply({ error: "云对话存储配置不完整。" }, 503, cors);
   const path = url.pathname;
@@ -142,6 +144,7 @@ export async function handleCloudStorage(request, env, url, cors) {
     }
     return reply({ error: "Not found" }, 404, cors);
   } catch (error) {
+    if (error?.status === 400 || error?.status === 413) return reply({ error: error.message }, error.status, cors);
     const status = error?.status === 401 || error?.status === 403 ? 503 : 502;
     return reply({ error: status === 503 ? "云存储服务暂时拒绝请求，请检查后台配置。" : "云存储暂时不可用，请稍后重试。" }, status, cors);
   }
