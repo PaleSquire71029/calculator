@@ -93,6 +93,11 @@ test("single login issues two separate product-scoped admin sessions", async () 
   assert.notEqual(body.tokens.cloud, body.tokens.learning);
   assert.ok(body.expiresIn > 0);
 
+  const cloudScoped = await worker.fetch(new Request("https://worker.test/admin/cloud/overview", {
+    headers: { Origin: origin, Authorization: "Bearer " + body.tokens.cloud, "CF-Connecting-IP": "203.0.113.199" }
+  }), env);
+  assert.equal(cloudScoped.status, 503, "cloud token should pass role verification and reach the missing Supabase configuration check");
+
   const denied = await worker.fetch(new Request("https://worker.test/admin/defaults?app=learning", {
     headers: { Origin: origin, Authorization: "Bearer " + body.tokens["zhixing-ai"] }
   }), env);
