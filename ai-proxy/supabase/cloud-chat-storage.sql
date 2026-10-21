@@ -85,9 +85,9 @@ revoke all on function public.zx_cleanup_expired_conversations() from public, an
 grant execute on function public.zx_cleanup_expired_conversations() to service_role;
 
 -- 限制表访问面：前端登录用户只可通过 RLS 访问自己的行。
-grant select, insert, update, delete on public.zx_conversations to authenticated;
-grant select, insert, delete on public.zx_messages to authenticated;
-revoke all on public.zx_conversations, public.zx_messages from anon;
+revoke all on public.zx_conversations, public.zx_messages from anon, authenticated;
+-- 所有聊天表读写均经 Worker 完成。前端只使用 Supabase Auth，不直接查询表，
+-- 从而避免客户端绕过 Worker 的 app_id 产品隔离。
 
 -- 自动清理：先在 Supabase Dashboard 的 Database → Extensions 启用 pg_cron，
 -- 再取消下面两行注释并执行；若当前项目不支持 pg_cron，改由受保护的 Worker Cron 调用清理函数。
