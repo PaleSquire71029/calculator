@@ -570,16 +570,13 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
         assert.equal(payload.email, "new.user@example.com");
         assert.equal(payload.email_confirm, true);
         assert.equal(typeof payload.password, "string");
-        assert.equal(payload.app_metadata.zx_registration.ip, "203.0.113.210");
-        assert.equal(payload.app_metadata.zx_registration.city, "Example City");
-        assert.equal(payload.app_metadata.zx_registration.region, "Example Region");
+        assert.equal("app_metadata" in payload, false, "registration IP must not be embedded in the user's JWT metadata");
         return new Response(JSON.stringify({
           id: "123e4567-e89b-42d3-a456-426614174001",
           email: payload.email,
           email_confirmed_at: "2026-10-21T12:00:00.000Z",
           created_at: "2026-10-21T12:00:00.000Z",
-          last_sign_in_at: null,
-          app_metadata: payload.app_metadata
+          last_sign_in_at: null
         }), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       return new Response(JSON.stringify({ users: [{
