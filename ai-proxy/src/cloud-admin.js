@@ -161,6 +161,33 @@ async function readAuditLog(env) {
   const data = await response.json();
   return Array.isArray(data) ? data : [];
 }
+async function readStoredRegistrations(env, ids) {
+  if (!env.ADMIN_STORE || !Array.isArray(ids) || !ids.length) return {};
+  try {
+    const safeIds = ids.filter(id => typeof id === "string" && UUID_RE.test(id)).slice(0, 100);
+    if (!safeIds.length) return {};
+    const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+    const response = await stub.fetch("https://admin-store.internal/account-registration?ids=" + encodeURIComponent(safeIds.join(",")), {
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) return {};
+    const data = await response.json();
+    return data && data.registrations && typeof data.registrations === "object" ? data.registrations : {};
+  } catch { return {}; }
+}
+async function writeStoredRegistration(env, userId, registration) {
+  if (!env.ADMIN_STORE || !UUID_RE.test(String(userId || ""))) return false;
+  try {
+    const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+    const response = await stub.fetch("https://admin-store.internal/account-registration", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, registration }),
+      signal: AbortSignal.timeout(8000)
+    });
+    return response.ok;
+  } catch { return false; }
+}
 async function appendAuditLog(env, action, app, affectedCount) {
   try {
     if (!env.ADMIN_STORE) return false;
@@ -189,8 +216,14 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
       const result = await authAdminRequest(env, "?" + params.toString());
       const users = Array.isArray(result?.users) ? result.users : (Array.isArray(result) ? result : []);
+      const safeUsers = users.map(safeAuthUser).filter(user => UUID_RE.test(user.id));
+      const registrations = await readStoredRegistrations(env, safeUsers.map(user => user.id));
+      const joinedUsers = safeUsers.map(user => ({
+        ...user,
+        registration: registrations[user.id] || user.registration
+      }));
       return reply({
-        users: users.map(safeAuthUser).filter(user => UUID_RE.test(user.id)),
+        users: joinedUsers,
         page, perPage, hasMore: users.length === perPage
       }, 200, cors);
     }
@@ -211,10 +244,7 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       try {
         result = await authAdminRequest(env, "", {
           method: "POST",
-          body: JSON.stringify({
-            email, password, email_confirm: true,
-            app_metadata: { zx_registration: registrationFromRequest(request) }
-          })
+          body: JSON.stringify({ email, password, email_confirm: true })
         });
       } catch (error) {
         const status = error?.status === 422 || error?.status === 409 ? 409 :
@@ -226,8 +256,11 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       }
       const user = safeAuthUser(result?.user || result);
       if (!UUID_RE.test(user.id)) return reply({ error: "Supabase 未返回有效的新账号信息，请刷新列表核对后再试。" }, 502, cors);
+      const registration = registrationFromRequest(request);
+      const registrationSaved = await writeStoredRegistration(env, user.id, registration);
+      user.registration = registration;
       const auditLogged = await appendAuditLog(env, "create_account", "all", 1);
-      return reply({ ok: true, user, auditLogged }, 201, cors);
+      return reply({ ok: true, user, registrationSaved, auditLogged }, 201, cors);
     }
 
     if (path === "/admin/cloud/overview" && request.method === "GET") {
