@@ -285,6 +285,42 @@ export class AdminSettingsStore {
       if (currentAlarm === null || currentAlarm > alarmAt) await this.state.storage.setAlarm(alarmAt);
       return json({ allowed: bucket.allowed, retryAfter: bucket.retryAfter });
     }
+    if (url.pathname === "/account-registration") {
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (request.method === "GET") {
+        const ids = String(url.searchParams.get("ids") || "").split(",").filter(Boolean);
+        if (!ids.length || ids.length > 100 || ids.some(id => !uuidPattern.test(id))) return json({ error: "Invalid registration lookup" }, 400);
+        const registrations = {};
+        for (const id of ids) {
+          const value = await this.state.storage.get("accountRegistration:" + id);
+          if (value && typeof value === "object") registrations[id] = value;
+        }
+        return json({ registrations });
+      }
+      if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+      const parsed = await readJsonLimited(request, 8192);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status);
+      const userId = parsed.data.userId;
+      const input = parsed.data.registration;
+      if (typeof userId !== "string" || !uuidPattern.test(userId) || !input || typeof input !== "object" || Array.isArray(input)) {
+        return json({ error: "Invalid account registration record" }, 400);
+      }
+      const clean = value => typeof value === "string" ? value.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 100) : "";
+      const registeredAt = typeof input.registeredAt === "string" && Number.isFinite(Date.parse(input.registeredAt))
+        ? new Date(input.registeredAt).toISOString() : new Date().toISOString();
+      const record = {
+        ip: clean(input.ip).slice(0, 80),
+        city: clean(input.city),
+        region: clean(input.region),
+        country: clean(input.country),
+        countryCode: clean(input.countryCode).slice(0, 8),
+        timezone: clean(input.timezone),
+        registeredAt,
+        source: ["admin-created", "self-signup", "invite"].includes(input.source) ? input.source : "admin-created"
+      };
+      await this.state.storage.put("accountRegistration:" + userId, record);
+      return json({ ok: true });
+    }
     if (url.pathname === "/cloud-audit") {
       if (request.method === "GET") {
         const entries = await this.state.storage.get("cloudAudit");
