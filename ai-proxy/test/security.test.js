@@ -565,6 +565,9 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
     const url = new URL(input instanceof Request ? input.url : String(input));
     assert.equal(url.hostname, "project.supabase.co");
     if (url.pathname.endsWith("/auth/v1/admin/users")) {
+      const adminHeaders = new Headers(init.headers || {});
+      assert.equal(adminHeaders.get("apikey"), "sb_secret_test_key");
+      assert.equal(adminHeaders.get("Authorization"), null, "opaque Supabase secret keys are not JWT bearer tokens");
       if (init.method === "POST") {
         const payload = JSON.parse(init.body);
         assert.equal(payload.email, "new.user@example.com");
