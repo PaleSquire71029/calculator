@@ -14,9 +14,9 @@
 
 - `SUPABASE_URL`：Supabase Project URL
 - `SUPABASE_PUBLISHABLE_KEY`：Supabase Publishable key（公开 key）
-- `SUPABASE_SERVICE_ROLE_KEY`：Supabase 服务角色密钥，只能放 Worker Secret，绝不可提供给浏览器或提交到仓库
+- `SUPABASE_SERVICE_ROLE_KEY`：优先使用 Supabase 的 Secret key（`sb_secret_...`），也兼容旧版 `service_role` JWT；只能放 Worker Secret，绝不可提供给浏览器或提交到仓库
 
-保存后重新部署 Worker。服务角色密钥能绕过 RLS，因此 Worker 所有对话读写都必须继续校验登录令牌、当前用户 ID、产品 ID 和对话所有权。
+保存后重新部署 Worker。高权限密钥能绕过 RLS，因此 Worker 所有对话读写都必须继续校验登录令牌、当前用户 ID、产品 ID 和对话所有权。新版 `sb_secret_...` 不是 JWT，Worker 会只把它放在 `apikey` 请求头；不要自行添加 `Authorization: Bearer sb_secret_...`。
 
 ## 3. 邮箱注册与登录
 
