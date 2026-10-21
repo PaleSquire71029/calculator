@@ -86,6 +86,7 @@ grant execute on function public.zx_cleanup_expired_conversations() to service_r
 
 -- 限制表访问面：前端登录用户只可通过 RLS 访问自己的行。
 revoke all on public.zx_conversations, public.zx_messages from anon, authenticated;
+grant all on public.zx_conversations, public.zx_messages to service_role;
 -- 所有聊天表读写均经 Worker 完成。前端只使用 Supabase Auth，不直接查询表，
 -- 从而避免客户端绕过 Worker 的 app_id 产品隔离。
 
