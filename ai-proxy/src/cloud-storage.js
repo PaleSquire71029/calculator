@@ -116,7 +116,8 @@ export async function handleCloudStorage(request, env, url, cors) {
       if (!await ownedConversation(env, conversationId, auth.id, app)) return reply({ error: "对话不存在或无权访问。" }, 404, cors);
       if (!["user", "assistant"].includes(body.role) || typeof body.content !== "string" ||
           !body.content.trim() || body.content.length > MAX_TEXT) return reply({ error: "消息内容无效或过长。" }, 400, cors);
-      const clientMessageId = UUID_RE.test(body.client_message_id || "") ? body.client_message_id : null;
+      if (!UUID_RE.test(body.client_message_id || "")) return reply({ error: "消息 ID 无效，请重试发送。" }, 400, cors);
+      const clientMessageId = body.client_message_id;
       const row = { conversation_id: conversationId, user_id: auth.id, app_id: app,
         role: body.role, content: body.content, status: body.status === "failed" ? "failed" : "complete",
         ...(clientMessageId ? { client_message_id: clientMessageId } : {}) };
