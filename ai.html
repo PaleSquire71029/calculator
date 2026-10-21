@@ -85,6 +85,14 @@ textarea::placeholder{color:#9aa5b6}
 .preview{display:none;align-items:center;gap:9px;margin:7px 0;padding:7px;border-radius:11px;background:#f1f5fc}
 .preview img{width:48px;height:48px;object-fit:cover;border-radius:7px}
 .preview span{font-size:12px;flex:1;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.account-panel{margin:0 0 10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.account-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.account-row[hidden]{display:none}
+.account-row input{min-width:0;flex:1 1 120px;width:100%;height:37px;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:#fff;color:var(--ink);font:inherit;font-size:13px}
+.account-row .btn{height:37px}
+.account-status{font-size:12px;color:var(--muted);margin:0 0 8px}
+.history-list{display:flex;gap:6px;overflow:auto;padding-top:9px}
+.history-item{flex:none;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid var(--line);border-radius:9px;background:#f7f9fd;color:#526782;padding:7px 9px;font-size:12px}
+.history-item.active{border-color:#8eaceb;background:#edf3ff;color:#315db4}
 .footnote{text-align:center;font-size:10px;color:#a0aabc;padding:0 0 8px}
 .error{color:#b54848!important}
 .spinner{display:inline-block;width:13px;height:13px;border:2px solid #ffffff80;border-top-color:white;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px}
@@ -100,6 +108,21 @@ textarea::placeholder{color:#9aa5b6}
   <div class="top-actions"><button class="plain" id="clearChat" type="button">新对话</button><a class="link" href="./index.html">返回计算器</a></div>
 </header>
 <div class="model-status" id="modelStatus" data-state="waiting" aria-live="polite">当前模型：等待连接</div>
+<section class="account-panel" aria-label="账号与云对话">
+  <div class="account-status" id="accountStatus" aria-live="polite">登录后可同步云端文字对话；知行AI与学习版历史相互隔离，保留 90 天。</div>
+  <div class="account-row" id="authForm">
+    <input id="accountEmail" type="email" autocomplete="email" placeholder="邮箱" aria-label="邮箱">
+    <input id="accountPassword" type="password" autocomplete="current-password" placeholder="密码（至少 8 位）" aria-label="密码">
+    <button class="btn" id="signInBtn" type="button">登录</button>
+    <button class="btn" id="signUpBtn" type="button">注册</button>
+  </div>
+  <div class="account-row" id="signedInRow" hidden>
+    <span id="accountEmailLabel" class="account-status"></span>
+    <button class="btn" id="refreshHistoryBtn" type="button">刷新历史</button>
+    <button class="btn" id="signOutBtn" type="button">退出</button>
+  </div>
+  <div class="history-list" id="historyList" aria-label="云端历史记录"></div>
+</section>
 <details class="settings" id="settings">
   <summary>连接设置 <span id="health" class="health">· 等待配置</span></summary>
   <div class="settings-body">
@@ -132,8 +155,10 @@ textarea::placeholder{color:#9aa5b6}
     </div>
   </div>
 </div>
-<div class="footnote">回答由 AI 生成，请自行核对重要信息。对话仅保存在当前页面，刷新后清空。</div>
+<div class="footnote">回答由 AI 生成，请自行核对重要信息。登录后可保存文字对话；图片和文件原件不会保存到云历史。</div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./ai-proxy/public/cloud-history.js"></script>
 <script>
 (function(){
 'use strict';
@@ -208,6 +233,7 @@ function render(){
  });
  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
 }
+window.zxAIApp={state,render,updateAttachments};
 function setBusy(v){state.busy=v;$('send').disabled=v;$('send').innerHTML=v?'<span class="spinner"></span>':'↑';$('question').disabled=v;$('imageInput').disabled=v;}
 function endpoint(){const raw=$('proxyUrl').value.trim();if(!raw)return '';try{const u=new URL(raw);if(!['https:','http:'].includes(u.protocol))return '';if(u.protocol==='http:'&&u.hostname!=='localhost'&&u.hostname!=='127.0.0.1')return '';if(u.pathname.endsWith('/api/chat'))return u.toString();return u.toString().replace(/\/$/,'')+'/api/chat';}catch(e){return '';}}
 function setModelStatus(model,state){const el=$('modelStatus');if(model){el.textContent='当前模型：'+model;el.title='当前配置/返回的模型：'+model;el.dataset.state='ready';}else{el.textContent=state==='error'?'当前模型：暂时无法获取':state==='waiting'?'当前模型：等待连接':'当前模型：未连接';el.title=el.textContent;el.dataset.state=state||'waiting';}}
@@ -278,14 +304,17 @@ async function send(){
  const images=state.images.slice(),files=state.files.slice();
  let visibleText=text||(images.length?'请看看这些图片并帮我分析。':'请阅读我上传的资料，并帮我总结重点。');
  if(files.length)visibleText+='\n\n【附件资料】\n'+files.map(f=>'文件：'+f.name+'\n'+f.text).join('\n\n---\n\n');
+ const cloudMessageId=window.zxCloudHistory?.messageId?.();
+ setBusy(true);
  state.messages.push({role:'user',text:visibleText,images:images.map(x=>x.data)});
+ if(window.zxCloudHistory){try{await window.zxCloudHistory.ensureConversation(visibleText);await window.zxCloudHistory.saveMessage('user',visibleText,cloudMessageId);}catch(cloudError){const el=$('accountStatus');if(el)el.textContent='云端保存暂不可用：'+cloudError.message;}}
  const apiMessages=state.messages.map(m=>{
   if(m.role==='user'&&m.images&&m.images.length){
    return {role:m.role,content:[{type:'text',text:m.text},...m.images.map(src=>({type:'image_url',image_url:{url:src}}))]};
   }
   return {role:m.role,content:m.text};
  });
- $('question').value='';autoResize();state.images=[];state.files=[];updateAttachments();render();setBusy(true);
+ $('question').value='';autoResize();state.images=[];state.files=[];updateAttachments();render();
  try{
   const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'general',messages:apiMessages})});
   let data={};try{data=await response.json();}catch(e){}
@@ -293,8 +322,9 @@ async function send(){
   if(typeof data.answer!=='string'||!data.answer.trim())throw new Error('模型没有返回文字答案。');
   if(data.model)setModelStatus(data.model,'ready');
   state.messages.push({role:'assistant',text:data.answer});
+  if(window.zxCloudHistory){try{await window.zxCloudHistory.saveMessage('assistant',data.answer);}catch(cloudError){const el=$('accountStatus');if(el)el.textContent='回答已生成，但云端保存失败：'+cloudError.message;}}
  }catch(e){state.messages.push({role:'assistant',text:'请求未完成：'+(e.message||'网络错误')+'\n\n请检查代理地址、模型配置和网络后重试。'});}
- finally{setBusy(false);render();$('question').focus();}
+ finally{setBusy(false);render();$('question').focus();if(window.zxCloudHistory)window.zxCloudHistory.refresh(false).catch(()=>{});}
 }
 $('send').addEventListener('click',send);
 $('question').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});

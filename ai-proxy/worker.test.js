@@ -631,3 +631,19 @@ test("public model listing and authenticated admin probes redact upstream creden
   }
 });
 
+
+
+test("cloud history rejects unknown product scopes", async () => {
+  const response = await worker.fetch(new Request("https://worker.example.test/api/history/conversations?app=unknown", {
+    headers: { Origin: origin, "CF-Connecting-IP": "198.51.100.210" }
+  }), testEnv());
+  assert.equal(response.status, 400);
+});
+
+test("cloud history fails closed until Supabase secrets are configured", async () => {
+  const response = await worker.fetch(new Request("https://worker.example.test/api/history/conversations?app=learning", {
+    headers: { Origin: origin, "CF-Connecting-IP": "198.51.100.211" }
+  }), testEnv());
+  assert.equal(response.status, 503);
+  assert.match((await response.json()).error, /尚未完成后端密钥配置/);
+});

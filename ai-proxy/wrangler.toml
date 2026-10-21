@@ -3,6 +3,9 @@ main = "src/index.js"
 compatibility_date = "2026-10-16"
 workers_dev = true
 
+[triggers]
+crons = ["17 3 * * *"]
+
 [vars]
 AI_BASE_URL = "https://api.a6api.com/v1"
 AI_MODEL = "gpt6-luna"
