@@ -42,6 +42,7 @@ async function openHistory(id) {
       const state = window.zxAIApp.state;
       state.messages = (result.messages || []).filter(m => m.status === 'complete' && ['user', 'assistant'].includes(m.role)).map(m => ({ role: m.role, text: m.content }));
       state.images = []; state.files = [];
+      window.zxAIApp.updateAttachments?.();
       window.zxAIApp.render();
     }
     await listHistory(false); setStatus('已恢复云端对话。');
