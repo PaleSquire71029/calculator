@@ -147,9 +147,9 @@ async function consumeRate(env, key, limit, windowMs) {
     return typeof result.allowed === "boolean" ? result : { allowed: false, unavailable: true, retryAfter: 60 };
   } catch { return { allowed: false, unavailable: true, retryAfter: 60 }; }
 }
-async function rateGate(request, env, key, limit, windowMs, cors) {
+async function rateGate(request, env, key, limit, windowMs, cors, includeIp = true) {
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-  const rate = await consumeRate(env, key + ":" + ip, limit, windowMs);
+  const rate = await consumeRate(env, includeIp ? key + ":" + ip : key, limit, windowMs);
   if (rate.unavailable) return reply({ error: "安全限流服务暂不可用，请稍后重试。" }, 503, cors);
   if (!rate.allowed) return reply({ error: "请求次数过多，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter || 60) });
   return null;
@@ -180,7 +180,7 @@ export async function handleUserAccountRoute(request, env, url, cors) {
       }
       const ipGate = await rateGate(request, env, "account-login", 12, 15 * 60 * 1000, cors);
       if (ipGate) return ipGate;
-      const emailGate = await rateGate(request, env, "account-login-email:" + email, 8, 60 * 60 * 1000, cors);
+      const emailGate = await rateGate(request, env, "account-login-email:" + email, 8, 60 * 60 * 1000, cors, false);
       if (emailGate) return emailGate;
       let session;
       try {
