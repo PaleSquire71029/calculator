@@ -297,6 +297,12 @@ export class AdminSettingsStore {
         }
         return json({ registrations });
       }
+      if (request.method === "DELETE") {
+        const userId = String(url.searchParams.get("user_id") || "");
+        if (!uuidPattern.test(userId)) return json({ error: "Invalid registration user ID" }, 400);
+        await this.state.storage.delete("accountRegistration:" + userId);
+        return json({ ok: true });
+      }
       if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
       const parsed = await readJsonLimited(request, 8192);
       if (parsed.error) return json({ error: parsed.error }, parsed.status);
@@ -330,7 +336,7 @@ export class AdminSettingsStore {
       const parsed = await readJsonLimited(request, 4096);
       if (parsed.error) return json({ error: parsed.error }, parsed.status);
       const input = parsed.data;
-      const actions = new Set(["delete_conversation", "delete_selected", "delete_user_data", "cleanup_90d", "create_account"]);
+      const actions = new Set(["delete_conversation", "delete_selected", "delete_user_data", "cleanup_90d", "create_account", "delete_account"]);
       if (!actions.has(input.action) ||
           !["zhixing-ai", "learning", "all"].includes(input.app) ||
           !Number.isInteger(input.affectedCount) || input.affectedCount < 0 || input.affectedCount > 1000000) {
