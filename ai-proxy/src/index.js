@@ -466,7 +466,7 @@ export default {
       return;
     }
     ctx.waitUntil((async () => {
-      const base = String(env.SUPABASE_URL).replace(/\\/+$/, "");
+      const base = String(env.SUPABASE_URL).replace(/\/+$/, "");
       const response = await fetch(base + "/rest/v1/rpc/zx_cleanup_expired_conversations", {
         method: "POST",
         headers: {
