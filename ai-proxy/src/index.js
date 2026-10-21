@@ -1,4 +1,5 @@
 import { AdminSettingsStore, createAdminModule, readJsonLimited, normalizeApiBaseUrl, readResponseTextLimited } from "./admin.js";
+import { handleCloudStorage } from "./cloud-storage.js";
 export { AdminSettingsStore };
 /**
  * 知行计算器 AI 代理
@@ -250,6 +251,7 @@ export default {
     }
     const url = new URL(request.url);
     if (url.pathname.startsWith("/admin/")) return adminModule.handleRoute(request, env, url, cors);
+    if (url.pathname.startsWith("/api/history/")) return handleCloudStorage(request, env, url, cors);
     if (request.method === "GET" && url.pathname === "/health") {
       const appId = normalizeAppId(url.searchParams.get("app"));
       const ip = request.headers.get("CF-Connecting-IP") || "unknown";
