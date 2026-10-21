@@ -285,6 +285,32 @@ export class AdminSettingsStore {
       if (currentAlarm === null || currentAlarm > alarmAt) await this.state.storage.setAlarm(alarmAt);
       return json({ allowed: bucket.allowed, retryAfter: bucket.retryAfter });
     }
+    if (url.pathname === "/cloud-audit") {
+      if (request.method === "GET") {
+        const entries = await this.state.storage.get("cloudAudit");
+        return json(Array.isArray(entries) ? entries : []);
+      }
+      if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+      const parsed = await readJsonLimited(request, 4096);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status);
+      const input = parsed.data;
+      const actions = new Set(["delete_conversation", "delete_selected", "delete_user_data", "cleanup_90d"]);
+      if (!actions.has(input.action) ||
+          !["zhixing-ai", "learning", "all"].includes(input.app) ||
+          !Number.isInteger(input.affectedCount) || input.affectedCount < 0 || input.affectedCount > 1000000) {
+        return json({ error: "Invalid cloud audit entry" }, 400);
+      }
+      const entry = {
+        id: crypto.randomUUID(),
+        at: new Date().toISOString(),
+        action: input.action,
+        app: input.app,
+        affectedCount: input.affectedCount
+      };
+      const previous = await this.state.storage.get("cloudAudit");
+      await this.state.storage.put("cloudAudit", [entry, ...(Array.isArray(previous) ? previous : [])].slice(0, 200));
+      return json({ ok: true, entry });
+    }
     if (url.pathname !== "/data") return json({ error: "Not found" }, 404);
     if (request.method === "GET") return json((await this.state.storage.get("adminData")) || {});
     if (request.method !== "PUT") return json({ error: "Method not allowed" }, 405);
