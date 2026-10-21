@@ -1,4 +1,5 @@
 /**
+ * Cloud history requests are rate-limited in the Worker entry point before reaching this module.
  * Secure Supabase chat history API.
  * Secrets required in Cloudflare Worker:
  *   SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SERVICE_ROLE_KEY
