@@ -545,3 +545,63 @@ test("streamed analysis requests usage and adds token counts to statistics and r
     assert.ok(stats.recent[0].durationMs >= 0);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+
+test("cloud data admin gets a separate scoped session and aggregated overview", async () => {
+  const { env } = fakeEnvironment({
+    SUPABASE_URL: "https://project.supabase.co",
+    SUPABASE_SERVICE_ROLE_KEY: "sb_secret_test_key"
+  });
+  const origin = "https://c.zhixing.us.ci";
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init = {}) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    assert.equal(url.hostname, "project.supabase.co");
+    if (init.method === "HEAD") {
+      const app = url.searchParams.get("app_id") || "";
+      const isMessage = url.pathname.endsWith("/zx_messages");
+      const expired = url.searchParams.has("last_activity_at");
+      const count = isMessage ? (app.includes("zhixing-ai") ? 8 : 9) :
+        expired ? (app.includes("zhixing-ai") ? 1 : 2) :
+          (app.includes("zhixing-ai") ? 2 : 3);
+      return new Response(null, { status: 200, headers: { "Content-Range": "0-0/" + count } });
+    }
+    if (url.pathname.endsWith("/zx_conversations") && url.searchParams.get("select") === "user_id") {
+      return new Response(JSON.stringify([
+        { user_id: "user-a" }, { user_id: "user-b" }, { user_id: "user-a" }
+      ]), { status: 200, headers: { "Content-Type": "application/json", "Content-Range": "0-2/3" } });
+    }
+    throw new Error("Unexpected mocked Supabase request: " + url.pathname + " " + (init.method || "GET"));
+  };
+  try {
+    const login = await worker.fetch(jsonRequest("https://worker.test/admin/cloud/login", {
+      password: env.ADMIN_PASSWORD
+    }, { Origin: origin, "CF-Connecting-IP": "203.0.113.210" }), env);
+    assert.equal(login.status, 200);
+    const { token } = await login.json();
+    assert.equal(typeof token, "string");
+
+    const overview = await worker.fetch(new Request("https://worker.test/admin/cloud/overview", {
+      headers: { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" }
+    }), env);
+    assert.equal(overview.status, 200);
+    const data = await overview.json();
+    assert.equal(data.totals.conversations, 5);
+    assert.equal(data.totals.messages, 17);
+    assert.equal(data.totals.expired, 3);
+    assert.equal(data.usersInRecentSample, 2);
+
+    const deniedSettings = await worker.fetch(new Request("https://worker.test/admin/settings?app=learning", {
+      headers: { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" }
+    }), env);
+    assert.equal(deniedSettings.status, 401, "cloud-data token must not authorize model/config operations");
+
+    const ordinaryToken = await loginAdmin(env, "203.0.113.211");
+    const deniedCloud = await worker.fetch(new Request("https://worker.test/admin/cloud/overview", {
+      headers: { Origin: origin, Authorization: "Bearer " + ordinaryToken, "CF-Connecting-IP": "203.0.113.211" }
+    }), env);
+    assert.equal(deniedCloud.status, 401, "ordinary product admin tokens must not authorize cloud-data operations");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
