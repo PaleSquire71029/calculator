@@ -510,7 +510,8 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       return json({
         tokens: {
           "zhixing-ai": await createToken(env, "zhixing-ai"),
-          learning: await createToken(env, "learning")
+          learning: await createToken(env, "learning"),
+          cloud: await createToken(env, "learning", "cloud-admin")
         },
         expiresIn: ADMIN_SESSION_TTL_MS
       }, 200, cors);
