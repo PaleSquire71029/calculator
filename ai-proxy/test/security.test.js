@@ -564,6 +564,17 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
   globalThis.fetch = async (input, init = {}) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     assert.equal(url.hostname, "project.supabase.co");
+    if (url.pathname.includes("/auth/v1/admin/users/123e4567-e89b-42d3-a456-426614174001")) {
+      const adminHeaders = new Headers(init.headers || {});
+      assert.equal(adminHeaders.get("apikey"), "sb_secret_test_key");
+      assert.equal(adminHeaders.get("Authorization"), null, "opaque Supabase secret keys are not JWT bearer tokens");
+      if (init.method === "DELETE") return new Response(null, { status: 204 });
+      return new Response(JSON.stringify({
+        id: "123e4567-e89b-42d3-a456-426614174001",
+        email: "new.user@example.com",
+        email_confirmed_at: "2026-10-21T12:00:00.000Z"
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
     if (url.pathname.endsWith("/auth/v1/admin/users")) {
       const adminHeaders = new Headers(init.headers || {});
       assert.equal(adminHeaders.get("apikey"), "sb_secret_test_key");
@@ -682,6 +693,20 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
       headers: { Origin: origin, Authorization: "Bearer " + ordinaryToken, "CF-Connecting-IP": "203.0.113.211" }
     }), env);
     assert.equal(deniedCloud.status, 401, "ordinary product admin tokens must not authorize cloud-data operations");
+
+    const wrongEmailDeletion = await worker.fetch(jsonRequest("https://worker.test/admin/cloud/accounts/delete", {
+      user_id: "123e4567-e89b-42d3-a456-426614174001", email: "not-the-owner@example.com", confirm: "DELETE_ACCOUNT"
+    }, { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" }), env);
+    assert.equal(wrongEmailDeletion.status, 409, "account deletion must match the target account email");
+    const accountDeletion = await worker.fetch(jsonRequest("https://worker.test/admin/cloud/accounts/delete", {
+      user_id: "123e4567-e89b-42d3-a456-426614174001", email: "new.user@example.com", confirm: "DELETE_ACCOUNT"
+    }, { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" }), env);
+    assert.equal(accountDeletion.status, 200);
+    const accountDeletionBody = await accountDeletion.json();
+    assert.equal(accountDeletionBody.userDeleted, true);
+    assert.equal(accountDeletionBody.conversationsDeleted, true);
+    assert.equal(accountDeletionBody.deletedConversations, 1);
+    assert.equal(accountDeletionBody.registrationDeleted, true);
   } finally {
     globalThis.fetch = originalFetch;
   }
