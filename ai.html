@@ -233,6 +233,7 @@ function render(){
  });
  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
 }
+window.zxAIApp={state,render};
 function setBusy(v){state.busy=v;$('send').disabled=v;$('send').innerHTML=v?'<span class="spinner"></span>':'↑';$('question').disabled=v;$('imageInput').disabled=v;}
 function endpoint(){const raw=$('proxyUrl').value.trim();if(!raw)return '';try{const u=new URL(raw);if(!['https:','http:'].includes(u.protocol))return '';if(u.protocol==='http:'&&u.hostname!=='localhost'&&u.hostname!=='127.0.0.1')return '';if(u.pathname.endsWith('/api/chat'))return u.toString();return u.toString().replace(/\/$/,'')+'/api/chat';}catch(e){return '';}}
 function setModelStatus(model,state){const el=$('modelStatus');if(model){el.textContent='当前模型：'+model;el.title='当前配置/返回的模型：'+model;el.dataset.state='ready';}else{el.textContent=state==='error'?'当前模型：暂时无法获取':state==='waiting'?'当前模型：等待连接':'当前模型：未连接';el.title=el.textContent;el.dataset.state=state||'waiting';}}
@@ -303,7 +304,9 @@ async function send(){
  const images=state.images.slice(),files=state.files.slice();
  let visibleText=text||(images.length?'请看看这些图片并帮我分析。':'请阅读我上传的资料，并帮我总结重点。');
  if(files.length)visibleText+='\n\n【附件资料】\n'+files.map(f=>'文件：'+f.name+'\n'+f.text).join('\n\n---\n\n');
+ const cloudMessageId=window.zxCloudHistory?.messageId?.();
  state.messages.push({role:'user',text:visibleText,images:images.map(x=>x.data)});
+ if(window.zxCloudHistory){try{await window.zxCloudHistory.ensureConversation(visibleText);await window.zxCloudHistory.saveMessage('user',visibleText,cloudMessageId);}catch(cloudError){const el=$('accountStatus');if(el)el.textContent='云端保存暂不可用：'+cloudError.message;}}
  const apiMessages=state.messages.map(m=>{
   if(m.role==='user'&&m.images&&m.images.length){
    return {role:m.role,content:[{type:'text',text:m.text},...m.images.map(src=>({type:'image_url',image_url:{url:src}}))]};
@@ -318,8 +321,9 @@ async function send(){
   if(typeof data.answer!=='string'||!data.answer.trim())throw new Error('模型没有返回文字答案。');
   if(data.model)setModelStatus(data.model,'ready');
   state.messages.push({role:'assistant',text:data.answer});
+  if(window.zxCloudHistory){try{await window.zxCloudHistory.saveMessage('assistant',data.answer);}catch(cloudError){const el=$('accountStatus');if(el)el.textContent='回答已生成，但云端保存失败：'+cloudError.message;}}
  }catch(e){state.messages.push({role:'assistant',text:'请求未完成：'+(e.message||'网络错误')+'\n\n请检查代理地址、模型配置和网络后重试。'});}
- finally{setBusy(false);render();$('question').focus();}
+ finally{setBusy(false);render();$('question').focus();if(window.zxCloudHistory)window.zxCloudHistory.refresh(false).catch(()=>{});}
 }
 $('send').addEventListener('click',send);
 $('question').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
