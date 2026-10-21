@@ -225,11 +225,15 @@ export async function handleUserAccountRoute(request, env, url, cors) {
       }, 200, cors);
     }
     if (path === "/api/account/me") {
+      const gate = await rateGate(request, env, "account-profile", 120, 60 * 1000, cors);
+      if (gate) return gate;
       const auth = await readUser(request, env);
       if (!auth) return reply({ error: "登录已失效，请重新登录。" }, 401, cors);
       return reply({ user: safeAccount(auth.user) }, 200, cors);
     }
     if (path === "/api/account/password") {
+      const ipGate = await rateGate(request, env, "account-password-ip", 20, 60 * 60 * 1000, cors);
+      if (ipGate) return ipGate;
       const auth = await readUser(request, env);
       if (!auth) return reply({ error: "登录已失效，请重新登录。" }, 401, cors);
       const parsed = await readBody(request, 8192);
@@ -264,6 +268,8 @@ export async function handleUserAccountRoute(request, env, url, cors) {
       return reply({ ok: true }, 200, cors);
     }
     if (path === "/api/account/logout") {
+      const gate = await rateGate(request, env, "account-logout", 30, 60 * 60 * 1000, cors);
+      if (gate) return gate;
       const auth = await readUser(request, env);
       if (!auth) return reply({ ok: true }, 200, cors);
       try { await authFetch(env, "logout", { method: "POST", bearer: auth.token }); }
