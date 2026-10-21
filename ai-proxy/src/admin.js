@@ -473,6 +473,9 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
         usageAvailable: Boolean(usage),
         // Client IP comes from Cloudflare's edge header, never from a client-supplied field.
         ip: String(event.clientIp || "unknown").slice(0, 80),
+        location: [event.clientLocation?.city, event.clientLocation?.region, event.clientLocation?.country]
+          .filter(value => typeof value === "string" && value.trim()).join(", ").slice(0, 200) || "未知归属地",
+        timezone: String(event.clientLocation?.timezone || "").slice(0, 80),
         origin: String(event.origin || "").slice(0, 200),
         userAgent: String(event.userAgent || "").slice(0, 220),
         durationMs: Math.max(0, Math.min(900000, Math.floor(Number(event.durationMs) || 0)))
