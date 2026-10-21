@@ -305,6 +305,7 @@ async function send(){
  let visibleText=text||(images.length?'请看看这些图片并帮我分析。':'请阅读我上传的资料，并帮我总结重点。');
  if(files.length)visibleText+='\n\n【附件资料】\n'+files.map(f=>'文件：'+f.name+'\n'+f.text).join('\n\n---\n\n');
  const cloudMessageId=window.zxCloudHistory?.messageId?.();
+ setBusy(true);
  state.messages.push({role:'user',text:visibleText,images:images.map(x=>x.data)});
  if(window.zxCloudHistory){try{await window.zxCloudHistory.ensureConversation(visibleText);await window.zxCloudHistory.saveMessage('user',visibleText,cloudMessageId);}catch(cloudError){const el=$('accountStatus');if(el)el.textContent='云端保存暂不可用：'+cloudError.message;}}
  const apiMessages=state.messages.map(m=>{
@@ -313,7 +314,7 @@ async function send(){
   }
   return {role:m.role,content:m.text};
  });
- $('question').value='';autoResize();state.images=[];state.files=[];updateAttachments();render();setBusy(true);
+ $('question').value='';autoResize();state.images=[];state.files=[];updateAttachments();render();
  try{
   const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'general',messages:apiMessages})});
   let data={};try{data=await response.json();}catch(e){}
