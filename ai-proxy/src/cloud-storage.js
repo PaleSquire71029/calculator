@@ -20,9 +20,11 @@ function appId(value) {
   return "";
 }
 function restHeaders(env) {
+  const key = env.SUPABASE_SERVICE_ROLE_KEY;
   return {
-    "apikey": env.SUPABASE_SERVICE_ROLE_KEY,
-    "Authorization": "Bearer " + env.SUPABASE_SERVICE_ROLE_KEY,
+    "apikey": key,
+    // New Supabase secret keys are opaque API keys, not JWTs; only legacy service_role JWTs belong in Authorization.
+    ...(String(key).startsWith("sb_secret_") ? {} : { "Authorization": "Bearer " + key }),
     "Content-Type": "application/json",
     "Accept": "application/json"
   };
