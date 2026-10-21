@@ -251,7 +251,13 @@ export default {
     }
     const url = new URL(request.url);
     if (url.pathname.startsWith("/admin/")) return adminModule.handleRoute(request, env, url, cors);
-    if (url.pathname.startsWith("/api/history/")) return handleCloudStorage(request, env, url, cors);
+    if (url.pathname.startsWith("/api/history/")) {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await adminModule.checkRateLimit(env, "cloud-history:" + ip, 90, WINDOW_MS);
+      if (rate.unavailable) return json({ error: "云历史限流暂时不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return json({ error: "云历史请求过于频繁，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
+      return handleCloudStorage(request, env, url, cors);
+    }
     if (request.method === "GET" && url.pathname === "/health") {
       const appId = normalizeAppId(url.searchParams.get("app"));
       const ip = request.headers.get("CF-Connecting-IP") || "unknown";
