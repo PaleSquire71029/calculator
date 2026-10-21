@@ -616,6 +616,20 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
           (app.includes("zhixing-ai") ? 2 : 3);
       return new Response(null, { status: 200, headers: { "Content-Range": "0-0/" + count } });
     }
+    if (url.pathname.endsWith("/zx_conversations") && String(url.searchParams.get("select") || "").startsWith("id,user_id,app_id,title")) {
+      assert.equal(url.searchParams.get("app_id"), "in.(zhixing-ai,learning)", "all-product account history must query only the two known apps");
+      assert.equal(url.searchParams.get("user_id"), "eq.123e4567-e89b-42d3-a456-426614174088");
+      return new Response(JSON.stringify([{
+        id: "123e4567-e89b-42d3-a456-426614174099",
+        user_id: "123e4567-e89b-42d3-a456-426614174088",
+        app_id: "learning",
+        title: "Learning conversation",
+        created_at: "2026-10-21T10:00:00.000Z",
+        updated_at: "2026-10-21T10:00:00.000Z",
+        last_activity_at: "2026-10-21T10:00:00.000Z",
+        zx_messages: [{ count: 2 }]
+      }]), { status: 200, headers: { "Content-Type": "application/json", "Content-Range": "0-0/1" } });
+    }
     if (url.pathname.endsWith("/zx_conversations") && url.searchParams.get("select") === "user_id") {
       return new Response(JSON.stringify([
         { user_id: "user-a" }, { user_id: "user-b" }, { user_id: "user-a" }
@@ -640,6 +654,15 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
     assert.equal(data.totals.messages, 17);
     assert.equal(data.totals.expired, 3);
     assert.equal(data.usersInRecentSample, 2);
+
+    const history = await worker.fetch(new Request("https://worker.test/admin/cloud/conversations?app=all&page=1&page_size=20&user_id=123e4567-e89b-42d3-a456-426614174088", {
+      headers: { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" }
+    }), env);
+    assert.equal(history.status, 200);
+    const historyBody = await history.json();
+    assert.equal(historyBody.conversations.length, 1);
+    assert.equal(historyBody.conversations[0].app_id, "learning");
+    assert.equal(historyBody.conversations[0].message_count, 2);
 
     const accounts = await worker.fetch(new Request("https://worker.test/admin/cloud/accounts?page=1&per_page=20", {
       headers: { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" }
