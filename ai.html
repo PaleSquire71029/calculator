@@ -86,7 +86,7 @@ textarea::placeholder{color:#9aa5b6}
 .preview img{width:48px;height:48px;object-fit:cover;border-radius:7px}
 .preview span{font-size:12px;flex:1;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .account-panel{margin:0 0 10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff}
-.account-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.account-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.account-row[hidden]{display:none}
 .account-row input{min-width:0;flex:1 1 120px;width:100%;height:37px;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:#fff;color:var(--ink);font:inherit;font-size:13px}
 .account-row .btn{height:37px}
 .account-status{font-size:12px;color:var(--muted);margin:0 0 8px}
@@ -233,7 +233,7 @@ function render(){
  });
  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
 }
-window.zxAIApp={state,render};
+window.zxAIApp={state,render,updateAttachments};
 function setBusy(v){state.busy=v;$('send').disabled=v;$('send').innerHTML=v?'<span class="spinner"></span>':'↑';$('question').disabled=v;$('imageInput').disabled=v;}
 function endpoint(){const raw=$('proxyUrl').value.trim();if(!raw)return '';try{const u=new URL(raw);if(!['https:','http:'].includes(u.protocol))return '';if(u.protocol==='http:'&&u.hostname!=='localhost'&&u.hostname!=='127.0.0.1')return '';if(u.pathname.endsWith('/api/chat'))return u.toString();return u.toString().replace(/\/$/,'')+'/api/chat';}catch(e){return '';}}
 function setModelStatus(model,state){const el=$('modelStatus');if(model){el.textContent='当前模型：'+model;el.title='当前配置/返回的模型：'+model;el.dataset.state='ready';}else{el.textContent=state==='error'?'当前模型：暂时无法获取':state==='waiting'?'当前模型：等待连接':'当前模型：未连接';el.title=el.textContent;el.dataset.state=state||'waiting';}}
