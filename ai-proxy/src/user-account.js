@@ -159,6 +159,7 @@ export async function handleUserAccountRoute(request, env, url, cors) {
   const path = url.pathname;
   const allowedMethods = {
     "/api/account/login": ["POST"],
+    "/api/account/refresh": ["POST"],
     "/api/account/me": ["GET"],
     "/api/account/password": ["POST"],
     "/api/account/logout": ["POST"]
@@ -190,6 +191,31 @@ export async function handleUserAccountRoute(request, env, url, cors) {
       }
       if (typeof session?.access_token !== "string" || typeof session?.refresh_token !== "string" || !session.user?.id) {
         return reply({ error: "身份服务未返回完整登录会话。" }, 502, cors);
+      }
+      return reply({
+        accessToken: session.access_token,
+        refreshToken: session.refresh_token,
+        expiresIn: Math.min(86400, Math.max(60, Number(session.expires_in) || ACCESS_TTL_DEFAULT)),
+        user: safeAccount(session.user)
+      }, 200, cors);
+    }
+    if (path === "/api/account/refresh") {
+      const parsed = await readBody(request, 8192);
+      if (parsed.error) return reply({ error: parsed.error }, parsed.status, cors);
+      const refreshToken = typeof parsed.data.refreshToken === "string" ? parsed.data.refreshToken : "";
+      if (!refreshToken || refreshToken.length > 8192) return reply({ error: "刷新会话已失效，请重新登录。" }, 401, cors);
+      const gate = await rateGate(request, env, "account-refresh", 30, 60 * 60 * 1000, cors);
+      if (gate) return gate;
+      let session;
+      try {
+        session = await authFetch(env, "token?grant_type=refresh_token", {
+          method: "POST", body: { refresh_token: refreshToken }
+        });
+      } catch {
+        return reply({ error: "登录已失效，请重新登录。" }, 401, cors);
+      }
+      if (typeof session?.access_token !== "string" || typeof session?.refresh_token !== "string" || !session.user?.id) {
+        return reply({ error: "身份服务未返回有效刷新会话。" }, 502, cors);
       }
       return reply({
         accessToken: session.access_token,
