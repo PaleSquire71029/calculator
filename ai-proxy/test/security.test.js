@@ -495,6 +495,74 @@ test("A6API balance combines hard USD limit and token usage units", async () => 
   } finally { globalThis.fetch = originalFetch; }
 });
 
+test("provider-aware balance lookup supports DeepSeek, OpenRouter, and SiliconFlow canonical billing endpoints", async () => {
+  const originalFetch = globalThis.fetch;
+  const cases = [
+    {
+      provider: "DeepSeek",
+      base: "https://api.deepseek.com",
+      endpoint: "https://api.deepseek.com/user/balance",
+      response: { is_available: true, balance_infos: [{ currency: "CNY", total_balance: "110.00", granted_balance: "10.00", topped_up_balance: "100.00" }] },
+      check: payload => {
+        assert.equal(payload.provider, "DeepSeek");
+        assert.equal(payload.currencies[0].totalBalance, 110);
+        assert.equal(payload.currencies[0].grantedBalance, 10);
+        assert.equal(payload.currencies[0].toppedUpBalance, 100);
+      }
+    },
+    {
+      provider: "OpenRouter",
+      base: "https://openrouter.ai/api/v1",
+      endpoint: "https://openrouter.ai/api/v1/credits",
+      response: { data: { total_credits: 100.5, total_usage: 25.75 } },
+      check: payload => {
+        assert.equal(payload.provider, "OpenRouter");
+        assert.equal(payload.totalCredits, 100.5);
+        assert.equal(payload.totalUsage, 25.75);
+        assert.equal(payload.remainingCredits, 74.75);
+      }
+    },
+    {
+      provider: "SiliconFlow",
+      base: "https://api.siliconflow.cn/v1",
+      endpoint: "https://api.siliconflow.cn/v1/user/info",
+      response: { status: true, data: { balance: "0.88", chargeBalance: "88.00", totalBalance: "88.88", status: "normal" } },
+      check: payload => {
+        assert.equal(payload.provider, "SiliconFlow");
+        assert.equal(payload.balance, 0.88);
+        assert.equal(payload.chargeBalance, 88);
+        assert.equal(payload.totalBalance, 88.88);
+      }
+    }
+  ];
+  try {
+    for (const [i, item] of cases.entries()) {
+      const { env } = fakeEnvironment({ AI_API_KEY: "sk-provider-balance-token" });
+      const token = await loginAdmin(env, "203.0.113." + (190 + i));
+      let requestCount = 0;
+      globalThis.fetch = async (input, init = {}) => {
+        requestCount++;
+        assert.equal(String(input), item.endpoint);
+        assert.equal(new Headers(init.headers || {}).get("Authorization"), "Bearer sk-provider-balance-token");
+        assert.equal(init.redirect, "manual", "balance lookup must not follow redirects with credentials");
+        return new Response(JSON.stringify(item.response), { status: 200, headers: { "Content-Type": "application/json" } });
+      };
+      const response = await worker.fetch(jsonRequest("https://worker.test/admin/balance", {
+        apiBaseUrl: item.base
+      }, {
+        Origin: "https://c.zhixing.us.ci",
+        Authorization: "Bearer " + token,
+        "CF-Connecting-IP": "203.0.113." + (190 + i)
+      }), env);
+      assert.equal(response.status, 200, item.provider + " balance query should succeed");
+      item.check(await response.json());
+      assert.equal(requestCount, 1);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("A6API balance never sends credentials to a noncanonical host", async () => {
   const { env } = fakeEnvironment({ AI_API_KEY: "sk-balance-token" });
   const token = await loginAdmin(env, "203.0.113.185");
