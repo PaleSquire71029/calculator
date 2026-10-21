@@ -354,7 +354,8 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       }, 200, cors);
     }
     if (path === "/admin/cloud/conversations" && request.method === "GET") {
-      const app = requestedApp(url);
+      const requested = url.searchParams.get("app");
+      const app = requested === "all" ? "all" : requestedApp(url);
       if (!app) return reply({ error: "请选择有效产品。" }, 400, cors);
       const page = Math.max(1, Math.min(10000, Number.parseInt(url.searchParams.get("page") || "1", 10) || 1));
       const pageSize = Math.max(1, Math.min(50, Number.parseInt(url.searchParams.get("page_size") || "20", 10) || 20));
@@ -363,11 +364,11 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       if (userId && !UUID_RE.test(userId)) return reply({ error: "用户 ID 格式无效。" }, 400, cors);
       const params = new URLSearchParams({
         select: "id,user_id,app_id,title,created_at,updated_at,last_activity_at,zx_messages(count)",
-        app_id: "eq." + app,
         order: "last_activity_at.desc",
         limit: String(pageSize),
         offset: String((page - 1) * pageSize)
       });
+      params.set("app_id", app === "all" ? "in.(zhixing-ai,learning)" : "eq." + app);
       if (term) params.set("title", "ilike.*" + term + "*");
       if (userId) params.set("user_id", "eq." + userId);
       const { response, data } = await db(env, "zx_conversations?" + params.toString(), { headers: { Prefer: "count=exact" } });
