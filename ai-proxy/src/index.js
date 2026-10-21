@@ -471,7 +471,7 @@ export default {
         method: "POST",
         headers: {
           "apikey": env.SUPABASE_SERVICE_ROLE_KEY,
-          "Authorization": "Bearer " + env.SUPABASE_SERVICE_ROLE_KEY,
+          ...(String(env.SUPABASE_SERVICE_ROLE_KEY).startsWith("sb_secret_") ? {} : { "Authorization": "Bearer " + env.SUPABASE_SERVICE_ROLE_KEY }),
           "Content-Type": "application/json",
           "Accept": "application/json"
         },
