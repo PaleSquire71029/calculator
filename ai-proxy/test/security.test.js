@@ -557,6 +557,10 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
   globalThis.fetch = async (input, init = {}) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     assert.equal(url.hostname, "project.supabase.co");
+    if (init.method === "DELETE" && url.pathname.endsWith("/zx_conversations")) {
+      const id = "123e4567-e89b-42d3-a456-426614174000";
+      return new Response(JSON.stringify([{ id }]), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
     if (init.method === "HEAD") {
       const app = url.searchParams.get("app_id") || "";
       const isMessage = url.pathname.endsWith("/zx_messages");
@@ -590,6 +594,25 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
     assert.equal(data.totals.messages, 17);
     assert.equal(data.totals.expired, 3);
     assert.equal(data.usersInRecentSample, 2);
+
+    const conversationId = "123e4567-e89b-42d3-a456-426614174000";
+    const deletion = await worker.fetch(jsonRequest("https://worker.test/admin/cloud/conversations/delete", {
+      app: "zhixing-ai", ids: [conversationId], confirm: "DELETE_SELECTED"
+    }, { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" }), env);
+    assert.equal(deletion.status, 200);
+    const deletionBody = await deletion.json();
+    assert.equal(deletionBody.deleted, 1);
+    assert.equal(deletionBody.auditLogged, true);
+
+    const auditResponse = await worker.fetch(new Request("https://worker.test/admin/cloud/audit", {
+      headers: { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" }
+    }), env);
+    assert.equal(auditResponse.status, 200);
+    const audit = await auditResponse.json();
+    assert.equal(audit.entries[0].action, "delete_conversation");
+    assert.equal(audit.entries[0].app, "zhixing-ai");
+    assert.equal(audit.entries[0].affectedCount, 1);
+    assert.equal("content" in audit.entries[0], false, "audit entries must not contain message content");
 
     const deniedSettings = await worker.fetch(new Request("https://worker.test/admin/settings?app=learning", {
       headers: { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" }
