@@ -175,6 +175,17 @@ async function readStoredRegistrations(env, ids) {
     return data && data.registrations && typeof data.registrations === "object" ? data.registrations : {};
   } catch { return {}; }
 }
+async function deleteStoredRegistration(env, userId) {
+  if (!env.ADMIN_STORE || !UUID_RE.test(String(userId || ""))) return false;
+  try {
+    const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+    const response = await stub.fetch("https://admin-store.internal/account-registration?user_id=" + encodeURIComponent(userId), {
+      method: "DELETE",
+      signal: AbortSignal.timeout(8000)
+    });
+    return response.ok;
+  } catch { return false; }
+}
 async function writeStoredRegistration(env, userId, registration) {
   if (!env.ADMIN_STORE || !UUID_RE.test(String(userId || ""))) return false;
   try {
@@ -261,6 +272,56 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       user.registration = registration;
       const auditLogged = await appendAuditLog(env, "create_account", "all", 1);
       return reply({ ok: true, user, registrationSaved, auditLogged }, 201, cors);
+    }
+
+    if (path === "/admin/cloud/accounts/delete" && request.method === "POST") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await consumeAdminRateLimit(env, "cloud-delete-account:" + ip, 5, 60 * 60 * 1000);
+      if (rate.unavailable) return reply({ error: "账号注销限流服务暂不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return reply({ error: "账号注销次数过多，请一小时后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter || 3600) });
+      const parsed = await readBody(request, 8192);
+      if (parsed.error) return reply({ error: parsed.error }, parsed.status, cors);
+      const userId = typeof parsed.data.user_id === "string" ? parsed.data.user_id : "";
+      const email = typeof parsed.data.email === "string" ? parsed.data.email.trim().toLowerCase() : "";
+      if (parsed.data.confirm !== "DELETE_ACCOUNT" || !UUID_RE.test(userId) ||
+          email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return reply({ error: "账号 ID、邮箱或注销确认无效。" }, 400, cors);
+      }
+      let target;
+      try {
+        const result = await authAdminRequest(env, "/" + encodeURIComponent(userId));
+        target = result?.user || result;
+      } catch (error) {
+        if (error?.status === 404) return reply({ error: "该账号不存在或已被注销。" }, 404, cors);
+        return reply({ error: "读取账号信息失败，未执行注销。" }, 502, cors);
+      }
+      if (!target || target.id !== userId || String(target.email || "").trim().toLowerCase() !== email) {
+        return reply({ error: "用户 ID 与邮箱不匹配；为防止误删，未执行操作。" }, 409, cors);
+      }
+      try {
+        await authAdminRequest(env, "/" + encodeURIComponent(userId), { method: "DELETE" });
+      } catch (error) {
+        const message = error?.status === 404 ? "账号已不存在。" : "Supabase 未确认账号注销成功，云端记录未删除。";
+        return reply({ error: message }, error?.status === 404 ? 404 : 502, cors);
+      }
+      let deletedConversations = 0;
+      let conversationsDeleted = true;
+      try {
+        const params = new URLSearchParams({ user_id: "eq." + userId, select: "id" });
+        const { data } = await db(env, "zx_conversations?" + params.toString(), {
+          method: "DELETE", headers: { Prefer: "return=representation" }
+        });
+        deletedConversations = Array.isArray(data) ? data.length : 0;
+      } catch {
+        conversationsDeleted = false;
+      }
+      const registrationDeleted = await deleteStoredRegistration(env, userId);
+      const auditLogged = await appendAuditLog(env, "delete_account", "all", deletedConversations);
+      return reply({
+        ok: true, userDeleted: true, deletedConversations, conversationsDeleted,
+        registrationDeleted, auditLogged,
+        warning: conversationsDeleted ? "" : "账号已注销，但云端聊天记录未能全部清除。请在聊天用户模块按该用户 ID 清理剩余数据。"
+      }, 200, cors);
     }
 
     if (path === "/admin/cloud/overview" && request.method === "GET") {
