@@ -161,6 +161,30 @@ test("Durable Object rate limiter persists counters and applies separate IP buck
   assert.ok(await storage.getAlarm());
 });
 
+test("public AI chat allows 15 requests per 30-minute IP window and blocks the 16th", async () => {
+  const { env } = fakeEnvironment();
+  const origin = "https://c.zhixing.us.ci";
+  const ip = "203.0.113.201";
+  const statuses = [];
+  for (let i = 0; i < 16; i++) {
+    const response = await worker.fetch(jsonRequest("https://worker.test/api/chat", {
+      app: "zhixing-ai"
+    }, {
+      Origin: origin,
+      "CF-Connecting-IP": ip
+    }), env);
+    statuses.push(response.status);
+    if (i < 15) assert.notEqual(response.status, 429, "request " + (i + 1) + " should be within the 15-request allowance");
+    else {
+      assert.equal(response.status, 429, "the 16th request should be rate-limited");
+      const retryAfter = Number(response.headers.get("Retry-After"));
+      assert.ok(retryAfter >= 1 && retryAfter <= 30 * 60, "Retry-After should reflect the 30-minute window");
+      assert.match((await response.json()).error, /请求过于频繁/);
+    }
+  }
+  assert.equal(statuses.length, 16);
+});
+
 test("admin save encrypts custom API keys at rest and never returns the key", async () => {
   const { env, storage } = fakeEnvironment();
   const origin = "https://c.zhixing.us.ci";
