@@ -676,3 +676,104 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("end-user sessions are isolated from admin privileges and can only manage their own password", async () => {
+  const { env } = fakeEnvironment({
+    SUPABASE_URL: "https://project.supabase.co",
+    SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test_key"
+  });
+  const origin = "https://ai.zhixing.us.ci";
+  const originalFetch = globalThis.fetch;
+  const userId = "123e4567-e89b-42d3-a456-426614174088";
+  const user = {
+    id: userId,
+    email: "self.user@example.com",
+    email_confirmed_at: "2026-10-21T12:00:00.000Z",
+    created_at: "2026-10-20T12:00:00.000Z",
+    last_sign_in_at: null,
+    app_metadata: {
+      zx_registration: {
+        ip: "198.51.100.7",
+        city: "Example City",
+        region: "Example Region",
+        country: "US",
+        countryCode: "US",
+        timezone: "America/Los_Angeles",
+        registeredAt: "2026-10-20T12:00:00.000Z",
+        source: "admin-created"
+      }
+    }
+  };
+  const validPassword = "Current-user-password-123";
+  globalThis.fetch = async (input, init = {}) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    if (url.hostname !== "project.supabase.co") throw new Error("Unexpected remote host");
+    if (url.pathname.endsWith("/auth/v1/token") && url.searchParams.get("grant_type") === "password") {
+      const payload = JSON.parse(init.body || "{}");
+      if (payload.email !== user.email || payload.password !== validPassword) {
+        return new Response(JSON.stringify({ msg: "invalid credentials" }), { status: 400, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({
+        access_token: "supabase-user-access-token",
+        refresh_token: "supabase-user-refresh-token",
+        expires_in: 3600,
+        user
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    if (url.pathname.endsWith("/auth/v1/user")) {
+      const bearer = new Headers(init.headers || {}).get("Authorization") || "";
+      if (bearer !== "Bearer supabase-user-access-token") {
+        return new Response(JSON.stringify({ msg: "invalid token" }), { status: 401, headers: { "Content-Type": "application/json" } });
+      }
+      if (init.method === "PUT") {
+        const payload = JSON.parse(init.body || "{}");
+        assert.equal(payload.password, "New-safe-user-password-456");
+        return new Response(JSON.stringify({ id: userId }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify(user), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    if (url.pathname.endsWith("/auth/v1/logout")) return new Response(null, { status: 204 });
+    throw new Error("Unexpected mocked Auth request: " + url.pathname);
+  };
+  try {
+    const login = await worker.fetch(jsonRequest("https://worker.test/api/account/login", {
+      email: user.email, password: validPassword
+    }, { Origin: origin, "CF-Connecting-IP": "203.0.113.70" }), env);
+    assert.equal(login.status, 200);
+    const session = await login.json();
+    assert.equal(session.user.id, userId);
+    assert.equal(session.user.registration.ip, "198.51.100.7");
+    assert.equal(session.user.registration.city, "Example City");
+    assert.equal(JSON.stringify(session).includes("SUPABASE_SERVICE_ROLE_KEY"), false);
+
+    const me = await worker.fetch(new Request("https://worker.test/api/account/me?user_id=another-user", {
+      headers: { Origin: origin, Authorization: "Bearer supabase-user-access-token" }
+    }), env);
+    assert.equal(me.status, 200);
+    assert.equal((await me.json()).user.id, userId, "request user_id must never override the authenticated identity");
+
+    const notAdmin = await worker.fetch(new Request("https://worker.test/admin/cloud/overview", {
+      headers: { Origin: origin, Authorization: "Bearer supabase-user-access-token", "CF-Connecting-IP": "203.0.113.70" }
+    }), env);
+    assert.equal(notAdmin.status, 401, "Supabase user tokens must not authorize admin cloud routes");
+
+    const wrongCurrent = await worker.fetch(jsonRequest("https://worker.test/api/account/password", {
+      currentPassword: "not-the-current-password", newPassword: "New-safe-user-password-456"
+    }, { Origin: origin, Authorization: "Bearer supabase-user-access-token", "CF-Connecting-IP": "203.0.113.70" }), env);
+    assert.equal(wrongCurrent.status, 401, "changing the password requires verifying the current password");
+
+    const changed = await worker.fetch(jsonRequest("https://worker.test/api/account/password", {
+      currentPassword: validPassword, newPassword: "New-safe-user-password-456"
+    }, { Origin: origin, Authorization: "Bearer supabase-user-access-token", "CF-Connecting-IP": "203.0.113.70" }), env);
+    assert.equal(changed.status, 200);
+    assert.deepEqual(await changed.json(), { ok: true });
+
+    const adminAsUser = await worker.fetch(new Request("https://worker.test/api/account/me", {
+      headers: { Origin: origin, Authorization: "Bearer eyJyb2xlIjoiYWRtaW4ifQ.invalid-signature" }
+    }), env);
+    assert.equal(adminAsUser.status, 401, "admin tokens are not Supabase user access tokens");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
