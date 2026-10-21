@@ -453,5 +453,31 @@ export default {
     }
     await adminModule.recordRequest(env, { appId, mode, ok: true, status: upstream.status, model: result.model || model, usage: result.usage , clientIp: ip, origin, userAgent: request.headers.get("User-Agent") || "", durationMs: Date.now() - requestStartedAt });
     return json({ answer, model: result.model || model, usage: result.usage || null }, 200, cors);
+  },
+  async scheduled(controller, env, ctx) {
+    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("Scheduled cloud-history cleanup skipped: Supabase secret configuration is incomplete.");
+      return;
+    }
+    ctx.waitUntil((async () => {
+      const base = String(env.SUPABASE_URL).replace(/\\/+$/, "");
+      const response = await fetch(base + "/rest/v1/rpc/zx_cleanup_expired_conversations", {
+        method: "POST",
+        headers: {
+          "apikey": env.SUPABASE_SERVICE_ROLE_KEY,
+          "Authorization": "Bearer " + env.SUPABASE_SERVICE_ROLE_KEY,
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: "{}",
+        redirect: "manual"
+      });
+      if (!response.ok) {
+        const detail = (await response.text()).slice(0, 240);
+        console.error("Scheduled cloud-history cleanup failed:", response.status, detail);
+        throw new Error("Supabase retention cleanup failed with HTTP " + response.status);
+      }
+      console.log("Scheduled cloud-history cleanup completed.");
+    })());
   }
 };
