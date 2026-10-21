@@ -626,10 +626,72 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
       const apiKey = typeof parsed.data.apiKey === "string" && parsed.data.apiKey.trim()
         ? parsed.data.apiKey.trim() : runtime.apiKey;
       if (!apiKey) return json({ error: "请先配置 API Token。" }, 400, cors);
-      if (new URL(apiBaseUrl).hostname.toLowerCase() !== "api.a6api.com") {
-        return json({ error: "当前不是 A6API API 地址。余额查询仅支持 https://api.a6api.com/v1；请先切换服务商或手动查看其他服务商的控制台。" }, 400, cors);
-      }
+      const host = new URL(apiBaseUrl).hostname.toLowerCase();
       const headers = { "Authorization": "Bearer " + apiKey, "Accept": "application/json" };
+      // Balance endpoints are provider-specific. All requests use fixed, allowlisted HTTPS hosts;
+      // never forward an API key to the user-supplied apiBaseUrl for billing lookup.
+      if (host === "api.deepseek.com") {
+        let response;
+        try {
+          response = await fetch("https://api.deepseek.com/user/balance", {
+            headers, redirect: "manual", signal: AbortSignal.timeout(12000)
+          });
+        } catch (error) {
+          return json({ error: "连接 DeepSeek 余额接口失败：" + describeFetchFailure(error, apiKey) }, 502, cors);
+        }
+        if (response.status >= 300 && response.status < 400) return json({ error: "DeepSeek 余额接口返回重定向，已为保护 Token 拒绝跟随。" }, 502, cors);
+        const read = await readResponseTextLimited(response, 256 * 1024);
+        if (read.error) return json({ error: "DeepSeek 余额响应无法读取。" }, 502, cors);
+        let body; try { body = JSON.parse(read.text); } catch { body = null; }
+        if (!response.ok) return json({ error: "DeepSeek 余额查询失败（HTTP " + response.status + "）：" + sanitizeProviderText(body?.message || body?.error?.message || "", apiKey, 160) }, 502, cors);
+        if (!Array.isArray(body?.balance_infos) || !body.balance_infos.length) return json({ error: "DeepSeek 没有返回可识别的余额信息。" }, 502, cors);
+        const currencies = body.balance_infos.map(row => {
+          const amount = value => value === undefined || value === null || value === "" ? null : Number(value);
+          return { currency: String(row?.currency || "").slice(0, 8), totalBalance: amount(row?.total_balance), grantedBalance: amount(row?.granted_balance), toppedUpBalance: amount(row?.topped_up_balance) };
+        });
+        if (currencies.some(row => !row.currency || row.totalBalance === null || !Number.isFinite(row.totalBalance))) return json({ error: "DeepSeek 返回的余额字段不完整。" }, 502, cors);
+        return json({ ok: true, provider: "DeepSeek", balanceType: "wallet", isAvailable: body.is_available === true, currencies }, 200, cors);
+      }
+      if (host === "openrouter.ai") {
+        let response;
+        try {
+          response = await fetch("https://openrouter.ai/api/v1/credits", {
+            headers, redirect: "manual", signal: AbortSignal.timeout(12000)
+          });
+        } catch (error) {
+          return json({ error: "连接 OpenRouter 额度接口失败：" + describeFetchFailure(error, apiKey) }, 502, cors);
+        }
+        if (response.status >= 300 && response.status < 400) return json({ error: "OpenRouter 额度接口返回重定向，已为保护 Token 拒绝跟随。" }, 502, cors);
+        const read = await readResponseTextLimited(response, 256 * 1024);
+        if (read.error) return json({ error: "OpenRouter 额度响应无法读取。" }, 502, cors);
+        let body; try { body = JSON.parse(read.text); } catch { body = null; }
+        if (!response.ok) return json({ error: "OpenRouter 额度查询失败（HTTP " + response.status + "）。该接口需要具备额度读取权限的 Management Key。" }, 502, cors);
+        const totalCredits = Number(body?.data?.total_credits), totalUsage = Number(body?.data?.total_usage);
+        if (!Number.isFinite(totalCredits) || totalCredits < 0 || !Number.isFinite(totalUsage) || totalUsage < 0 || totalUsage > totalCredits + 0.000001) return json({ error: "OpenRouter 返回的额度数据不完整或不一致。" }, 502, cors);
+        return json({ ok: true, provider: "OpenRouter", balanceType: "credits", currency: "USD", totalCredits, totalUsage, remainingCredits: Math.max(0, totalCredits - totalUsage) }, 200, cors);
+      }
+      if (host === "api.siliconflow.cn") {
+        let response;
+        try {
+          response = await fetch("https://api.siliconflow.cn/v1/user/info", {
+            headers, redirect: "manual", signal: AbortSignal.timeout(12000)
+          });
+        } catch (error) {
+          return json({ error: "连接 SiliconFlow 余额接口失败：" + describeFetchFailure(error, apiKey) }, 502, cors);
+        }
+        if (response.status >= 300 && response.status < 400) return json({ error: "SiliconFlow 余额接口返回重定向，已为保护 Token 拒绝跟随。" }, 502, cors);
+        const read = await readResponseTextLimited(response, 256 * 1024);
+        if (read.error) return json({ error: "SiliconFlow 余额响应无法读取。" }, 502, cors);
+        let body; try { body = JSON.parse(read.text); } catch { body = null; }
+        if (!response.ok || body?.status === false) return json({ error: "SiliconFlow 余额查询失败（HTTP " + response.status + "）：" + sanitizeProviderText(body?.message || "", apiKey, 160) }, 502, cors);
+        const info = body?.data;
+        const balance = Number(info?.balance), chargeBalance = Number(info?.chargeBalance), totalBalance = Number(info?.totalBalance);
+        if (!info || !Number.isFinite(balance) || !Number.isFinite(totalBalance)) return json({ error: "SiliconFlow 返回的余额字段不完整。" }, 502, cors);
+        return json({ ok: true, provider: "SiliconFlow", balanceType: "wallet", currency: "CNY", balance, chargeBalance: Number.isFinite(chargeBalance) ? chargeBalance : null, totalBalance, status: typeof info.status === "string" ? info.status.slice(0, 40) : "" }, 200, cors);
+      }
+      if (host !== "api.a6api.com") {
+        return json({ error: "当前提供商尚无可自动查询的余额接口。API 调用与模型列表仍可正常使用；请查看服务商控制台。" }, 400, cors);
+      }
       let subscriptionResponse, tokenResponse;
       // Cloudflare Workers do not support redirect:"error"; "manual" avoids forwarding credentials,
       // and the explicit 3xx check below rejects redirects without contacting their destinations.
