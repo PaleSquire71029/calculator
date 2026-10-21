@@ -15,8 +15,9 @@ const DEFAULT_ORIGINS = [
 ];
 const MAX_BODY_BYTES = 8 * 1024 * 1024;
 const MAX_STREAM_BYTES = 4 * 1024 * 1024;
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_REQUESTS = 12;
+const HISTORY_WINDOW_MS = 10 * 60 * 1000;
+const CHAT_WINDOW_MS = 30 * 60 * 1000;
+const MAX_CHAT_REQUESTS = 15;
 
 const MODE_PROMPTS = {
   solve: "你是严谨的高中数学解题老师。用中文回答，按已知条件、思路、逐步推导、结论组织。不要跳过关键步骤；计算不确定时明确指出，不得编造题目条件。",
@@ -264,7 +265,7 @@ export default {
     }
     if (url.pathname.startsWith("/api/history/")) {
       const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-      const rate = await adminModule.checkRateLimit(env, "cloud-history:" + ip, 90, WINDOW_MS);
+      const rate = await adminModule.checkRateLimit(env, "cloud-history:" + ip, 90, HISTORY_WINDOW_MS);
       if (rate.unavailable) return json({ error: "云历史限流暂时不可用，请稍后重试。" }, 503, cors);
       if (!rate.allowed) return json({ error: "云历史请求过于频繁，请稍后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
       return handleCloudStorage(request, env, url, cors);
@@ -317,7 +318,7 @@ export default {
     if (!origin || !allowed.includes(origin)) return json({ error: "该网站来源未获授权，请检查 Worker 的 ALLOWED_ORIGINS 配置。" }, 403, cors);
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const requestStartedAt = Date.now();
-    const rate = await adminModule.checkRateLimit(env, "chat:" + ip, MAX_REQUESTS, WINDOW_MS);
+    const rate = await adminModule.checkRateLimit(env, "chat:" + ip, MAX_CHAT_REQUESTS, CHAT_WINDOW_MS);
     if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
     if (!rate.allowed) return json({ error: "请求过于频繁，请等待几分钟后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
     const parsed = await readJsonLimited(request, MAX_BODY_BYTES);
