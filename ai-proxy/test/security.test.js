@@ -88,7 +88,9 @@ test("single login issues two separate product-scoped admin sessions", async () 
   const body = await response.json();
   assert.ok(body.tokens["zhixing-ai"]);
   assert.ok(body.tokens.learning);
+  assert.ok(body.tokens.cloud, "unified login should issue a cloud-admin-scoped token");
   assert.notEqual(body.tokens["zhixing-ai"], body.tokens.learning);
+  assert.notEqual(body.tokens.cloud, body.tokens.learning);
   assert.ok(body.expiresIn > 0);
 
   const denied = await worker.fetch(new Request("https://worker.test/admin/defaults?app=learning", {
@@ -557,6 +559,29 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
   globalThis.fetch = async (input, init = {}) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     assert.equal(url.hostname, "project.supabase.co");
+    if (url.pathname.endsWith("/auth/v1/admin/users")) {
+      if (init.method === "POST") {
+        const payload = JSON.parse(init.body);
+        assert.equal(payload.email, "new.user@example.com");
+        assert.equal(payload.email_confirm, true);
+        assert.equal(typeof payload.password, "string");
+        return new Response(JSON.stringify({
+          id: "123e4567-e89b-42d3-a456-426614174001",
+          email: payload.email,
+          email_confirmed_at: "2026-10-21T12:00:00.000Z",
+          created_at: "2026-10-21T12:00:00.000Z",
+          last_sign_in_at: null
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ users: [{
+        id: "123e4567-e89b-42d3-a456-426614174001",
+        email: "new.user@example.com",
+        email_confirmed_at: "2026-10-21T12:00:00.000Z",
+        created_at: "2026-10-21T12:00:00.000Z",
+        last_sign_in_at: null,
+        encrypted_password: "must-not-leak"
+      }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
     if (init.method === "DELETE" && url.pathname.endsWith("/zx_conversations")) {
       const id = "123e4567-e89b-42d3-a456-426614174000";
       return new Response(JSON.stringify([{ id }]), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -594,6 +619,24 @@ test("cloud data admin gets a separate scoped session and aggregated overview", 
     assert.equal(data.totals.messages, 17);
     assert.equal(data.totals.expired, 3);
     assert.equal(data.usersInRecentSample, 2);
+
+    const accounts = await worker.fetch(new Request("https://worker.test/admin/cloud/accounts?page=1&per_page=20", {
+      headers: { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" }
+    }), env);
+    assert.equal(accounts.status, 200);
+    const accountsBody = await accounts.json();
+    assert.equal(accountsBody.users.length, 1);
+    assert.equal(accountsBody.users[0].email, "new.user@example.com");
+    assert.equal(JSON.stringify(accountsBody).includes("must-not-leak"), false, "Auth internal fields must not be returned");
+
+    const createdAccount = await worker.fetch(jsonRequest("https://worker.test/admin/cloud/accounts", {
+      email: "new.user@example.com", password: "safe-initial-password-123", emailOwnershipConfirmed: true
+    }, { Origin: origin, Authorization: "Bearer " + token, "CF-Connecting-IP": "203.0.113.210" }), env);
+    assert.equal(createdAccount.status, 201);
+    const createdBody = await createdAccount.json();
+    assert.equal(createdBody.user.email, "new.user@example.com");
+    assert.equal(JSON.stringify(createdBody).includes("safe-initial-password-123"), false, "created user response must not echo password");
+    assert.equal(createdBody.auditLogged, true);
 
     const conversationId = "123e4567-e89b-42d3-a456-426614174000";
     const deletion = await worker.fetch(jsonRequest("https://worker.test/admin/cloud/conversations/delete", {
