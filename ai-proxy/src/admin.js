@@ -294,7 +294,7 @@ export class AdminSettingsStore {
       const parsed = await readJsonLimited(request, 4096);
       if (parsed.error) return json({ error: parsed.error }, parsed.status);
       const input = parsed.data;
-      const actions = new Set(["delete_conversation", "delete_selected", "delete_user_data", "cleanup_90d"]);
+      const actions = new Set(["delete_conversation", "delete_selected", "delete_user_data", "cleanup_90d", "create_account"]);
       if (!actions.has(input.action) ||
           !["zhixing-ai", "learning", "all"].includes(input.app) ||
           !Number.isInteger(input.affectedCount) || input.affectedCount < 0 || input.affectedCount > 1000000) {
