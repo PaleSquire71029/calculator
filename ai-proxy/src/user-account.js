@@ -107,8 +107,7 @@ async function readUser(request, env) {
     return null;
   }
 }
-function safeRegistration(user) {
-  const metadata = user?.app_metadata?.zx_registration;
+function cleanRegistration(metadata) {
   if (!metadata || typeof metadata !== "object") return {
     ip: "", city: "", region: "", country: "", countryCode: "", timezone: "", registeredAt: null, source: ""
   };
@@ -123,15 +122,31 @@ function safeRegistration(user) {
     source: safeText(metadata.source, 40)
   };
 }
-function safeAccount(user) {
+function safeRegistration(user) {
+  return cleanRegistration(user?.app_metadata?.zx_registration);
+}
+function safeAccount(user, registrationOverride) {
   return {
     id: safeText(user?.id, 64),
     email: safeText(user?.email, 254),
     emailConfirmedAt: user?.email_confirmed_at || null,
     createdAt: user?.created_at || null,
     lastSignInAt: user?.last_sign_in_at || null,
-    registration: safeRegistration(user)
+    registration: registrationOverride === undefined ? safeRegistration(user) : cleanRegistration(registrationOverride)
   };
+}
+async function readStoredRegistration(env, userId) {
+  if (!env.ADMIN_STORE || typeof userId !== "string") return null;
+  try {
+    const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+    const response = await stub.fetch("https://admin-store.internal/account-registration?ids=" + encodeURIComponent(userId), {
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    const entry = data && data.registrations && data.registrations[userId];
+    return entry && typeof entry === "object" ? entry : undefined;
+  } catch { return undefined; }
 }
 async function consumeRate(env, key, limit, windowMs) {
   if (!env.ADMIN_STORE) return { allowed: false, unavailable: true, retryAfter: 60 };
@@ -196,7 +211,7 @@ export async function handleUserAccountRoute(request, env, url, cors) {
         accessToken: session.access_token,
         refreshToken: session.refresh_token,
         expiresIn: Math.min(86400, Math.max(60, Number(session.expires_in) || ACCESS_TTL_DEFAULT)),
-        user: safeAccount(session.user)
+        user: safeAccount(session.user, await readStoredRegistration(env, session.user.id))
       }, 200, cors);
     }
     if (path === "/api/account/refresh") {
@@ -221,7 +236,7 @@ export async function handleUserAccountRoute(request, env, url, cors) {
         accessToken: session.access_token,
         refreshToken: session.refresh_token,
         expiresIn: Math.min(86400, Math.max(60, Number(session.expires_in) || ACCESS_TTL_DEFAULT)),
-        user: safeAccount(session.user)
+        user: safeAccount(session.user, await readStoredRegistration(env, session.user.id))
       }, 200, cors);
     }
     if (path === "/api/account/me") {
@@ -229,7 +244,7 @@ export async function handleUserAccountRoute(request, env, url, cors) {
       if (gate) return gate;
       const auth = await readUser(request, env);
       if (!auth) return reply({ error: "登录已失效，请重新登录。" }, 401, cors);
-      return reply({ user: safeAccount(auth.user) }, 200, cors);
+      return reply({ user: safeAccount(auth.user, await readStoredRegistration(env, auth.user.id)) }, 200, cors);
     }
     if (path === "/api/account/password") {
       const ipGate = await rateGate(request, env, "account-password-ip", 20, 60 * 60 * 1000, cors);
