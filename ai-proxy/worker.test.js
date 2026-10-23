@@ -442,10 +442,10 @@ test("calculator inline AI analysis script parses and chat panel is removed", ()
 
 test("AI frontend inline JavaScript parses without syntax errors", () => {
   const html = readFileSync(new URL("../ai.html", import.meta.url), "utf8");
-  const start = html.lastIndexOf("<script>");
-  const end = html.lastIndexOf("</script>");
-  assert.ok(start >= 0 && end > start, "inline script must exist");
-  assert.doesNotThrow(() => new Script(html.slice(start + 8, end)));
+  const inlineScripts = [...html.matchAll(/<script(?![^>]*\\bsrc=)[^>]*>([\\s\\S]*?)<\\/script>/gi)];
+  const lastInline = inlineScripts.at(-1);
+  assert.ok(lastInline && lastInline[1], "inline script must exist");
+  assert.doesNotThrow(() => new Script(lastInline[1]));
   assert.match(html, /mathTypesetQueue=Promise\.resolve\(\)/);
   assert.match(html, /window\.MathJax\.typesetClear\(\[node\]\)/);
   assert.match(html, /cdnjs\.cloudflare\.com\/ajax\/libs\/mathjax/);
