@@ -105,21 +105,14 @@ textarea::placeholder{color:#9aa5b6}
 <div class="app">
 <header class="top">
   <div class="brand"><div class="logo" aria-hidden="true">✳</div><span>知行AI学习版</span></div>
-  <div class="top-actions"><button class="plain" id="clearChat" type="button">新对话</button><a class="link" href="./index.html">返回计算器</a></div>
+  <div class="top-actions"><button class="plain" id="clearChat" type="button">新对话</button><a class="link" href="./index.html">返回计算器</a><span class="zx-account-anchor" data-account-anchor aria-label="账号登录"></span></div>
 </header>
 <div class="model-status" id="modelStatus" data-state="waiting" aria-live="polite">当前模型：等待连接</div>
 <section class="account-panel" aria-label="账号与云对话">
-  <div class="account-status" id="accountStatus" aria-live="polite">登录后可同步云端文字对话；知行AI与学习版历史相互隔离，保留 90 天。</div>
-  <div class="account-row" id="authForm">
-    <input id="accountEmail" type="email" autocomplete="email" placeholder="邮箱" aria-label="邮箱">
-    <input id="accountPassword" type="password" autocomplete="current-password" placeholder="密码（至少 8 位）" aria-label="密码">
-    <button class="btn" id="signInBtn" type="button">登录</button>
-    <button class="btn" id="signUpBtn" type="button">注册</button>
-  </div>
-  <div class="account-row" id="signedInRow" hidden>
-    <span id="accountEmailLabel" class="account-status"></span>
+  <div class="account-status" id="accountStatus" aria-live="polite">登录后可同步学习版文字对话；历史内容仅在账号登录后加载。</div>
+  <div class="account-row">
+    <button class="btn" type="button" data-zx-open-account>账号登录 / 管理</button>
     <button class="btn" id="refreshHistoryBtn" type="button">刷新历史</button>
-    <button class="btn" id="signOutBtn" type="button">退出</button>
   </div>
   <div class="history-list" id="historyList" aria-label="云端历史记录"></div>
 </section>
@@ -332,6 +325,6 @@ window.addEventListener('load',()=>typeset($('chat')));
 checkProxy();
 })();
 </script>
-<script src="/assets/account-auth.js?v=20261023-account-auth-4" defer></script>
+<script src="/assets/account-auth.js?v=20261023-account-auth-5" defer></script>
 </body>
 </html>
