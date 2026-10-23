@@ -451,6 +451,12 @@ test("AI frontend inline JavaScript parses without syntax errors", () => {
   assert.match(html, /cdnjs\.cloudflare\.com\/ajax\/libs\/mathjax/);
 });
 
+
+test("shared account login asset parses without syntax errors", () => {
+  const source = readFileSync(new URL("../assets/account-auth.js", import.meta.url), "utf8");
+  assert.doesNotThrow(() => new Script(source));
+});
+
 test("AI admin frontend inline JavaScript parses", () => {
   const html = readFileSync(new URL("../ai-admin.html", import.meta.url), "utf8");
   const start = html.lastIndexOf("<script>");

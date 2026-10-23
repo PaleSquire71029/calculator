@@ -5082,7 +5082,7 @@ a{color:#416bd6}
       if(isDetails&&!coreAnswer)throw new Error('请先生成核心结论，再生成完整分析。');
       requestController=new AbortController();
       requestTimeout=window.setTimeout(()=>requestController.abort(),95000);
-      const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'analysis',action:action,mode:viewId,context:context,analysisStage:stage,coreAnswer:isDetails?coreAnswer:undefined,question:question||undefined,stream:true}),redirect:'error',signal:requestController.signal});
+      const response=await fetch(ep,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'analysis',action:action,mode:viewId,context:context,analysisStage:stage,coreAnswer:isDetails?coreAnswer:undefined,question:question||undefined,stream:true}),redirect:'error',signal:requestController.signal});
       if(!response.ok){
         let errorData={};try{errorData=await response.json();}catch(e){}
         throw new Error(errorData.error||('请求失败（HTTP '+response.status+'）'));

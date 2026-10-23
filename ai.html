@@ -316,7 +316,7 @@ async function send(){
  });
  $('question').value='';autoResize();state.images=[];state.files=[];updateAttachments();render();
  try{
-  const response=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'general',messages:apiMessages})});
+  const response=await fetch(ep,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'general',messages:apiMessages})});
   let data={};try{data=await response.json();}catch(e){}
   if(!response.ok)throw new Error(data.error||'请求失败（HTTP '+response.status+'）');
   if(typeof data.answer!=='string'||!data.answer.trim())throw new Error('模型没有返回文字答案。');
