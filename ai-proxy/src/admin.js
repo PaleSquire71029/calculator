@@ -359,6 +359,39 @@ export class AdminSettingsStore {
       if (result.conflict) return json({ error: "该用户名已被使用，请换一个用户名。" }, 409);
       return json({ ok: true, user: result.record });
     }
+    if (url.pathname === "/account-verification") {
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const cleanId = value => typeof value === "string" ? value.trim().slice(0, 64) : "";
+      if (request.method === "GET") {
+        const userId = cleanId(url.searchParams.get("user_id"));
+        if (userId) {
+          if (!uuidPattern.test(userId)) return json({ error: "Invalid user ID" }, 400);
+          return json({ verification: await this.state.storage.get("accountVerification:" + userId) || null });
+        }
+        const ids = String(url.searchParams.get("ids") || "").split(",").filter(Boolean);
+        if (!ids.length || ids.length > 100 || ids.some(id => !uuidPattern.test(id))) return json({ error: "Invalid verification lookup" }, 400);
+        const verifications = {};
+        for (const id of ids) {
+          const record = await this.state.storage.get("accountVerification:" + id);
+          if (record && typeof record === "object") verifications[id] = record;
+        }
+        return json({ verifications });
+      }
+      if (request.method === "DELETE") {
+        const userId = cleanId(url.searchParams.get("user_id"));
+        if (!uuidPattern.test(userId)) return json({ error: "Invalid user ID" }, 400);
+        await this.state.storage.delete("accountVerification:" + userId);
+        return json({ ok: true });
+      }
+      if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+      const parsed = await readJsonLimited(request, 4096);
+      if (parsed.error) return json({ error: parsed.error }, parsed.status);
+      const userId = cleanId(parsed.data.userId);
+      if (!uuidPattern.test(userId) || typeof parsed.data.verified !== "boolean") return json({ error: "Invalid verification data" }, 400);
+      const record = { userId, verified: parsed.data.verified, updatedAt: new Date().toISOString() };
+      await this.state.storage.put("accountVerification:" + userId, record);
+      return json({ ok: true, verification: record });
+    }
     if (url.pathname === "/cloud-audit") {
       if (request.method === "GET") {
         const entries = await this.state.storage.get("cloudAudit");
@@ -368,7 +401,7 @@ export class AdminSettingsStore {
       const parsed = await readJsonLimited(request, 4096);
       if (parsed.error) return json({ error: parsed.error }, parsed.status);
       const input = parsed.data;
-      const actions = new Set(["delete_conversation", "delete_selected", "delete_user_data", "cleanup_90d", "create_account", "delete_account", "set_username"]);
+      const actions = new Set(["delete_conversation", "delete_selected", "delete_user_data", "cleanup_90d", "create_account", "delete_account", "set_username", "set_verification"]);
       if (!actions.has(input.action) ||
           !["zhixing-ai", "learning", "all"].includes(input.app) ||
           !Number.isInteger(input.affectedCount) || input.affectedCount < 0 || input.affectedCount > 1000000) {

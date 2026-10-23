@@ -217,6 +217,38 @@ async function deleteStoredUsername(env, userId) {
   try { const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1")); const response = await stub.fetch("https://admin-store.internal/account-username?user_id=" + encodeURIComponent(userId), { method: "DELETE", signal: AbortSignal.timeout(8000) }); return response.ok; }
   catch { return false; }
 }
+async function readStoredVerifications(env, ids) {
+  if (!env.ADMIN_STORE || !Array.isArray(ids) || !ids.length) return {};
+  try {
+    const safeIds = ids.filter(id => typeof id === "string" && UUID_RE.test(id)).slice(0, 100);
+    if (!safeIds.length) return {};
+    const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+    const response = await stub.fetch("https://admin-store.internal/account-verification?ids=" + encodeURIComponent(safeIds.join(",")), { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) return {};
+    const data = await response.json();
+    return data && data.verifications && typeof data.verifications === "object" ? data.verifications : {};
+  } catch { return {}; }
+}
+async function writeStoredVerification(env, userId, verified) {
+  if (!env.ADMIN_STORE || !UUID_RE.test(String(userId || "")) || typeof verified !== "boolean") return { ok: false, error: "认证参数无效。" };
+  try {
+    const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+    const response = await stub.fetch("https://admin-store.internal/account-verification", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, verified }), signal: AbortSignal.timeout(8000)
+    });
+    const data = await response.json().catch(() => ({}));
+    return response.ok ? { ok: true, verification: data.verification } : { ok: false, status: response.status, error: safeMetaText(data.error, 180) || "认证状态保存失败。" };
+  } catch { return { ok: false, error: "认证状态存储暂不可用。" }; }
+}
+async function deleteStoredVerification(env, userId) {
+  if (!env.ADMIN_STORE || !UUID_RE.test(String(userId || ""))) return false;
+  try {
+    const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+    const response = await stub.fetch("https://admin-store.internal/account-verification?user_id=" + encodeURIComponent(userId), { method: "DELETE", signal: AbortSignal.timeout(8000) });
+    return response.ok;
+  } catch { return false; }
+}
 async function appendAuditLog(env, action, app, affectedCount) {
   try {
     if (!env.ADMIN_STORE) return false;
@@ -264,6 +296,26 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       await appendAuditLog(env, "set_username", "all", 1);
       return reply({ ok: true, username: saved.user?.username || username }, 200, cors);
     }
+    if (path === "/admin/cloud/accounts/verification" && request.method === "POST") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await consumeAdminRateLimit(env, "cloud-set-verification:" + ip, 30, 15 * 60 * 1000);
+      if (rate.unavailable) return reply({ error: "账号认证限流服务暂不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return reply({ error: "操作过于频繁，请 15 分钟后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter || 900) });
+      const parsed = await readBody(request, 4096);
+      if (parsed.error) return reply({ error: parsed.error }, parsed.status, cors);
+      const userId = typeof parsed.data.user_id === "string" ? parsed.data.user_id : "";
+      const verified = parsed.data.verified;
+      if (!UUID_RE.test(userId) || typeof verified !== "boolean") return reply({ error: "账号或认证状态无效。" }, 400, cors);
+      try {
+        const lookup = await authAdminRequest(env, "/" + encodeURIComponent(userId));
+        const account = lookup?.user || lookup;
+        if (account?.id !== userId) return reply({ error: "账号不存在，请刷新账号列表后重试。" }, 404, cors);
+      } catch { return reply({ error: "无法核验账号，请刷新账号列表后重试。" }, 404, cors); }
+      const saved = await writeStoredVerification(env, userId, verified);
+      if (!saved.ok) return reply({ error: saved.error || "认证状态保存失败。" }, 503, cors);
+      await appendAuditLog(env, "set_verification", "all", 1);
+      return reply({ ok: true, verified: saved.verification?.verified === true }, 200, cors);
+    }
     if (path === "/admin/cloud/accounts" && request.method === "GET") {
       const page = Math.max(1, Math.min(10000, Number.parseInt(url.searchParams.get("page") || "1", 10) || 1));
       const perPage = Math.max(1, Math.min(100, Number.parseInt(url.searchParams.get("per_page") || "50", 10) || 50));
@@ -273,7 +325,8 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       const safeUsers = users.map(safeAuthUser).filter(user => UUID_RE.test(user.id));
       const registrations = await readStoredRegistrations(env, safeUsers.map(user => user.id));
       const usernames = await readStoredUsernames(env, safeUsers.map(user => user.id));
-      const joinedUsers = safeUsers.map(user => ({ ...user, username: usernames[user.id]?.username || "", registration: registrations[user.id] || user.registration }));
+      const verifications = await readStoredVerifications(env, safeUsers.map(user => user.id));
+      const joinedUsers = safeUsers.map(user => ({ ...user, username: usernames[user.id]?.username || "", verified: verifications[user.id]?.verified === true, registration: registrations[user.id] || user.registration }));
       return reply({
         users: joinedUsers,
         page, perPage, hasMore: users.length === perPage
@@ -358,10 +411,11 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       }
       const registrationDeleted = await deleteStoredRegistration(env, userId);
       const usernameDeleted = await deleteStoredUsername(env, userId);
+      const verificationDeleted = await deleteStoredVerification(env, userId);
       const auditLogged = await appendAuditLog(env, "delete_account", "all", deletedConversations);
       return reply({
         ok: true, userDeleted: true, deletedConversations, conversationsDeleted,
-        registrationDeleted, usernameDeleted, auditLogged,
+        registrationDeleted, usernameDeleted, verificationDeleted, auditLogged,
         warning: conversationsDeleted ? "" : "账号已注销，但云端聊天记录未能全部清除。请在聊天用户模块按该用户 ID 清理剩余数据。"
       }, 200, cors);
     }

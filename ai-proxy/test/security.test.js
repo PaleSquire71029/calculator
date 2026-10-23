@@ -202,6 +202,22 @@ test("Durable Object account usernames are case-insensitive unique and can be ch
   assert.equal((await newLookup.json()).user.userId, "11111111-1111-4111-8111-111111111111");
 });
 
+
+test("Durable Object verification is explicit and can be revoked", async () => {
+  const storage = new MemoryStorage();
+  const store = new AdminSettingsStore({ storage }, {});
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const send = verified => jsonRequest("https://admin-store.internal/account-verification", { userId, verified });
+  const initial = await store.fetch(new Request("https://admin-store.internal/account-verification?user_id=" + userId));
+  assert.equal((await initial.json()).verification, null);
+  const approved = await store.fetch(send(true));
+  assert.equal(approved.status, 200);
+  assert.equal((await approved.json()).verification.verified, true);
+  const revoked = await store.fetch(send(false));
+  assert.equal(revoked.status, 200);
+  assert.equal((await revoked.json()).verification.verified, false);
+});
+
 test("admin save encrypts custom API keys at rest and never returns the key", async () => {
   const { env, storage } = fakeEnvironment();
   const origin = "https://c.zhixing.us.ci";

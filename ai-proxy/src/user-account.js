@@ -136,7 +136,17 @@ function safeAccount(user, registrationOverride, usernameOverride) {
     emailConfirmedAt: user?.email_confirmed_at || null, createdAt: user?.created_at || null, lastSignInAt: user?.last_sign_in_at || null,
     registration: registrationOverride === undefined ? safeRegistration(user) : cleanRegistration(registrationOverride) };
 }
-export async function getAuthenticatedAccount(request, env) { return await readUser(request, env); }
+export async function getAuthenticatedAccount(request, env) {
+  const auth = await readUser(request, env);
+  if (!auth || !env.ADMIN_STORE || !auth.user?.id) return null;
+  try {
+    const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+    const response = await stub.fetch("https://admin-store.internal/account-verification?user_id=" + encodeURIComponent(auth.user.id), { signal: AbortSignal.timeout(5000) });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data?.verification?.userId === auth.user.id && data.verification.verified === true ? auth : null;
+  } catch { return null; }
+}
 async function readStoredRegistration(env, userId) {
   if (!env.ADMIN_STORE || typeof userId !== "string") return null;
   try {
