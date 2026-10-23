@@ -161,7 +161,7 @@ test("Durable Object rate limiter persists counters and applies separate IP buck
   assert.ok(await storage.getAlarm());
 });
 
-test("public AI chat allows 15 requests per 30-minute IP window and blocks the 16th", async () => {
+test("public AI chat allows 15 requests per 15-minute IP window and blocks the 16th", async () => {
   const { env } = fakeEnvironment();
   const origin = "https://c.zhixing.us.ci";
   const ip = "203.0.113.201";
@@ -178,11 +178,28 @@ test("public AI chat allows 15 requests per 30-minute IP window and blocks the 1
     else {
       assert.equal(response.status, 429, "the 16th request should be rate-limited");
       const retryAfter = Number(response.headers.get("Retry-After"));
-      assert.ok(retryAfter >= 1 && retryAfter <= 30 * 60, "Retry-After should reflect the 30-minute window");
+      assert.ok(retryAfter >= 1 && retryAfter <= 15 * 60, "Retry-After should reflect the 15-minute window");
       assert.match((await response.json()).error, /请求过于频繁/);
     }
   }
   assert.equal(statuses.length, 16);
+});
+
+
+test("Durable Object account usernames are case-insensitive unique and can be changed", async () => {
+  const storage = new MemoryStorage();
+  const store = new AdminSettingsStore({ storage }, {});
+  const request = (userId, username, email) => jsonRequest("https://admin-store.internal/account-username", { userId, username, email });
+  const one = await store.fetch(request("11111111-1111-4111-8111-111111111111", "Study_User", "one@example.com"));
+  assert.equal(one.status, 200);
+  const duplicate = await store.fetch(request("22222222-2222-4222-8222-222222222222", "study_user", "two@example.com"));
+  assert.equal(duplicate.status, 409);
+  const changed = await store.fetch(request("11111111-1111-4111-8111-111111111111", "Study_User2", "one@example.com"));
+  assert.equal(changed.status, 200);
+  const oldLookup = await store.fetch(new Request("https://admin-store.internal/account-username?username=study_user"));
+  assert.equal((await oldLookup.json()).user, null);
+  const newLookup = await store.fetch(new Request("https://admin-store.internal/account-username?username=study_user2"));
+  assert.equal((await newLookup.json()).user.userId, "11111111-1111-4111-8111-111111111111");
 });
 
 test("admin save encrypts custom API keys at rest and never returns the key", async () => {
