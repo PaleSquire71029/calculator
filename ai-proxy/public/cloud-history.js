@@ -63,32 +63,33 @@ async function refreshAuth() {
   if (!client) { setStatus('登录组件加载失败，请刷新页面后重试。'); return; }
   const result = await client.auth.getSession();
   const user = result.data.session?.user || null;
-  $('authForm').hidden = !!user; $('signedInRow').hidden = !user;
-  $('accountEmailLabel').textContent = user?.email || '已登录';
-  if (user) { try { await listHistory(false); setStatus('已登录 · 选择历史记录可恢复对话。'); } catch (e) { setStatus('已登录，但云历史暂不可用：' + e.message); } }
-  else { activeConversationId = null; $('historyList').replaceChildren(); setStatus('登录后可同步文字对话；两个产品的历史相互隔离，保留 90 天。'); }
+  const statusEl = $('accountStatus');
+  if (user) {
+    if (statusEl) statusEl.textContent = '已登录 · 本产品云历史 ' + ((await listHistory(false).catch(() => ({ conversations: [] }))).conversations || []).length + ' 条。';
+    else await listHistory(false).catch(() => {});
+  } else {
+    activeConversationId = null;
+    const host = $('historyList');
+    if (host) host.replaceChildren();
+    setStatus('登录后可同步文字对话；登录入口位于页面顶栏账号窗口。');
+  }
 }
-async function auth(mode) {
-  const email = $('accountEmail').value.trim(), password = $('accountPassword').value;
-  if (!email || !password) { setStatus('请输入邮箱和密码。'); return; }
-  if (password.length < 8) { setStatus('密码至少需要 8 位。'); return; }
-  $('signInBtn').disabled = $('signUpBtn').disabled = true;
-  try {
-    const result = mode === 'signup' ? await client.auth.signUp({ email, password }) : await client.auth.signInWithPassword({ email, password });
+async function syncAuth(session) {
+  if (!client) throw new Error('登录组件加载失败，请刷新页面后重试。');
+  if (session?.access_token && session?.refresh_token) {
+    const result = await client.auth.setSession({ access_token: session.access_token, refresh_token: session.refresh_token });
     if (result.error) throw result.error;
-    if (mode === 'signup' && !result.data.session) { setStatus('注册已提交，请先打开邮箱完成验证，再回来登录。'); return; }
-    await refreshAuth();
-  } catch (e) { setStatus('账号操作失败：' + (e.message || '请检查邮箱、密码或邮件验证设置。')); }
-  finally { $('signInBtn').disabled = $('signUpBtn').disabled = false; }
+  } else {
+    const result = await client.auth.signOut();
+    if (result.error) throw result.error;
+  }
+  await refreshAuth();
 }
-$('signInBtn').addEventListener('click', () => auth('signin'));
-$('signUpBtn').addEventListener('click', () => auth('signup'));
-$('signOutBtn').addEventListener('click', async () => { await client?.auth.signOut(); activeConversationId = null; if (window.zxAIApp) { window.zxAIApp.state.messages = []; window.zxAIApp.render(); } await refreshAuth(); });
-$('refreshHistoryBtn').addEventListener('click', () => listHistory());
-$('clearChat').addEventListener('click', () => { activeConversationId = null; });
+if ($('refreshHistoryBtn')) $('refreshHistoryBtn').addEventListener('click', () => listHistory());
+if ($('clearChat')) $('clearChat').addEventListener('click', () => { activeConversationId = null; });
 if (client) client.auth.onAuthStateChange(() => setTimeout(refreshAuth, 0));
 window.zxCloudHistory = {
-  get isSignedIn() { return !!client; },
+  syncAuth,
   async ensureConversation(title) { const session = await client.auth.getSession(); if (!session.data.session) return null; return ensureConversation(title); },
   async saveMessage(role, content, id) { const session = await client.auth.getSession(); if (!session.data.session) return; return saveMessage(role, content, id || uuid()); },
   refresh: listHistory,
