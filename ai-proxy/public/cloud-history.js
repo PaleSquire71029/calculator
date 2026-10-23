@@ -3,7 +3,7 @@
 const SUPABASE_URL = 'https://gzuaqjtvnkiblhqsgzpd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_jJDVBqrGIjg87Iwn5bXwxQ_Z4JfI3aj';
 const $ = id => document.getElementById(id);
-const client = window.supabase?.createClient ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+const client = window.supabase?.createClient ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } }) : null;
 let activeConversationId = null;
 function setStatus(message) { const el = $('accountStatus'); if (el) el.textContent = message; }
 function uuid() { return crypto.randomUUID(); }
