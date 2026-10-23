@@ -1,4 +1,4 @@
-import { handleUserAccountRoute } from "./user-account.js";
+import { handleUserAccountRoute, getAuthenticatedAccount } from "./user-account.js";
 import { AdminSettingsStore, createAdminModule, readJsonLimited, normalizeApiBaseUrl, readResponseTextLimited } from "./admin.js";
 import { handleCloudStorage } from "./cloud-storage.js";
 export { AdminSettingsStore };
@@ -16,8 +16,10 @@ const DEFAULT_ORIGINS = [
 const MAX_BODY_BYTES = 8 * 1024 * 1024;
 const MAX_STREAM_BYTES = 4 * 1024 * 1024;
 const HISTORY_WINDOW_MS = 10 * 60 * 1000;
-const CHAT_WINDOW_MS = 30 * 60 * 1000;
+const CHAT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_CHAT_REQUESTS = 15;
+const DEVICE_WINDOW_MS = 15 * 60 * 1000;
+const MAX_DEVICE_REQUESTS = 15;
 
 const MODE_PROMPTS = {
   solve: "你是严谨的高中数学解题老师。用中文回答，按已知条件、思路、逐步推导、结论组织。不要跳过关键步骤；计算不确定时明确指出，不得编造题目条件。",
@@ -202,10 +204,21 @@ function getClientLocation(request) {
     ? cf[key].replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 100) : "";
   return { city: value("city"), region: value("region"), country: value("country"), regionCode: value("regionCode"), timezone: value("timezone") };
 }
+function readCookie(request, name) {
+  for (const part of (request.headers.get("Cookie") || "").split(";")) {
+    const at = part.indexOf("="); if (at < 0 || part.slice(0, at).trim() !== name) continue;
+    try { return decodeURIComponent(part.slice(at + 1).trim()); } catch { return ""; }
+  }
+  return "";
+}
+function makeDeviceId() {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  return Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
+}
 function corsHeaders(request, env) {
   const origin = request.headers.get("Origin") || "";
   const allowed = getAllowedOrigins(env);
-  const headers = { "Vary": "Origin", "Access-Control-Allow-Methods": "POST, GET, PUT, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization", "Access-Control-Max-Age": "86400" };
+  const headers = { "Vary": "Origin", "Access-Control-Allow-Methods": "POST, GET, PUT, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization", "Access-Control-Allow-Credentials": "true", "Access-Control-Max-Age": "86400" };
   if (allowed.includes(origin)) headers["Access-Control-Allow-Origin"] = origin;
   return headers;
 }
@@ -250,7 +263,7 @@ const adminModule = createAdminModule({
 
 export default {
   async fetch(request, env) {
-    const cors = corsHeaders(request, env);
+    let cors = corsHeaders(request, env);
     const origin = request.headers.get("Origin") || "";
     const allowed = getAllowedOrigins(env);
     if (request.method === "OPTIONS") {
@@ -318,9 +331,21 @@ export default {
     if (!origin || !allowed.includes(origin)) return json({ error: "该网站来源未获授权，请检查 Worker 的 ALLOWED_ORIGINS 配置。" }, 403, cors);
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const requestStartedAt = Date.now();
-    const rate = await adminModule.checkRateLimit(env, "chat:" + ip, MAX_CHAT_REQUESTS, CHAT_WINDOW_MS);
-    if (rate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
-    if (!rate.allowed) return json({ error: "请求过于频繁，请等待几分钟后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter) });
+    let deviceId = readCookie(request, "zx_device");
+    if (!/^[a-f0-9]{48}$/.test(deviceId)) {
+      deviceId = makeDeviceId();
+      cors = { ...cors, "Set-Cookie": "zx_device=" + deviceId + "; Domain=.zhixing.us.ci; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Lax" };
+    }
+    let authenticated = null;
+    try { authenticated = await getAuthenticatedAccount(request, env); } catch { authenticated = null; }
+    if (!authenticated) {
+      const ipRate = await adminModule.checkRateLimit(env, "chat:" + ip, MAX_CHAT_REQUESTS, CHAT_WINDOW_MS);
+      if (ipRate.unavailable) return json({ error: "安全限流存储暂时不可用，请稍后重试。" }, 503, cors);
+      if (!ipRate.allowed) return json({ error: "当前 IP 请求过于频繁，每 15 分钟最多 15 次。登录账号后可继续使用。" }, 429, { ...cors, "Retry-After": String(ipRate.retryAfter) });
+      const deviceRate = await adminModule.checkRateLimit(env, "chat-device:" + deviceId, MAX_DEVICE_REQUESTS, DEVICE_WINDOW_MS);
+      if (deviceRate.unavailable) return json({ error: "设备限流服务暂时不可用，请稍后重试。" }, 503, cors);
+      if (!deviceRate.allowed) return json({ error: "当前设备请求过于频繁，每 15 分钟最多 15 次。请稍后再试或登录账号。" }, 429, { ...cors, "Retry-After": String(deviceRate.retryAfter) });
+    }
     const parsed = await readJsonLimited(request, MAX_BODY_BYTES);
     if (parsed.error) {
       const message = parsed.status === 413 ? "请求体过大，请压缩图片后重试。" : "请求不是有效的 JSON 对象。";

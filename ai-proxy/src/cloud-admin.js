@@ -199,6 +199,24 @@ async function writeStoredRegistration(env, userId, registration) {
     return response.ok;
   } catch { return false; }
 }
+async function readStoredUsernames(env, ids) {
+  if (!env.ADMIN_STORE || !Array.isArray(ids) || !ids.length) return {};
+  try { const safeIds = ids.filter(id => typeof id === "string" && UUID_RE.test(id)).slice(0, 100); if (!safeIds.length) return {};
+    const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1"));
+    const response = await stub.fetch("https://admin-store.internal/account-username?ids=" + encodeURIComponent(safeIds.join(",")), { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) return {}; const data = await response.json(); return data && data.users && typeof data.users === "object" ? data.users : {};
+  } catch { return {}; }
+}
+async function writeStoredUsername(env, userId, email, username) {
+  if (!env.ADMIN_STORE || !UUID_RE.test(String(userId || ""))) return { ok: false, error: "用户名存储暂不可用。" };
+  try { const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1")); const response = await stub.fetch("https://admin-store.internal/account-username", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, email, username }), signal: AbortSignal.timeout(8000) }); const data = await response.json().catch(() => ({})); return response.ok ? { ok: true, user: data.user } : { ok: false, status: response.status, error: safeMetaText(data.error, 180) || "用户名保存失败。" }; }
+  catch { return { ok: false, error: "用户名存储暂不可用。" }; }
+}
+async function deleteStoredUsername(env, userId) {
+  if (!env.ADMIN_STORE || !UUID_RE.test(String(userId || ""))) return false;
+  try { const stub = env.ADMIN_STORE.get(env.ADMIN_STORE.idFromName("settings-v1")); const response = await stub.fetch("https://admin-store.internal/account-username?user_id=" + encodeURIComponent(userId), { method: "DELETE", signal: AbortSignal.timeout(8000) }); return response.ok; }
+  catch { return false; }
+}
 async function appendAuditLog(env, action, app, affectedCount) {
   try {
     if (!env.ADMIN_STORE) return false;
@@ -221,6 +239,31 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       const entries = await readAuditLog(env);
       return reply({ entries, limit: 200 }, 200, cors);
     }
+    if (path === "/admin/cloud/accounts/username" && request.method === "POST") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rate = await consumeAdminRateLimit(env, "cloud-set-username:" + ip, 30, 15 * 60 * 1000);
+      if (rate.unavailable) return reply({ error: "用户名管理限流服务暂不可用，请稍后重试。" }, 503, cors);
+      if (!rate.allowed) return reply({ error: "操作过于频繁，请 15 分钟后再试。" }, 429, { ...cors, "Retry-After": String(rate.retryAfter || 900) });
+      const parsed = await readBody(request, 8192); if (parsed.error) return reply({ error: parsed.error }, parsed.status, cors);
+      const userId = typeof parsed.data.user_id === "string" ? parsed.data.user_id : "";
+      const username = typeof parsed.data.username === "string" ? parsed.data.username.trim() : "";
+      if (!UUID_RE.test(userId)) return reply({ error: "账号 ID 无效。" }, 400, cors);
+      if (username && !/^[A-Za-z][A-Za-z0-9_-]{2,23}$/.test(username)) return reply({ error: "用户名须为 3–24 位，以英文字母开头，只能包含字母、数字、下划线或连字符。" }, 400, cors);
+      let account;
+      try { const lookup = await authAdminRequest(env, "/" + encodeURIComponent(userId)); account = lookup?.user || lookup; }
+      catch { return reply({ error: "无法核验账号，请刷新账号列表后重试。" }, 404, cors); }
+      const email = typeof account?.email === "string" ? account.email.trim().toLowerCase() : "";
+      if (account?.id !== userId || !email) return reply({ error: "账号不存在或无有效邮箱。" }, 404, cors);
+      if (!username) {
+        const removed = await deleteStoredUsername(env, userId);
+        if (!removed) return reply({ error: "用户名存储暂不可用，未能清除。" }, 503, cors);
+        await appendAuditLog(env, "set_username", "all", 1); return reply({ ok: true, username: "" }, 200, cors);
+      }
+      const saved = await writeStoredUsername(env, userId, email, username);
+      if (!saved.ok) return reply({ error: saved.error || "用户名保存失败。" }, saved.status === 409 ? 409 : saved.status === 400 ? 400 : 503, cors);
+      await appendAuditLog(env, "set_username", "all", 1);
+      return reply({ ok: true, username: saved.user?.username || username }, 200, cors);
+    }
     if (path === "/admin/cloud/accounts" && request.method === "GET") {
       const page = Math.max(1, Math.min(10000, Number.parseInt(url.searchParams.get("page") || "1", 10) || 1));
       const perPage = Math.max(1, Math.min(100, Number.parseInt(url.searchParams.get("per_page") || "50", 10) || 50));
@@ -229,10 +272,8 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
       const users = Array.isArray(result?.users) ? result.users : (Array.isArray(result) ? result : []);
       const safeUsers = users.map(safeAuthUser).filter(user => UUID_RE.test(user.id));
       const registrations = await readStoredRegistrations(env, safeUsers.map(user => user.id));
-      const joinedUsers = safeUsers.map(user => ({
-        ...user,
-        registration: registrations[user.id] || user.registration
-      }));
+      const usernames = await readStoredUsernames(env, safeUsers.map(user => user.id));
+      const joinedUsers = safeUsers.map(user => ({ ...user, username: usernames[user.id]?.username || "", registration: registrations[user.id] || user.registration }));
       return reply({
         users: joinedUsers,
         page, perPage, hasMore: users.length === perPage
@@ -316,10 +357,11 @@ export async function handleCloudAdminDataRoute(request, env, url, cors) {
         conversationsDeleted = false;
       }
       const registrationDeleted = await deleteStoredRegistration(env, userId);
+      const usernameDeleted = await deleteStoredUsername(env, userId);
       const auditLogged = await appendAuditLog(env, "delete_account", "all", deletedConversations);
       return reply({
         ok: true, userDeleted: true, deletedConversations, conversationsDeleted,
-        registrationDeleted, auditLogged,
+        registrationDeleted, usernameDeleted, auditLogged,
         warning: conversationsDeleted ? "" : "账号已注销，但云端聊天记录未能全部清除。请在聊天用户模块按该用户 ID 清理剩余数据。"
       }, 200, cors);
     }

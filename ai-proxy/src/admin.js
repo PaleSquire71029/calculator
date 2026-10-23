@@ -327,6 +327,38 @@ export class AdminSettingsStore {
       await this.state.storage.put("accountRegistration:" + userId, record);
       return json({ ok: true });
     }
+    if (url.pathname === "/account-username") {
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const clean = value => typeof value === "string" ? value.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 254) : "";
+      if (request.method === "GET") {
+        const username = clean(url.searchParams.get("username")).toLowerCase();
+        if (username) { if (!/^[a-z][a-z0-9_-]{2,23}$/.test(username)) return json({ user: null }); const user = await this.state.storage.get("usernameIndex:" + username); return json({ user: user && typeof user === "object" ? user : null }); }
+        const userId = clean(url.searchParams.get("user_id"));
+        if (userId) { if (!uuidPattern.test(userId)) return json({ error: "Invalid user ID" }, 400); return json({ user: await this.state.storage.get("accountUsername:" + userId) || null }); }
+        const ids = String(url.searchParams.get("ids") || "").split(",").filter(Boolean);
+        if (!ids.length || ids.length > 100 || ids.some(id => !uuidPattern.test(id))) return json({ error: "Invalid username lookup" }, 400);
+        const users = {}; for (const id of ids) { const value = await this.state.storage.get("accountUsername:" + id); if (value && typeof value === "object") users[id] = value; }
+        return json({ users });
+      }
+      if (request.method === "DELETE") {
+        const userId = clean(url.searchParams.get("user_id")); if (!uuidPattern.test(userId)) return json({ error: "Invalid user ID" }, 400);
+        await this.state.storage.transaction(async txn => { const old = await txn.get("accountUsername:" + userId); if (old?.normalized) { const indexed = await txn.get("usernameIndex:" + old.normalized); if (indexed?.userId === userId) await txn.delete("usernameIndex:" + old.normalized); } await txn.delete("accountUsername:" + userId); });
+        return json({ ok: true });
+      }
+      if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+      const parsed = await readJsonLimited(request, 8192); if (parsed.error) return json({ error: parsed.error }, parsed.status);
+      const userId = clean(parsed.data.userId), email = clean(parsed.data.email).toLowerCase(), username = clean(parsed.data.username), normalized = username.toLowerCase();
+      if (!uuidPattern.test(userId) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !/^[A-Za-z][A-Za-z0-9_-]{2,23}$/.test(username)) return json({ error: "用户名须为 3–24 位，以英文字母开头，只能包含字母、数字、下划线或连字符。" }, 400);
+      const result = await this.state.storage.transaction(async txn => {
+        const old = await txn.get("accountUsername:" + userId), indexed = await txn.get("usernameIndex:" + normalized);
+        if (indexed && indexed.userId !== userId) return { conflict: true };
+        if (old?.normalized && old.normalized !== normalized) { const oldIndex = await txn.get("usernameIndex:" + old.normalized); if (oldIndex?.userId === userId) await txn.delete("usernameIndex:" + old.normalized); }
+        const record = { userId, email, username, normalized, updatedAt: new Date().toISOString() };
+        await txn.put("accountUsername:" + userId, record); await txn.put("usernameIndex:" + normalized, record); return { record };
+      });
+      if (result.conflict) return json({ error: "该用户名已被使用，请换一个用户名。" }, 409);
+      return json({ ok: true, user: result.record });
+    }
     if (url.pathname === "/cloud-audit") {
       if (request.method === "GET") {
         const entries = await this.state.storage.get("cloudAudit");
@@ -336,7 +368,7 @@ export class AdminSettingsStore {
       const parsed = await readJsonLimited(request, 4096);
       if (parsed.error) return json({ error: parsed.error }, parsed.status);
       const input = parsed.data;
-      const actions = new Set(["delete_conversation", "delete_selected", "delete_user_data", "cleanup_90d", "create_account", "delete_account"]);
+      const actions = new Set(["delete_conversation", "delete_selected", "delete_user_data", "cleanup_90d", "create_account", "delete_account", "set_username"]);
       if (!actions.has(input.action) ||
           !["zhixing-ai", "learning", "all"].includes(input.app) ||
           !Number.isInteger(input.affectedCount) || input.affectedCount < 0 || input.affectedCount > 1000000) {
