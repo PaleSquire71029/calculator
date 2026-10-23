@@ -65,8 +65,12 @@ async function refreshAuth() {
   const user = result.data.session?.user || null;
   const statusEl = $('accountStatus');
   if (user) {
-    if (statusEl) statusEl.textContent = '已登录 · 本产品云历史 ' + ((await listHistory(false).catch(() => ({ conversations: [] }))).conversations || []).length + ' 条。';
-    else await listHistory(false).catch(() => {});
+    try {
+      await listHistory(false);
+      if (statusEl) statusEl.textContent = '已登录 · 本产品云历史可用，可在下方恢复历史记录。';
+    } catch (error) {
+      if (statusEl) statusEl.textContent = '已登录，但云历史暂不可用：' + (error.message || '请稍后重试。');
+    }
   } else {
     activeConversationId = null;
     const host = $('historyList');
