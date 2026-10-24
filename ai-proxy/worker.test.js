@@ -68,7 +68,7 @@ test("admin login issues a signed, expiring session token", async () => {
   assert.ok(body.expiresIn > 0);
 });
 
-test("admin keeps Zhixing AI settings isolated from the learning and calculator profile", async () => {
+test("admin keeps Zhixing AI settings isolated from the learning profile", async () => {
   const isolatedEnv = testEnv({ ADMIN_PASSWORD: "test-admin-password" });
   const loginFor = async (app, ip) => worker.fetch(new Request("https://worker.example.test/admin/login?app=" + app, {
     method: "POST",
@@ -136,6 +136,42 @@ test("admin keeps Zhixing AI settings isolated from the learning and calculator 
   assert.equal(learningSettings.status, 200);
   assert.equal((await zhixingSettings.json()).model, "zhixing-only-model");
   assert.equal((await learningSettings.json()).model, "legacy-shared-model");
+});
+test("calculator AI has its own protected settings scope", async () => {
+  const isolatedEnv = testEnv({ ADMIN_PASSWORD: "test-admin-password" });
+  const loginFor = async (app, ip) => worker.fetch(new Request("https://worker.example.test/admin/login?app=" + app, {
+    method: "POST", headers: { "Content-Type": "application/json", Origin: origin, "CF-Connecting-IP": ip },
+    body: JSON.stringify({ password: "test-admin-password" })
+  }), isolatedEnv);
+  const [learningLogin, calculatorLogin] = await Promise.all([
+    loginFor("learning", "198.51.100.151"), loginFor("calculator-ai", "198.51.100.152")
+  ]);
+  assert.equal(learningLogin.status, 200); assert.equal(calculatorLogin.status, 200);
+  const learningToken = (await learningLogin.json()).token, calculatorToken = (await calculatorLogin.json()).token;
+  const headers = token => ({ Origin: origin, Authorization: "Bearer " + token, "Content-Type": "application/json" });
+  const learningHeaders = headers(learningToken), calculatorHeaders = headers(calculatorToken);
+  const denied = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=calculator-ai", { headers: learningHeaders }), isolatedEnv);
+  assert.equal(denied.status, 401);
+  const defaults = await worker.fetch(new Request("https://worker.example.test/admin/defaults?app=calculator-ai", { headers: calculatorHeaders }), isolatedEnv);
+  assert.equal(defaults.status, 200);
+  const prompts = await defaults.json();
+  assert.match(prompts.chat.general, /知行计算器AI版/);
+  const seed = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=learning", {
+    method: "PUT", headers: learningHeaders,
+    body: JSON.stringify({ apiBaseUrl: "https://api.example.com/v1", model: "learning-model", temperature: 0.3, maxTokens: 128, prompts, apiKey: "" })
+  }), isolatedEnv);
+  assert.equal(seed.status, 200);
+  const initial = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=calculator-ai", { headers: calculatorHeaders }), isolatedEnv);
+  assert.equal((await initial.json()).model, "learning-model");
+  const saved = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=calculator-ai", {
+    method: "PUT", headers: calculatorHeaders,
+    body: JSON.stringify({ apiBaseUrl: "https://api.example.com/v1", model: "calculator-model", temperature: 0.4, maxTokens: 192, prompts, apiKey: "" })
+  }), isolatedEnv);
+  assert.equal(saved.status, 200);
+  const learning = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=learning", { headers: learningHeaders }), isolatedEnv);
+  const calculator = await worker.fetch(new Request("https://worker.example.test/admin/settings?app=calculator-ai", { headers: calculatorHeaders }), isolatedEnv);
+  assert.equal((await learning.json()).model, "learning-model");
+  assert.equal((await calculator.json()).model, "calculator-model");
 });
 
 test("admin settings require a valid bearer session", async () => {

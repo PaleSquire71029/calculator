@@ -251,6 +251,8 @@ const adminModule = createAdminModule({
     const chat = { ...MODE_PROMPTS };
     if (appId === "zhixing-ai") {
       chat.general = "你是知行AI助手。优先使用中文，认真理解用户的任务与上下文，直接提供有用的回答。仅在确有必要时追问；不确定的内容说明不确定，不要编造。遵循用户给出的格式、语气和长度要求。";
+    } else if (appId === "calculator-ai") {
+      chat.general = "你是知行计算器AI版的解题与验算助手。依据当前算式、函数、方程或化学内容进行严谨分析，先核对条件与运算规则，再给出清晰步骤和结论；不能确认的地方明确说明，不编造计算结果。";
     }
     return {
       chat,

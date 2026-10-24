@@ -1511,7 +1511,7 @@ body::after{animation:zxLine 6.5s var(--zx-ease) infinite}
                 <a href="https://11.hongye71.dpdns.org/#/workbench/tools" class="zx-back hidden md:inline-flex" title="回到主站的效率工作台">
                     <i class="fa-solid fa-toolbox"></i>效率工作台
                 </a>
-                <span class="zx-account-anchor" data-account-anchor aria-label="账号登录"></span>
+                
                 <button id="mobileMenuToggle" type="button" class="zx-icon-btn zx-mobile-menu-toggle" aria-expanded="false" aria-controls="mobileFunctionMenu" title="打开功能菜单">
                     <span class="zx-hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
                     <span class="sr-only">功能菜单</span>
@@ -5083,7 +5083,7 @@ a{color:#416bd6}
       if(isDetails&&!coreAnswer)throw new Error('请先生成核心结论，再生成完整分析。');
       requestController=new AbortController();
       requestTimeout=window.setTimeout(()=>requestController.abort(),95000);
-      const response=await fetch(ep,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'analysis',action:action,mode:viewId,context:context,analysisStage:stage,coreAnswer:isDetails?coreAnswer:undefined,question:question||undefined,stream:true}),redirect:'error',signal:requestController.signal});
+      const response=await fetch(ep,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({app:'calculator-ai',task:'analysis',action:action,mode:viewId,context:context,analysisStage:stage,coreAnswer:isDetails?coreAnswer:undefined,question:question||undefined,stream:true}),redirect:'error',signal:requestController.signal});
       if(!response.ok){
         let errorData={};try{errorData=await response.json();}catch(e){}
         throw new Error(errorData.error||('请求失败（HTTP '+response.status+'）'));
@@ -5189,6 +5189,5 @@ body::before,body::after{box-shadow:none!important;text-shadow:none!important}
 a{color:#365fbd}
 @media(prefers-reduced-transparency:reduce){.zx-header{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
 </style>
-<script src="/assets/account-auth.js?v=20261023-account-auth-6" defer></script>
 </body>
 </html>

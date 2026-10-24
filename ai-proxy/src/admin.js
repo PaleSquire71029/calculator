@@ -4,12 +4,19 @@ const ADMIN_LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const ADMIN_LOGIN_MAX_ATTEMPTS = 8;
 const ENCRYPTED_KEY_PREFIX = "enc:v1:";
 const EMPTY_STATS = () => ({ totalRequests: 0, failedRequests: 0, promptTokens: 0, completionTokens: 0, totalTokens: 0, recent: [] });
-function normalizeAppId(value) { return value === "zhixing-ai" ? "zhixing-ai" : "learning"; }
+function normalizeAppId(value) { return value === "zhixing-ai" ? "zhixing-ai" : value === "calculator-ai" ? "calculator-ai" : "learning"; }
 function readProfile(data, appId) {
   const key = normalizeAppId(appId);
   const profile = data?.apps?.[key];
   if (profile && typeof profile === "object") return profile;
   if (key === "learning") return { settings: data?.settings || {}, stats: data?.stats || EMPTY_STATS() };
+  if (key === "calculator-ai") {
+    const learningSettings = data?.apps?.learning?.settings;
+    const source = learningSettings && typeof learningSettings === "object" && !Array.isArray(learningSettings) ? learningSettings : data?.settings;
+    const seededSettings = source && typeof source === "object" && !Array.isArray(source) ? { ...source } : {};
+    delete seededSettings.prompts;
+    return { settings: seededSettings, stats: EMPTY_STATS() };
+  }
   // Bootstrap the newly separated Zhixing AI profile from the existing shared API connection once.
   // Keep prompt defaults app-specific and statistics isolated; the first write persists an independent profile.
   const legacySettings = data?.settings && typeof data.settings === "object" && !Array.isArray(data.settings) ? { ...data.settings } : {};
@@ -621,6 +628,7 @@ export function createAdminModule({ getAllowedOrigins, defaultPrompts }) {
         tokens: {
           "zhixing-ai": await createToken(env, "zhixing-ai"),
           learning: await createToken(env, "learning"),
+          "calculator-ai": await createToken(env, "calculator-ai"),
           cloud: await createToken(env, "learning", "cloud-admin")
         },
         expiresIn: ADMIN_SESSION_TTL_MS

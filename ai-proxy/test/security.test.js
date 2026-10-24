@@ -78,7 +78,7 @@ test("rejects insecure, credential-bearing, literal-IP, internal, and custom-por
   for (const value of invalid) assert.throws(() => normalizeApiBaseUrl(value), value);
 });
 
-test("single login issues two separate product-scoped admin sessions", async () => {
+test("single login issues separate sessions for all products and cloud administration", async () => {
   const { env } = fakeEnvironment();
   const origin = "https://c.zhixing.us.ci";
   const response = await worker.fetch(jsonRequest("https://worker.test/admin/login/all?app=learning", {
@@ -88,8 +88,10 @@ test("single login issues two separate product-scoped admin sessions", async () 
   const body = await response.json();
   assert.ok(body.tokens["zhixing-ai"]);
   assert.ok(body.tokens.learning);
+  assert.ok(body.tokens["calculator-ai"]);
   assert.ok(body.tokens.cloud, "unified login should issue a cloud-admin-scoped token");
   assert.notEqual(body.tokens["zhixing-ai"], body.tokens.learning);
+  assert.notEqual(body.tokens["calculator-ai"], body.tokens.learning);
   assert.notEqual(body.tokens.cloud, body.tokens.learning);
   assert.ok(body.expiresIn > 0);
 
@@ -107,6 +109,11 @@ test("single login issues two separate product-scoped admin sessions", async () 
     headers: { Origin: origin, Authorization: "Bearer " + body.tokens.learning }
   }), env);
   assert.equal(allowed.status, 200);
+  const calculatorAllowed = await worker.fetch(new Request("https://worker.test/admin/defaults?app=calculator-ai", {
+    headers: { Origin: origin, Authorization: "Bearer " + body.tokens["calculator-ai"] }
+  }), env);
+  assert.equal(calculatorAllowed.status, 200);
+
 });
 
 test("limits JSON bodies even when Content-Length is absent or misleading", async () => {
